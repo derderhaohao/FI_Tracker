@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+
+/* Light and dark themes follow the system setting. Chart colors are the validated
+   reference palette (categorical slots in fixed order, never cycled). */
+:root {
+  color-scheme: light;
+  --background: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f2f1ee;
+  --foreground: #0b0b0b;
+  --muted-foreground: #52514e;
+  --subtle: #898781;
+  --border: #e1e0d9;
+  --input: #d6d5ce;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --ring: #0f766e;
+  --good: #006300;
+  --good-mark: #0ca30c;
+  --warning: #8a5a00;
+  --warning-bg: #fff6df;
+  --critical: #b42323;
+  --critical-bg: #fdecec;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --foreground: #f0efec;
+    --muted-foreground: #c3c2b7;
+    --subtle: #898781;
+    --border: #2c2c2a;
+    --input: #3a3a37;
+    --primary: #2dd4bf;
+    --primary-foreground: #04201d;
+    --ring: #2dd4bf;
+    --good: #0ca30c;
+    --good-mark: #0ca30c;
+    --warning: #fab219;
+    --warning-bg: #2a2110;
+    --critical: #e66767;
+    --critical-bg: #2c1515;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-critical: var(--critical);
+  --color-critical-bg: var(--critical-bg);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  input[type='number']::-webkit-inner-spin-button {
+    opacity: 0.5;
+  }
+}
