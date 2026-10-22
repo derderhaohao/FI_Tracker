@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Copy, Download, Plus, Trash2, Upload } from 'lucide-react';
+import { Copy, Download, Lock, Plus, Trash2, Upload } from 'lucide-react';
 import {
   ASSET_CLASSES,
   ASSET_CLASS_LABELS,
@@ -19,10 +19,18 @@ import {
   exportBackup,
   importBackup,
   markBackedUp,
-  parseBackupText,
+  parseBackup,
   type BackupFile,
 } from '@/io/backup';
 import { exportCsvFiles } from '@/io/csv';
+import {
+  decryptBackup,
+  encryptBackup,
+  encryptedBackupFileName,
+  isEncryptedBackup,
+  type EncryptedBackup,
+} from '@/io/encryption';
+import { disableAutosave, enableAutosave, resumeAutosave, useAutosave } from '@/lib/autosave';
 import { buildDemoBackup } from '@/io/demo';
 import { downloadText } from '@/lib/download';
 import { useAppData } from '@/app/data';
@@ -791,6 +799,127 @@ function Categories() {
   );
 }
 
+function EncryptedExport({ onDone }: { onDone: (message: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [a, setA] = useState('');
+  const [b, setB] = useState('');
+  const [busy, setBusy] = useState(false);
+  const error =
+    a.length > 0 && a.length < 10
+      ? 'Use at least 10 characters.'
+      : b && a !== b
+        ? 'The passphrases do not match.'
+        : undefined;
+  if (!open) {
+    return (
+      <div className="mt-4">
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          <Lock aria-hidden /> Export encrypted backup
+        </Button>
+        <p className="mt-1 text-xs text-subtle">
+          For backups kept in cloud drives or email. Without the passphrase the file cannot be opened, by
+          anyone.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <form
+      className="mt-4 flex flex-wrap items-end gap-2 rounded-md border p-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (error || !a || a !== b) return;
+        setBusy(true);
+        const enc = await encryptBackup(await exportBackup(), a);
+        downloadText(encryptedBackupFileName(today()), JSON.stringify(enc));
+        await markBackedUp();
+        setBusy(false);
+        setOpen(false);
+        setA('');
+        setB('');
+        onDone('Encrypted backup downloaded. Keep the passphrase somewhere safe: it cannot be recovered.');
+      }}
+    >
+      <Field label="Passphrase" error={error}>
+        {(id) => (
+          <Input
+            id={id}
+            type="password"
+            autoComplete="new-password"
+            value={a}
+            onChange={(e) => setA(e.target.value)}
+            className="w-56"
+            autoFocus
+          />
+        )}
+      </Field>
+      <Field label="Repeat passphrase">
+        {(id) => (
+          <Input
+            id={id}
+            type="password"
+            autoComplete="new-password"
+            value={b}
+            onChange={(e) => setB(e.target.value)}
+            className="w-56"
+          />
+        )}
+      </Field>
+      <Button type="submit" disabled={busy || !!error || !a || a !== b}>
+        {busy ? 'Encrypting…' : 'Download encrypted backup'}
+      </Button>
+      <Button variant="ghost" onClick={() => setOpen(false)}>
+        Cancel
+      </Button>
+    </form>
+  );
+}
+
+function AutosaveControls() {
+  const autosave = useAutosave();
+  const when = autosave.lastSavedAt ? new Date(autosave.lastSavedAt).toLocaleString() : 'not yet';
+  return (
+    <div className="mt-4 rounded-md border p-3 text-sm">
+      <div className="font-medium">Auto-save to a file</div>
+      {autosave.status === 'unsupported' ? (
+        <p className="mt-1 text-muted-foreground">
+          Needs Chrome or Edge on a computer. In this browser, export backups by hand.
+        </p>
+      ) : autosave.status === 'off' ? (
+        <>
+          <p className="mt-1 text-muted-foreground">
+            Pick a file once, for example in a synced folder; the app rewrites it after every change. The file
+            is a plain (unencrypted) backup.
+          </p>
+          <Button className="mt-2" variant="outline" onClick={() => void enableAutosave()}>
+            Choose auto-save file
+          </Button>
+        </>
+      ) : (
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground">
+            {autosave.status === 'needs-permission'
+              ? 'Paused'
+              : autosave.status === 'error'
+                ? 'Failed'
+                : 'Saving'}{' '}
+            to <strong className="text-foreground">{autosave.fileName}</strong> · last saved {when}
+          </span>
+          {autosave.status === 'needs-permission' && (
+            <Button size="sm" variant="outline" onClick={() => void resumeAutosave()}>
+              Resume
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => void disableAutosave()}>
+            Turn off
+          </Button>
+        </div>
+      )}
+      {autosave.error && <p className="mt-1 text-xs text-critical">{autosave.error}</p>}
+    </div>
+  );
+}
+
 function Backup() {
   const { settings, accounts } = useAppData();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -826,8 +955,11 @@ function Backup() {
     await replaceWith(buildDemoBackup(), 'Demo data');
   };
 
-  const onFile = async (file: File) => {
-    const parsed = parseBackupText(await file.text());
+  const [locked, setLocked] = useState<EncryptedBackup>();
+  const [passphrase, setPassphrase] = useState('');
+
+  const restoreParsed = async (raw: unknown) => {
+    const parsed = parseBackup(raw);
     if (!parsed.ok) {
       setMessage({ tone: 'critical', text: parsed.error });
       return;
@@ -840,6 +972,35 @@ function Backup() {
     )
       return;
     await replaceWith(parsed.file, 'Backup');
+  };
+
+  const onFile = async (file: File) => {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(await file.text());
+    } catch {
+      setMessage({ tone: 'critical', text: 'The file is not valid JSON.' });
+      return;
+    }
+    if (isEncryptedBackup(raw)) {
+      setLocked(raw);
+      setPassphrase('');
+      setMessage({ tone: 'info', text: 'This backup is encrypted. Enter its passphrase.' });
+      return;
+    }
+    await restoreParsed(raw);
+  };
+
+  const unlock = async () => {
+    if (!locked) return;
+    try {
+      const raw = await decryptBackup(locked, passphrase);
+      setLocked(undefined);
+      setPassphrase('');
+      await restoreParsed(raw);
+    } catch (e) {
+      setMessage({ tone: 'critical', text: e instanceof Error ? e.message : String(e) });
+    }
   };
 
   return (
@@ -890,6 +1051,37 @@ function Backup() {
           {message.text}
         </Notice>
       )}
+      {locked && (
+        <form
+          className="mt-3 flex flex-wrap items-end gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void unlock();
+          }}
+        >
+          <Field label="Passphrase">
+            {(id) => (
+              <Input
+                id={id}
+                type="password"
+                autoComplete="off"
+                value={passphrase}
+                onChange={(e) => setPassphrase(e.target.value)}
+                className="w-64"
+                autoFocus
+              />
+            )}
+          </Field>
+          <Button type="submit" disabled={!passphrase}>
+            Decrypt and restore
+          </Button>
+          <Button variant="ghost" onClick={() => setLocked(undefined)}>
+            Cancel
+          </Button>
+        </form>
+      )}
+      <EncryptedExport onDone={(text) => setMessage({ tone: 'info', text })} />
+      <AutosaveControls />
       <ul className="mt-4 flex flex-col gap-1 text-sm text-muted-foreground">
         <li>
           Last backup:{' '}

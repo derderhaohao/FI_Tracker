@@ -11,6 +11,10 @@ export default defineConfig({
     baseURL: `http://localhost:${port}/FI_Tracker/`,
     trace: 'retain-on-failure',
     acceptDownloads: true,
+    // Optional: a pre-installed Chromium when the bundled one is not downloaded.
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
+      : {},
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

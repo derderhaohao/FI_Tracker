@@ -14,17 +14,17 @@ built in as editable settings.
 
 ## Screens
 
-| Route          | Screen       | What it does                                                                |
-| -------------- | ------------ | --------------------------------------------------------------------------- |
-| `#/`           | Dashboard    | Net worth, FI progress, projected FI date, savings rate, alerts, backup     |
-| `#/accounts`   | Accounts     | Account registry and liability terms                                        |
-| `#/snapshots`  | Snapshots    | Accounts × dates grid, FX per date, holdings, net-worth change attribution  |
-| `#/cashflow`   | Cash flow    | Categories × months grid, lump sums, savings-rate trend                     |
-| `#/goal`       | Goal         | FI budget and tiers, SWR, income streams, post-employment costs, target age |
-| `#/projection` | Projection   | Baseline projection, FI target, sensitivity, year table                     |
-| `#/lab`        | Strategy Lab | Scenarios, side-by-side comparison, Monte Carlo bands, plan of record       |
-| `#/reviews`    | Reviews      | Checklists, plan vs. actual, review log                                     |
-| `#/settings`   | Settings     | Assumptions, Taiwan settings, categories, backup / restore, demo data       |
+| Route          | Screen       | What it does                                                                                            |
+| -------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
+| `#/`           | Dashboard    | Net worth, FI progress, projected FI date, savings rate, alerts, backup                                 |
+| `#/accounts`   | Accounts     | Account registry and liability terms                                                                    |
+| `#/snapshots`  | Snapshots    | Accounts × dates grid, FX per date, holdings, CSV import, change attribution with reconciliation check  |
+| `#/cashflow`   | Cash flow    | Monthly totals or individual transactions, CSV import from bank exports, lump sums, savings-rate trend  |
+| `#/goal`       | Goal         | FI budget and tiers, SWR, income streams, post-employment costs, target age, goal history               |
+| `#/projection` | Projection   | Baseline projection, FI target, sensitivity, year table                                                 |
+| `#/lab`        | Strategy Lab | Scenarios, comparison, Monte Carlo bands, historical backtest (1871–2022), buy vs. rent, plan of record |
+| `#/reviews`    | Reviews      | Checklists, plan vs. actual, review log                                                                 |
+| `#/settings`   | Settings     | Assumptions, Taiwan settings, categories, backup / restore, encrypted export, auto-save, demo data      |
 
 ## Getting started
 
@@ -61,6 +61,9 @@ npm run build          # production build into dist/
 npm run e2e            # Playwright smoke tests against the built site
 npm run perf           # 10,000 Monte Carlo runs must finish in under 5 seconds
 npm run demo:generate  # regenerate sample-data/demo.json
+
+# Locally, if Playwright's own browser is not downloaded:
+PLAYWRIGHT_CHROMIUM_PATH=/path/to/chrome npm run e2e
 ```
 
 ### Layout
@@ -99,3 +102,13 @@ plan for Pages.
 - Backups are named `*.fi.json`. `.gitignore` blocks them (and `backups/`, `.env*`), and CI fails if
   one is ever committed. Never put real data in this repository.
 - Safari deletes site data after 7 days without a visit; prefer Chrome or Edge.
+- In Chrome or Edge, Settings → Backup → **Choose auto-save file** keeps a backup file up to date
+  after every change. **Export encrypted backup** protects copies kept in cloud drives or email.
+- The app can be installed (browser menu → Install) and works offline after the first visit.
+
+## Data sources
+
+- Historical returns for the backtest: Robert Shiller's data (S&P composite with dividends, CPI-U,
+  10-year Treasury yield), via [datasets/s-and-p-500](https://github.com/datasets/s-and-p-500).
+  Regenerate with `npx tsx scripts/build-history.ts data.csv`.
+- Taiwan rules: see the check table in [docs/decisions.md](docs/decisions.md).

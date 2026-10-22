@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Copy, Plus, Trash2 } from 'lucide-react';
-import type { CashFlow, Category } from '@/domain/entities';
+import { Copy, Plus, Trash2, Upload } from 'lucide-react';
+import type { CashFlow, Category, Settings } from '@/domain/entities';
 import { cashFlowTwd, monthlyTotals, trailing12 } from '@/domain/cashflow';
-import { addMonths, monthOf, today } from '@/domain/dates';
+import { addMonths, lastDayOfMonth, monthOf, today } from '@/domain/dates';
 import { formatMinor, parseMoneyInput } from '@/domain/money';
 import { db } from '@/db/db';
 import { newId, patch, save, saveMany } from '@/db/repo';
@@ -12,21 +12,27 @@ import { LineChart } from '@/components/charts/LineChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input, Select } from '@/components/ui/input';
-import { Badge, EmptyState, PageHeader, Stat, Table } from '@/components/ui/misc';
+import { Badge, EmptyState, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
+import { TransactionImport } from '@/features/import/CsvImport';
 import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
 
 const VISIBLE_MONTHS = 6;
 
+type CashFlowMode = Settings['cashFlowMode'];
+
+/** The grid cell's own record: a monthly TWD total that is neither a lump sum nor a dated transaction. */
+function isRegular(f: CashFlow) {
+  return !f.lumpSum && f.currency === 'TWD' && !f.date;
+}
+
 function regularFlow(flows: readonly CashFlow[], month: string, categoryId: string) {
-  return flows.find(
-    (f) => f.month === month && f.categoryId === categoryId && !f.lumpSum && f.currency === 'TWD',
-  );
+  return flows.find((f) => f.month === month && f.categoryId === categoryId && isRegular(f));
 }
 
 async function setRegular(month: string, categoryId: string, minor: number | undefined) {
   const existing = (
     await db.cashFlows.where('[month+categoryId]').equals([month, categoryId]).toArray()
-  ).find((f) => !f.lumpSum && f.currency === 'TWD');
+  ).find(isRegular);
   if (minor === undefined || minor === 0) {
     if (existing) await db.cashFlows.delete(existing.id);
     return;
@@ -43,32 +49,61 @@ async function setRegular(month: string, categoryId: string, minor: number | und
     });
 }
 
-function LumpSums({ month, categories }: { month: string; categories: Category[] }) {
+function defaultDate(month: string): string {
+  const t = today();
+  return monthOf(t) === month ? t : `${month}-01`;
+}
+
+function Entries({ month, categories, mode }: { month: string; categories: Category[]; mode: CashFlowMode }) {
   const { cashFlows, fxRates } = useAppData();
-  const rows = cashFlows.filter((f) => f.month === month && (f.lumpSum || f.currency !== 'TWD'));
+  const rows = cashFlows
+    .filter((f) => f.month === month && (mode === 'transactions' || !isRegular(f)))
+    .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || a.createdAt.localeCompare(b.createdAt));
   const [draft, setDraft] = useState({
-    categoryId: categories[0]?.id ?? '',
+    date: defaultDate(month),
+    categoryId: categories.find((c) => c.kind === 'expense')?.id ?? categories[0]?.id ?? '',
     amount: '',
     currency: 'TWD',
     note: '',
-    lumpSum: true,
+    lumpSum: mode === 'monthly',
   });
-  const name = (id: string) => categories.find((c) => c.id === id)?.name ?? '?';
+  const [draftMonth, setDraftMonth] = useState(month);
+  if (draftMonth !== month) {
+    setDraftMonth(month);
+    setDraft({ ...draft, date: defaultDate(month) });
+  }
   const amount = parseMoneyInput(draft.amount);
+  const dateOk =
+    mode === 'monthly' ? draft.date === '' || monthOf(draft.date) === month : monthOf(draft.date) === month;
+  const kindOf = (id: string) => categories.find((c) => c.id === id)?.kind;
+  const total = rows.reduce(
+    (s, f) => s + (kindOf(f.categoryId) === 'income' ? 1 : -1) * cashFlowTwd(f, fxRates),
+    0,
+  );
+
   return (
     <Card className="mt-4">
       <CardHeader
-        title={`One-off and foreign-currency entries · ${monthLabel(month)}`}
-        description="Tag year-end bonuses and large one-off costs as lump sums so they do not distort monthly trends."
+        title={
+          mode === 'transactions'
+            ? `Transactions · ${monthLabel(month)}`
+            : `Other entries · ${monthLabel(month)}`
+        }
+        description={
+          mode === 'transactions'
+            ? `${rows.length} entries, net ${twd(total)}. Tag year-end bonuses and large one-off costs as lump sums so they do not distort trends.`
+            : 'Lump sums, foreign-currency amounts and imported transactions. Tag year-end bonuses and large one-off costs as lump sums so they do not distort monthly trends.'
+        }
       />
       <CardContent>
         <Table>
           <thead>
             <tr>
+              <th>Date</th>
               <th>Category</th>
+              <th>Description</th>
               <th className="text-right">Amount</th>
               <th className="text-right">TWD</th>
-              <th>Note</th>
               <th>Tag</th>
               <th />
             </tr>
@@ -76,10 +111,29 @@ function LumpSums({ month, categories }: { month: string; categories: Category[]
           <tbody>
             {rows.map((f) => (
               <tr key={f.id}>
-                <td>{name(f.categoryId)}</td>
-                <td className="text-right">{formatMinor(f.amountMinor, f.currency)}</td>
+                <td className="whitespace-nowrap text-muted-foreground">{f.date ?? 'month'}</td>
+                <td>
+                  <Select
+                    aria-label="Category"
+                    className="h-8 min-w-36"
+                    value={f.categoryId}
+                    onChange={(e) => void patch(db.cashFlows, f.id, { categoryId: e.target.value })}
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.kind})
+                      </option>
+                    ))}
+                  </Select>
+                </td>
+                <td className="max-w-72 truncate text-muted-foreground" title={f.note}>
+                  {f.note}
+                </td>
+                <td className="text-right whitespace-nowrap">
+                  {kindOf(f.categoryId) === 'expense' ? '−' : '+'}
+                  {formatMinor(f.amountMinor, f.currency)}
+                </td>
                 <td className="text-right text-muted-foreground">{twd(cashFlowTwd(f, fxRates))}</td>
-                <td className="text-muted-foreground">{f.note}</td>
                 <td>
                   <button
                     onClick={() => void patch(db.cashFlows, f.id, { lumpSum: !f.lumpSum })}
@@ -102,8 +156,19 @@ function LumpSums({ month, categories }: { month: string; categories: Category[]
             ))}
             <tr>
               <td>
+                <Input
+                  aria-label="Date"
+                  type="date"
+                  className="h-8 w-36"
+                  value={draft.date}
+                  min={`${month}-01`}
+                  max={lastDayOfMonth(month)}
+                  onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+                />
+              </td>
+              <td>
                 <Select
-                  aria-label="Category"
+                  aria-label="New entry category"
                   className="h-8"
                   value={draft.categoryId}
                   onChange={(e) => setDraft({ ...draft, categoryId: e.target.value })}
@@ -114,6 +179,15 @@ function LumpSums({ month, categories }: { month: string; categories: Category[]
                     </option>
                   ))}
                 </Select>
+              </td>
+              <td>
+                <Input
+                  aria-label="Description"
+                  className="h-8"
+                  value={draft.note}
+                  onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+                  placeholder={mode === 'transactions' ? 'Supermarket' : 'Year-end bonus'}
+                />
               </td>
               <td>
                 <div className="flex gap-1">
@@ -135,15 +209,6 @@ function LumpSums({ month, categories }: { month: string; categories: Category[]
               </td>
               <td />
               <td>
-                <Input
-                  aria-label="Note"
-                  className="h-8"
-                  value={draft.note}
-                  onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-                  placeholder="Year-end bonus"
-                />
-              </td>
-              <td>
                 <label className="flex items-center gap-1 text-xs">
                   <input
                     type="checkbox"
@@ -157,13 +222,18 @@ function LumpSums({ month, categories }: { month: string; categories: Category[]
                 <Button
                   size="sm"
                   disabled={
-                    !draft.categoryId || amount === null || amount <= 0 || !/^[A-Z]{3}$/.test(draft.currency)
+                    !draft.categoryId ||
+                    amount === null ||
+                    amount <= 0 ||
+                    !/^[A-Z]{3}$/.test(draft.currency) ||
+                    !dateOk
                   }
                   onClick={() => {
                     if (amount === null) return;
                     void save(db.cashFlows, {
                       id: newId(),
                       month,
+                      date: draft.date || undefined,
                       categoryId: draft.categoryId,
                       amountMinor: amount,
                       currency: draft.currency,
@@ -179,13 +249,18 @@ function LumpSums({ month, categories }: { month: string; categories: Category[]
             </tr>
           </tbody>
         </Table>
+        {mode === 'monthly' && (
+          <p className="mt-2 text-xs text-subtle">Leave the date empty for a monthly total.</p>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export function CashFlowPage() {
-  const { cashFlows, categories, fxRates } = useAppData();
+  const { cashFlows, categories, fxRates, settings } = useAppData();
+  const mode = settings.cashFlowMode;
+  const [importing, setImporting] = useState(false);
   const totals = useMemo(
     () => monthlyTotals(cashFlows, categories, fxRates),
     [cashFlows, categories, fxRates],
@@ -209,7 +284,7 @@ export function CashFlowPage() {
       await saveMany(
         db.cashFlows,
         cashFlows
-          .filter((f) => f.month === prev && !f.lumpSum && f.currency === 'TWD')
+          .filter((f) => f.month === prev && isRegular(f))
           .map((f) => ({
             id: newId(),
             month: next,
@@ -257,13 +332,23 @@ export function CashFlowPage() {
             const others = extra - (regular ? regular.amountMinor / 100 : 0);
             return (
               <td key={m} className="w-36 align-top">
-                <MoneyInput
-                  aria-label={`${c.name} ${m}`}
-                  value={regular?.amountMinor}
-                  currency="TWD"
-                  onCommit={(v) => void setRegular(m, c.id, v)}
-                />
-                {Math.abs(others) > 0.5 && (
+                {mode === 'transactions' ? (
+                  <button
+                    className="block w-full py-1 text-right hover:text-primary"
+                    onClick={() => setSelected(m)}
+                    aria-label={`${c.name} ${m}: show transactions`}
+                  >
+                    {extra ? twd(extra) : <span className="text-subtle">—</span>}
+                  </button>
+                ) : (
+                  <MoneyInput
+                    aria-label={`${c.name} ${m}`}
+                    value={regular?.amountMinor}
+                    currency="TWD"
+                    onCommit={(v) => void setRegular(m, c.id, v)}
+                  />
+                )}
+                {mode === 'monthly' && Math.abs(others) > 0.5 && (
                   <div className="mt-0.5 text-right text-[11px] text-subtle">
                     + {twdCompact(others)} other
                   </div>
@@ -280,18 +365,37 @@ export function CashFlowPage() {
     <>
       <PageHeader
         title="Cash flow"
-        description="Monthly totals per category (net income after tax and deductions). Lump sums and foreign-currency entries go below the grid."
+        description={
+          mode === 'monthly'
+            ? 'Monthly totals per category (net income after tax and deductions). Lump sums, foreign-currency and imported entries go below the grid.'
+            : 'Individual dated transactions, entered or imported from CSV. The grid sums them per category and month.'
+        }
         actions={
           <>
+            <Segmented
+              label="Cash-flow mode"
+              value={mode}
+              onChange={(m) => void patch(db.settings, 'singleton', { cashFlowMode: m })}
+              options={[
+                { value: 'monthly', label: 'Monthly totals' },
+                { value: 'transactions', label: 'Transactions' },
+              ]}
+            />
+            <Button variant="outline" onClick={() => setImporting(true)}>
+              <Upload aria-hidden /> Import CSV
+            </Button>
             <Button variant="outline" onClick={() => void addMonth(false)}>
               <Plus aria-hidden /> Add month
             </Button>
-            <Button onClick={() => void addMonth(true)} disabled={months.length === 0}>
-              <Copy aria-hidden /> Copy last month
-            </Button>
+            {mode === 'monthly' && (
+              <Button onClick={() => void addMonth(true)} disabled={months.length === 0}>
+                <Copy aria-hidden /> Copy last month
+              </Button>
+            )}
           </>
         }
       />
+      {importing && <TransactionImport onClose={() => setImporting(false)} />}
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat
           label="Trailing 12 months income"
@@ -376,7 +480,7 @@ export function CashFlowPage() {
         </Card>
       )}
 
-      {lumpMonth && <LumpSums month={lumpMonth} categories={categories} />}
+      {lumpMonth && <Entries month={lumpMonth} categories={categories} mode={mode} />}
 
       {totals.length > 1 && (
         <Card className="mt-4">

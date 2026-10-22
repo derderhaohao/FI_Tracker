@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { AssumptionSet, Holding, Review, Scenario } from '@/domain/entities';
+import type { AssumptionSet, GoalSnapshot, Holding, Review, Scenario } from '@/domain/entities';
 import {
   baselineContext,
   buildProjectionInput,
@@ -22,6 +22,7 @@ export interface AppData extends PlanData {
   assumptionSets: AssumptionSet[];
   scenarios: Scenario[];
   reviews: Review[];
+  goalHistory: GoalSnapshot[];
   /** The assumption set selected in Settings (falls back to the first). */
   activeAssumptions: AssumptionSet;
   ctx: BaselineContext;
@@ -52,6 +53,7 @@ export function DataProvider({ children, fallback }: { children: ReactNode; fall
       assumptionSets,
       scenarios,
       reviews,
+      goalHistory,
     ] = await Promise.all([
       db.settings.get('singleton'),
       db.accounts.toArray(),
@@ -65,6 +67,7 @@ export function DataProvider({ children, fallback }: { children: ReactNode; fall
       db.assumptionSets.toArray(),
       db.scenarios.toArray(),
       db.reviews.toArray(),
+      db.goalHistory.toArray(),
     ]);
     return {
       settings,
@@ -79,6 +82,7 @@ export function DataProvider({ children, fallback }: { children: ReactNode; fall
       assumptionSets,
       scenarios,
       reviews,
+      goalHistory,
     };
   });
 

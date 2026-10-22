@@ -15,6 +15,10 @@ import { ReviewsPage } from '@/features/review/ReviewsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { DataProvider } from './data';
 import { ErrorBoundary } from './ErrorBoundary';
+import { GoalHistoryRecorder } from './GoalHistoryRecorder';
+import { AutoSaver } from './AutoSaver';
+import { UpdatePrompt } from './UpdatePrompt';
+import { initAutosave } from '@/lib/autosave';
 import { Layout } from './Layout';
 
 /** `npm run demo` opens `#/settings?demo=1`: load the demo data when the database is empty. */
@@ -46,12 +50,16 @@ export function App() {
         ),
       );
     void requestPersistence();
+    void initAutosave();
   }, []);
 
   if (!ready) return <Loading error={error} />;
   return (
     <ErrorBoundary>
       <DataProvider fallback={<Loading />}>
+        <GoalHistoryRecorder />
+        <AutoSaver />
+        <UpdatePrompt />
         <HashRouter>
           <Routes>
             <Route element={<Layout />}>

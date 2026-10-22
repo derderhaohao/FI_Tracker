@@ -23,6 +23,7 @@ export function defaultSettings(assumptionSetId: string): Draft<Settings> {
     },
     alerts: { targetSavingsRate: 0.3, allocationDriftThreshold: 0.1, emergencyFundMonths: 6 },
     snapshotSinceBackup: false,
+    cashFlowMode: 'monthly',
   };
 }
 

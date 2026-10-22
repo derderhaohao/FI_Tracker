@@ -4,6 +4,7 @@ import type {
   CashFlow,
   Category,
   FxRate,
+  GoalSnapshot,
   Holding,
   Review,
   Scenario,
@@ -13,6 +14,7 @@ import type {
 import { defaultAssumptionSet } from '@/domain/assumptions';
 import { buildProjectionInput, type PlanData } from '@/domain/baseline';
 import { addMonths, lastDayOfMonth, monthRange } from '@/domain/dates';
+import { fiNumber, fiSpendingByTier } from '@/domain/fiNumber';
 import { mulberry32 } from '@/domain/montecarlo/rng';
 import { toMinor } from '@/domain/money';
 import { lockProjection } from '@/domain/planVsActual';
@@ -73,6 +75,7 @@ export function buildDemoBackup(): BackupFile {
     },
     alerts: { targetSavingsRate: 0.35, allocationDriftThreshold: 0.1, emergencyFundMonths: 6 },
     snapshotSinceBackup: false,
+    cashFlowMode: 'monthly',
     ...at,
   };
 
@@ -329,7 +332,26 @@ export function buildDemoBackup(): BackupFile {
     assumptionSets: [assumptionSet, cautious],
     scenarios,
     reviews: [] as Review[],
+    goalHistory: [] as GoalSnapshot[],
   };
+
+  // Goal history: a first, leaner goal, then the current budget after the annual reset.
+  const fullSpending = fiSpendingByTier(categories, settings.destination).full;
+  const goal = (date: string, spending: number, swr: number): GoalSnapshot => ({
+    id: id('goal'),
+    date,
+    fiTier: 'full',
+    fiSpendingMinor: toMinor(Math.round(spending)),
+    guaranteedIncomeMinor: 0,
+    swr,
+    fiNumberMinor: toMinor(Math.round(fiNumber(spending, 0, swr))),
+    targetFiAge: 50,
+    ...at,
+  });
+  data.goalHistory.push(
+    goal('2025-01-31', 640_000, 0.04),
+    goal('2026-03-31', fullSpending, settings.defaultSwr),
+  );
 
   // Lock the baseline as plan of record, as of the snapshot six months before the last.
   const lockMonth = addMonths(LAST_MONTH, -6);

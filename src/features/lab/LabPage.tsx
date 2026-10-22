@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Copy, Lock, Play, Plus, Trash2 } from 'lucide-react';
 import type { Scenario } from '@/domain/entities';
 import { MAX_RUNS } from '@/domain/montecarlo/runner';
@@ -18,10 +18,51 @@ import { Badge, EmptyState, Notice, PageHeader, Table } from '@/components/ui/mi
 import { dateAfterYears, pct, twdCompact } from '@/lib/format';
 import { inflationIndex } from '@/lib/valueMode';
 import { ScenarioEditor } from './ScenarioEditor';
-import { evaluate, lockPlanOfRecord, newScenarioDraft } from './actions';
+import { evaluate, lockPlanOfRecord, newScenarioDraft, type Evaluated } from './actions';
+import { BacktestCard } from './BacktestCard';
+import { BuyVsRentPanel } from './BuyVsRent';
+import { HISTORY, runBacktest } from '@/domain/backtest';
+import { Segmented } from '@/components/ui/misc';
 import { signature, useMonteCarlo } from './useMonteCarlo';
 
+function withBacktest(e: Evaluated) {
+  return { ...e, slot: 0, backtest: runBacktest(e.input) };
+}
+
+type LabTab = 'scenarios' | 'buyrent';
+
+function LabTabs({ tab, onChange }: { tab: LabTab; onChange: (t: LabTab) => void }) {
+  return (
+    <Segmented
+      label="Lab section"
+      value={tab}
+      onChange={onChange}
+      options={[
+        { value: 'scenarios', label: 'Scenarios' },
+        { value: 'buyrent', label: 'Buy vs. rent' },
+      ]}
+    />
+  );
+}
+
 export function LabPage() {
+  const [tab, setTab] = useState<LabTab>('scenarios');
+  if (tab === 'buyrent') {
+    return (
+      <>
+        <PageHeader
+          title="Strategy Lab"
+          description="Is buying a home better than renting and investing the difference?"
+          actions={<LabTabs tab={tab} onChange={setTab} />}
+        />
+        <BuyVsRentPanel />
+      </>
+    );
+  }
+  return <ScenarioLab tabs={<LabTabs tab={tab} onChange={setTab} />} />;
+}
+
+function ScenarioLab({ tabs }: { tabs: ReactNode }) {
   const data = useAppData();
   const { scenarios, ctx } = data;
   const theme = useChartTheme();
@@ -53,7 +94,10 @@ export function LabPage() {
     () =>
       sorted
         .filter((s) => s.id in compare)
-        .map((s) => ({ ...evaluate(data, s), slot: compare[s.id] }))
+        .map((s) => {
+          const e = evaluate(data, s);
+          return { ...e, slot: compare[s.id], backtest: runBacktest(e.input) };
+        })
         .sort((a, b) => a.slot - b.slot),
     [sorted, compare, data],
   );
@@ -61,7 +105,11 @@ export function LabPage() {
   if (sorted.length === 0) {
     return (
       <>
-        <PageHeader title="Strategy Lab" description="Test alternatives against the same real data." />
+        <PageHeader
+          title="Strategy Lab"
+          description="Test alternatives against the same real data."
+          actions={tabs}
+        />
         <EmptyState title="No scenarios yet">
           A scenario is the baseline plus named overrides: savings rate, income changes, spending, allocation,
           FI age, one-off events and part-time income.
@@ -121,10 +169,8 @@ export function LabPage() {
     return row;
   });
 
-  const selectedEval = compared.find((c) => c.scenario.id === selected.id) ?? {
-    ...evaluate(data, selected),
-    slot: 0,
-  };
+  const selectedEval =
+    compared.find((c) => c.scenario.id === selected.id) ?? withBacktest(evaluate(data, selected));
   const selectedMc = mc.results[selected.id];
   const selectedMcFresh =
     selectedMc && selectedMc.signature === signature(selectedEval.input, mcRuns, mcSeed);
@@ -147,6 +193,7 @@ export function LabPage() {
         description="A scenario is the baseline plus named overrides. Compare up to five side by side, then test them with Monte Carlo."
         actions={
           <>
+            {tabs}
             <ValueModeToggle />
             <AssumptionBadge set={assumptionSetFor(data, selected.assumptionSetId)} />
           </>
@@ -203,6 +250,12 @@ export function LabPage() {
                 <th className="text-right">FI date</th>
                 <th className="text-right">FI age</th>
                 <th className="text-right">Success rate</th>
+                <th
+                  className="text-right"
+                  title={`Share of starting years ${HISTORY[0].year}–${HISTORY.at(-1)!.year} in which the money lasts`}
+                >
+                  Historical
+                </th>
                 <th className="text-right">FI age P10–P90</th>
                 <th className="text-right">Investable at FI</th>
                 <th className="text-right">At horizon</th>
@@ -268,6 +321,11 @@ export function LabPage() {
                           )}
                         </td>
                         <td className="text-right">
+                          <span title={`${c.backtest.runs} starting years`}>
+                            {pct(c.backtest.successRate, 0)}
+                          </span>
+                        </td>
+                        <td className="text-right">
                           {m?.summary.fiAgeP10 !== undefined
                             ? `${Math.round(m.summary.fiAgeP10)}–${Math.round(m.summary.fiAgeP90!)}`
                             : '—'}
@@ -278,7 +336,7 @@ export function LabPage() {
                         <td className="text-right">{twdCompact(c.result.balanceAtHorizon)}</td>
                       </>
                     ) : (
-                      <td colSpan={6} className="text-right text-subtle">
+                      <td colSpan={7} className="text-right text-subtle">
                         Tick to compare
                       </td>
                     )}
@@ -420,6 +478,7 @@ export function LabPage() {
           </CardContent>
         </Card>
       </div>
+      <BacktestCard name={selected.name} evaluation={selectedEval} />
     </>
   );
 }
