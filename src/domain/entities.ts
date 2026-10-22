@@ -99,6 +99,8 @@ export const settingsSchema = z.object({
   lastBackupAt: z.string().optional(),
   /** True after a snapshot is saved and before the next backup. */
   snapshotSinceBackup: z.boolean(),
+  /** Monthly totals per category (default) or individual dated transactions (ENG-2). */
+  cashFlowMode: z.enum(['monthly', 'transactions']),
   ...audit,
 });
 export type Settings = z.infer<typeof settingsSchema>;
@@ -183,6 +185,8 @@ export const cashFlowSchema = z.object({
   currency: currencySchema,
   lumpSum: z.boolean(),
   note: z.string().max(500).optional(),
+  /** Set for individual transactions (transaction mode, CSV import); absent for monthly totals. */
+  date: isoDateSchema.optional(),
   ...audit,
 });
 export type CashFlow = z.infer<typeof cashFlowSchema>;
@@ -374,6 +378,23 @@ export const reviewSchema = z.object({
   ...audit,
 });
 export type Review = z.infer<typeof reviewSchema>;
+
+// ---------- Goal history (DST-7) ----------
+
+/** The goal as it stood on a day; one record per day, the latest change wins. */
+export const goalSnapshotSchema = z.object({
+  id: idSchema,
+  date: isoDateSchema,
+  fiTier: fiTierSchema,
+  /** Annual FI spending for the plan tier, TWD minor units. */
+  fiSpendingMinor: minorSchema.min(0),
+  guaranteedIncomeMinor: minorSchema.min(0),
+  swr: z.number().min(0).max(1),
+  fiNumberMinor: minorSchema.min(0),
+  targetFiAge: ageSchema.optional(),
+  ...audit,
+});
+export type GoalSnapshot = z.infer<typeof goalSnapshotSchema>;
 
 /** Strips audit fields, for inputs where the repository stamps them. */
 export type Draft<T> = Omit<T, 'createdAt' | 'updatedAt'>;

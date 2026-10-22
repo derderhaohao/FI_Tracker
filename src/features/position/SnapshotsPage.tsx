@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Copy, Plus, Trash2 } from 'lucide-react';
+import { Copy, Plus, Trash2, Upload } from 'lucide-react';
+import { BalanceImport } from '@/features/import/CsvImport';
 import type { Account, Holding } from '@/domain/entities';
-import { monthlyTotals, savingsBetween } from '@/domain/cashflow';
+import { monthlyTotals } from '@/domain/cashflow';
 import { lastDayOfMonth, monthOf, today } from '@/domain/dates';
 import { exactRate, rateFor } from '@/domain/fx';
 import { formatMoney, fromMinor, toMinor } from '@/domain/money';
-import { attributeChange, latestSnapshots, netWorthAt, snapshotDates } from '@/domain/networth';
+import { latestSnapshots, netWorthAt, snapshotDates } from '@/domain/networth';
+import { periodChanges } from '@/domain/reconcile';
 import { db } from '@/db/db';
 import { newId, patch, save, saveMany } from '@/db/repo';
 import { useAppData } from '@/app/data';
@@ -13,7 +15,7 @@ import { MoneyInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/input';
-import { EmptyState, Notice, PageHeader, Table } from '@/components/ui/misc';
+import { Badge, EmptyState, Notice, PageHeader, Table } from '@/components/ui/misc';
 import { twd, twdCompact } from '@/lib/format';
 
 const VISIBLE_DATES = 6;
@@ -236,6 +238,7 @@ export function SnapshotsPage() {
   const shown = showAll ? dates : dates.slice(-VISIBLE_DATES);
   const [newDate, setNewDate] = useState(lastDayOfMonth(monthOf(today())));
   const [holdingsFor, setHoldingsFor] = useState<{ accountId: string; date: string }>();
+  const [importing, setImporting] = useState(false);
   const currencies = [...new Set(active.map((a) => a.currency).filter((c) => c !== 'TWD'))].sort();
   const totals = useMemo(
     () => monthlyTotals(data.cashFlows, data.categories, fxRates),
@@ -285,11 +288,12 @@ export function SnapshotsPage() {
   const nwByDate = new Map(
     dates.map((d) => [d, netWorthAt(d, accounts, snapshots, fxRates, settings.birthYear)]),
   );
-  const attributions = allDates.slice(1).map((d, i) => {
-    const prev = allDates[i];
-    const contributions = savingsBetween(totals, monthOf(prev), monthOf(d));
-    return attributeChange(nwByDate.get(prev)!, nwByDate.get(d)!, contributions, fxRates);
-  });
+  const attributions = periodChanges(
+    allDates.map((d) => nwByDate.get(d)!),
+    totals,
+    fxRates,
+    data.activeAssumptions.assets,
+  );
   const missingFx = shown.flatMap((d) =>
     currencies.filter((c) => rateFor(fxRates, c, d) === undefined).map((c) => `${c} on ${d}`),
   );
@@ -300,7 +304,13 @@ export function SnapshotsPage() {
       <PageHeader
         title="Snapshots"
         description={`One balance per account per ${settings.snapshotCadence === 'monthly' ? 'month' : 'quarter'}, in its native currency, with the FX rate for the date. Liabilities are entered as the amount owed.`}
+        actions={
+          <Button variant="outline" onClick={() => setImporting(true)}>
+            <Upload aria-hidden /> Import CSV
+          </Button>
+        }
       />
+      {importing && <BalanceImport onClose={() => setImporting(false)} />}
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-end gap-3">
           <Field label="Snapshot date">
@@ -467,7 +477,7 @@ export function SnapshotsPage() {
         <Card className="mt-4">
           <CardHeader
             title="What changed"
-            description="Each period's change in total net worth = savings from cash flow + market return + FX effect (prior foreign balances × rate change). Market return is the remainder."
+            description="Each period's change in total net worth = savings from cash flow + market return + FX effect (prior foreign balances × rate change). Market return is the remainder; “Check” marks a remainder too large for the assets to have earned."
           />
           <CardContent>
             <Table>
@@ -478,6 +488,7 @@ export function SnapshotsPage() {
                   <th className="text-right">Contributions</th>
                   <th className="text-right">Market return</th>
                   <th className="text-right">FX effect</th>
+                  <th>Check</th>
                 </tr>
               </thead>
               <tbody>
@@ -493,6 +504,22 @@ export function SnapshotsPage() {
                       <td className="text-right">{twdCompact(a.contributions)}</td>
                       <td className="text-right">{twdCompact(a.marketReturn)}</td>
                       <td className="text-right">{twdCompact(a.fxEffect)}</td>
+                      <td>
+                        {a.check === undefined ? (
+                          <span className="text-xs text-subtle" title="No cash flow entered for this period">
+                            no cash flow
+                          </span>
+                        ) : a.check.flagged ? (
+                          <Badge
+                            tone="warning"
+                            title={`Market return ${twdCompact(a.marketReturn)} is outside the plausible range ${twdCompact(a.check.expectedLow)} to ${twdCompact(a.check.expectedHigh)}. Check for a missing cash-flow entry, a mistyped balance, or a transfer between tracked and untracked accounts.`}
+                          >
+                            Check
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-good">OK</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
               </tbody>

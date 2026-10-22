@@ -8,6 +8,7 @@ import type {
   Holding,
   IncomeStream,
   Liability,
+  GoalSnapshot,
   Review,
   Scenario,
   Settings,
@@ -15,7 +16,7 @@ import type {
 } from '@/domain/entities';
 
 /** Current IndexedDB schema version; also written into every backup file. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const STORE_NAMES = [
   'settings',
@@ -30,6 +31,7 @@ export const STORE_NAMES = [
   'assumptionSets',
   'scenarios',
   'reviews',
+  'goalHistory',
 ] as const;
 export type StoreName = (typeof STORE_NAMES)[number];
 
@@ -46,6 +48,7 @@ export class FiDatabase extends Dexie {
   assumptionSets!: EntityTable<AssumptionSet, 'id'>;
   scenarios!: EntityTable<Scenario, 'id'>;
   reviews!: EntityTable<Review, 'id'>;
+  goalHistory!: EntityTable<GoalSnapshot, 'id'>;
 
   constructor(name = 'fi-tracker') {
     super(name);
@@ -64,6 +67,20 @@ export class FiDatabase extends Dexie {
       scenarios: 'id, isPlanOfRecord',
       reviews: 'id, date',
     });
+    // v2: dated transactions (ENG-2), cash-flow mode setting, goal history (DST-7).
+    this.version(2)
+      .stores({
+        cashFlows: 'id, month, categoryId, [month+categoryId], date',
+        goalHistory: 'id, date',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('settings')
+          .toCollection()
+          .modify((s: { cashFlowMode?: string }) => {
+            s.cashFlowMode ??= 'monthly';
+          });
+      });
   }
 
   allTables() {

@@ -7,8 +7,16 @@ import { SCHEMA_VERSION } from '@/db/db';
 
 type RawFile = { schemaVersion: number; [key: string]: unknown };
 
+type RawData = Record<string, unknown[] | undefined>;
+
 export const MIGRATIONS: Record<number, (file: RawFile) => RawFile> = {
-  // 1: (file) => ({ ...file, schemaVersion: 2, data: { ... } }),
+  // v1 → v2: cash-flow mode setting (default monthly totals) and an empty goal history.
+  1: (file) => {
+    const data = { ...(file.data as RawData) };
+    data.settings = (data.settings ?? []).map((s) => ({ cashFlowMode: 'monthly', ...(s as object) }));
+    data.goalHistory = data.goalHistory ?? [];
+    return { ...file, schemaVersion: 2, data };
+  },
 };
 
 export function migrateBackup(raw: unknown, target = SCHEMA_VERSION): unknown {

@@ -1,0 +1,4779 @@
+{
+  "app": "fi-tracker",
+  "schemaVersion": 1,
+  "exportedAt": "2026-10-01T00:00:00.000Z",
+  "data": {
+    "settings": [
+      {
+        "id": "singleton",
+        "baseCurrency": "TWD",
+        "birthYear": 1991,
+        "horizonAge": 95,
+        "defaultSwr": 0.035,
+        "snapshotCadence": "monthly",
+        "activeAssumptionSetId": "demo-assumptions-base",
+        "targetAllocation": {
+          "cash": 0.1,
+          "tw_equity": 0.3,
+          "us_equity": 0.45,
+          "bond": 0.15
+        },
+        "destination": {
+          "fiTier": "full",
+          "fatMultiplier": 1.3,
+          "nhiMonthlyMinor": 82600,
+          "privateInsuranceAnnualMinor": 3600000,
+          "healthcareReserveAnnualMinor": 3000000,
+          "targetFiAge": 50
+        },
+        "alerts": {
+          "targetSavingsRate": 0.35,
+          "allocationDriftThreshold": 0.1,
+          "emergencyFundMonths": 6
+        },
+        "snapshotSinceBackup": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "accounts": [
+      {
+        "id": "demo-acct-0001",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "Everyday account",
+        "institution": "Demo Bank",
+        "type": "cash",
+        "assetClass": "cash",
+        "currency": "TWD",
+        "investable": true
+      },
+      {
+        "id": "demo-acct-0002",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "Emergency fund",
+        "institution": "Demo Bank",
+        "type": "cash",
+        "assetClass": "cash",
+        "currency": "TWD",
+        "investable": true
+      },
+      {
+        "id": "demo-acct-0003",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "TW ETFs",
+        "institution": "Demo Securities",
+        "type": "brokerage",
+        "assetClass": "tw_equity",
+        "currency": "TWD",
+        "investable": true
+      },
+      {
+        "id": "demo-acct-0004",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "US ETFs",
+        "institution": "Sample Broker",
+        "type": "brokerage",
+        "assetClass": "us_equity",
+        "currency": "USD",
+        "investable": true
+      },
+      {
+        "id": "demo-acct-0005",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "Bond ETF",
+        "institution": "Sample Broker",
+        "type": "brokerage",
+        "assetClass": "bond",
+        "currency": "USD",
+        "investable": true
+      },
+      {
+        "id": "demo-acct-0006",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "勞退 account",
+        "institution": "Labor pension fund",
+        "type": "pension",
+        "assetClass": "other",
+        "currency": "TWD",
+        "investable": true,
+        "accessAge": 60
+      },
+      {
+        "id": "demo-acct-0007",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "USD savings policy",
+        "institution": "Demo Life",
+        "type": "insurance",
+        "assetClass": "other",
+        "currency": "USD",
+        "investable": false
+      },
+      {
+        "id": "demo-acct-0008",
+        "archived": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "nickname": "Car loan",
+        "institution": "Demo Bank",
+        "type": "liability",
+        "assetClass": "other",
+        "currency": "TWD",
+        "investable": false
+      }
+    ],
+    "snapshots": [
+      {
+        "id": "demo-snap-0010",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 12000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0011",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 38000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0012",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 145000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0013",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 3800000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0014",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 900000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0015",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 61000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0016",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0017",
+        "date": "2025-01-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 42000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0019",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 12292400,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0020",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 38300000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0021",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 146558000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0022",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 3788900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0023",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 911500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0024",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 62288200,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0025",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0026",
+        "date": "2025-02-28",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 40750000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0028",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 13490700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0029",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 38600000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0030",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 148042300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0031",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 3840600,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0032",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 929700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0033",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 63580300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0034",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0035",
+        "date": "2025-03-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 39500000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0037",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 13899100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0038",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 38900000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0039",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 149890000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0040",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 3857500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0041",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 936300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0042",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 64876200,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0043",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0044",
+        "date": "2025-04-30",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 38250000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0046",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 11717700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0047",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 39200000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0048",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 149818800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0049",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4060500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0050",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 955500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0051",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 66176000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0052",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0053",
+        "date": "2025-05-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 37000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0055",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 10865000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0056",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 39500000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0057",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 155511300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0058",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4255900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0059",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 973300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0060",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 67479800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0061",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0062",
+        "date": "2025-06-30",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 35750000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0064",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 9230100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0065",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 39800000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0066",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 156418700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0067",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4366100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0068",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 994800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0069",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 68787400,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0070",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0071",
+        "date": "2025-07-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 34500000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0073",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 9682800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0074",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 40100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0075",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 164047100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0076",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4412800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0077",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1002600,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0078",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 70099000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0079",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0080",
+        "date": "2025-08-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 33250000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0082",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 9006400,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0083",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 40400000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0084",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 165591200,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0085",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4526600,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0086",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1006700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0087",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 71414500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0088",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0089",
+        "date": "2025-09-30",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 32000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0091",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 9736700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0092",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 40700000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0093",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 172000400,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0094",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4490200,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0095",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1012700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0096",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 72733900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0097",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0098",
+        "date": "2025-10-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 30750000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0100",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 10289300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0101",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 41000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0102",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 181284300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0103",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4648900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0104",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1025600,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0105",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 74057300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0106",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0107",
+        "date": "2025-11-30",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 29500000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0109",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 8593600,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0110",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 41300000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0111",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 178873300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0112",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4650900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0113",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1036300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0114",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 75384700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0115",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0116",
+        "date": "2025-12-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 28250000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0118",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 8534800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0119",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 41600000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0120",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 181819000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0121",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4748700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0122",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1040900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0123",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 76716000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0124",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0125",
+        "date": "2026-01-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 27000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0127",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 8962100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0128",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 41900000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0129",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 186687000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0130",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 4984300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0131",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1065000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0132",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 78051400,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0133",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0134",
+        "date": "2026-02-28",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 25750000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0136",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 6935800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0137",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 42200000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0138",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 184464100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0139",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 5169600,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0140",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1078300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0141",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 79390700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0142",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0143",
+        "date": "2026-03-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 24500000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0145",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 7075500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0146",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 42500000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0147",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 192868300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0148",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 5342100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0149",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1093900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0150",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 80734100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0151",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0152",
+        "date": "2026-04-30",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 23250000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0154",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 6000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0155",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 42800000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0156",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 200295000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0157",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 5564300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0158",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1098700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0159",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 82081500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0160",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0161",
+        "date": "2026-05-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 22000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0163",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 6000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0164",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 43100000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0165",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 205001000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0166",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 5496800,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0167",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1121300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0168",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 83433000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0169",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0170",
+        "date": "2026-06-30",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 20750000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0172",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 7134900,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0173",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 43400000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0174",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 214018000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0175",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 5729700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0176",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1139400,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0177",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 84788500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0178",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0179",
+        "date": "2026-07-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 19500000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0181",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 8539300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0182",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 43700000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0183",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 216555300,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0184",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 5857500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0185",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1164500,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0186",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 86148000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0187",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0188",
+        "date": "2026-08-31",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 18250000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0190",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0001",
+        "balanceMinor": 7484200,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0191",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0002",
+        "balanceMinor": 44000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0192",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0003",
+        "balanceMinor": 226247700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0193",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0004",
+        "balanceMinor": 5971100,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0194",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0005",
+        "balanceMinor": 1182700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0195",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0006",
+        "balanceMinor": 87511700,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0196",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0007",
+        "balanceMinor": 2280000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-snap-0197",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0008",
+        "balanceMinor": 17000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "fxRates": [
+      {
+        "id": "demo-fx-0009",
+        "date": "2025-01-31",
+        "currency": "USD",
+        "twdPerUnit": 31.25,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0018",
+        "date": "2025-02-28",
+        "currency": "USD",
+        "twdPerUnit": 31,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0027",
+        "date": "2025-03-31",
+        "currency": "USD",
+        "twdPerUnit": 30.77,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0036",
+        "date": "2025-04-30",
+        "currency": "USD",
+        "twdPerUnit": 30.74,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0045",
+        "date": "2025-05-31",
+        "currency": "USD",
+        "twdPerUnit": 30.85,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0054",
+        "date": "2025-06-30",
+        "currency": "USD",
+        "twdPerUnit": 31.09,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0063",
+        "date": "2025-07-31",
+        "currency": "USD",
+        "twdPerUnit": 31.28,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0072",
+        "date": "2025-08-31",
+        "currency": "USD",
+        "twdPerUnit": 31.06,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0081",
+        "date": "2025-09-30",
+        "currency": "USD",
+        "twdPerUnit": 31.41,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0090",
+        "date": "2025-10-31",
+        "currency": "USD",
+        "twdPerUnit": 31.43,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0099",
+        "date": "2025-11-30",
+        "currency": "USD",
+        "twdPerUnit": 31.82,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0108",
+        "date": "2025-12-31",
+        "currency": "USD",
+        "twdPerUnit": 32.14,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0117",
+        "date": "2026-01-31",
+        "currency": "USD",
+        "twdPerUnit": 32,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0126",
+        "date": "2026-02-28",
+        "currency": "USD",
+        "twdPerUnit": 32.17,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0135",
+        "date": "2026-03-31",
+        "currency": "USD",
+        "twdPerUnit": 32.11,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0144",
+        "date": "2026-04-30",
+        "currency": "USD",
+        "twdPerUnit": 31.95,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0153",
+        "date": "2026-05-31",
+        "currency": "USD",
+        "twdPerUnit": 32.22,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0162",
+        "date": "2026-06-30",
+        "currency": "USD",
+        "twdPerUnit": 31.94,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0171",
+        "date": "2026-07-31",
+        "currency": "USD",
+        "twdPerUnit": 32.2,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0180",
+        "date": "2026-08-31",
+        "currency": "USD",
+        "twdPerUnit": 32.1,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-fx-0189",
+        "date": "2026-09-30",
+        "currency": "USD",
+        "twdPerUnit": 32.44,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "holdings": [
+      {
+        "id": "demo-hold-0198",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0004",
+        "ticker": "VT",
+        "units": 180,
+        "priceMinor": 13240,
+        "currency": "USD",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-hold-0199",
+        "date": "2026-09-30",
+        "accountId": "demo-acct-0004",
+        "ticker": "VOO",
+        "units": 64,
+        "priceMinor": 56000,
+        "currency": "USD",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "liabilities": [
+      {
+        "accountId": "demo-acct-0008",
+        "interestRate": 0.025,
+        "monthlyPaymentMinor": 1250000,
+        "remainingMonths": 32,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "cashFlows": [
+      {
+        "id": "demo-cf-0212",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0213",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0201",
+        "amountMinor": 17300000,
+        "currency": "TWD",
+        "lumpSum": true,
+        "note": "Year-end bonus",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0214",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0215",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1081100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0216",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 216900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0217",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 228200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0218",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0219",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0220",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 744400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0221",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0222",
+        "month": "2025-01",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 98100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0223",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0224",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0225",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1108900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0226",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 226900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0227",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 255700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0228",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0229",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0230",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 728700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0231",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0232",
+        "month": "2025-02",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 122000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0233",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0234",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0202",
+        "amountMinor": 1613600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0235",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0236",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1090300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0237",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 289800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0238",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 239500,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0239",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0240",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0241",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 553800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0242",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0243",
+        "month": "2025-03",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 95300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0244",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0245",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0246",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1270100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0247",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 230600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0248",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 266200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0249",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0250",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0251",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 377900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0252",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0253",
+        "month": "2025-04",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 188300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0254",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0255",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0256",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1194100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0257",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 244700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0258",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 265400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0259",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0260",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0261",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 501500,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0262",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0263",
+        "month": "2025-05",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 65800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0264",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0265",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0202",
+        "amountMinor": 1316400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0266",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0267",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1193000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0268",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 288400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0269",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 250900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0270",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0271",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0272",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 431900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0273",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0274",
+        "month": "2025-06",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 78200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0275",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0276",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0277",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1159400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0278",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 284200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0279",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 226300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0280",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0281",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0282",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 457700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0283",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0284",
+        "month": "2025-07",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 6800000,
+        "currency": "TWD",
+        "lumpSum": true,
+        "note": "Japan trip",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0285",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0286",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0287",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1067200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0288",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 294600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0289",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 218700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0290",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0291",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0292",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 581400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0293",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0294",
+        "month": "2025-08",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 81900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0295",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0296",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0201",
+        "amountMinor": 3000000,
+        "currency": "TWD",
+        "lumpSum": true,
+        "note": "Mid-Autumn bonus",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0297",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0202",
+        "amountMinor": 1462200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0298",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0299",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1149700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0300",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 274300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0301",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 239100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0302",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0303",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0304",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 403000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0305",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0306",
+        "month": "2025-09",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 169300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0307",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0308",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0309",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1223000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0310",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 304800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0311",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 216700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0312",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0313",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0314",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 668600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0315",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0316",
+        "month": "2025-10",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 123200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0317",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0318",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0319",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1025900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0320",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 283900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0321",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 256700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0322",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0323",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0324",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 391200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0325",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0326",
+        "month": "2025-11",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 183000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0327",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0328",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0202",
+        "amountMinor": 1127300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0329",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0330",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1251500,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0331",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 202000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0332",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 249300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0333",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0334",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0335",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 523700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0336",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0337",
+        "month": "2025-12",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 245200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0338",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0339",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0201",
+        "amountMinor": 17300000,
+        "currency": "TWD",
+        "lumpSum": true,
+        "note": "Year-end bonus",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0340",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0341",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1230400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0342",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 221300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0343",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 245600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0344",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0345",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0346",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 572500,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0347",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0348",
+        "month": "2026-01",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 198000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0349",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8650000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0350",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0351",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1037400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0352",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 253600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0353",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 248800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0354",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0355",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0356",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 533500,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0357",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0358",
+        "month": "2026-02",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 200700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0359",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8996000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0360",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0202",
+        "amountMinor": 1531200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0361",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0362",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1037800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0363",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 244300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0364",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 256000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0365",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0366",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0367",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 651500,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0368",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0369",
+        "month": "2026-03",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 129600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0370",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8996000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0371",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0372",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1034900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0373",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 204000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0374",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 211300,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0375",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0376",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0377",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 353400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0378",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0379",
+        "month": "2026-04",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 129100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0380",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8996000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0381",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0382",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1177000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0383",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 231700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0384",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 265200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0385",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0386",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0387",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 631800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0388",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0389",
+        "month": "2026-05",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 58100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0390",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8996000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0391",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0202",
+        "amountMinor": 1389600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0392",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0393",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1281200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0394",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 212900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0395",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 258700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0396",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0397",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0398",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 501000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0399",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0400",
+        "month": "2026-06",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 99100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0401",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8996000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0402",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0403",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1013000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0404",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 296700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0405",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 252700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0406",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0407",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0408",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 654600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0409",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0410",
+        "month": "2026-07",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 227900,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0411",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8996000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0412",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0413",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1130000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0414",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 295500,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0415",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 216700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0416",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0417",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0418",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 601700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0419",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0420",
+        "month": "2026-08",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 106200,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0421",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0200",
+        "amountMinor": 8996000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0422",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0201",
+        "amountMinor": 3000000,
+        "currency": "TWD",
+        "lumpSum": true,
+        "note": "Mid-Autumn bonus",
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0423",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0202",
+        "amountMinor": 1292100,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0424",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0203",
+        "amountMinor": 1800000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0425",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0204",
+        "amountMinor": 1255700,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0426",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0205",
+        "amountMinor": 250400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0427",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0206",
+        "amountMinor": 219800,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0428",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0207",
+        "amountMinor": 190000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0429",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0208",
+        "amountMinor": 600000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0430",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0210",
+        "amountMinor": 359400,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0431",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0211",
+        "amountMinor": 1250000,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cf-0432",
+        "month": "2026-09",
+        "categoryId": "demo-cat-0209",
+        "amountMinor": 158600,
+        "currency": "TWD",
+        "lumpSum": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "categories": [
+      {
+        "id": "demo-cat-0200",
+        "name": "Salary",
+        "kind": "income",
+        "essential": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0201",
+        "name": "Bonus",
+        "kind": "income",
+        "essential": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0202",
+        "name": "Dividends",
+        "kind": "income",
+        "essential": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0203",
+        "name": "Housing",
+        "kind": "expense",
+        "essential": true,
+        "fiAnnualMinor": 21600000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0204",
+        "name": "Food",
+        "kind": "expense",
+        "essential": true,
+        "fiAnnualMinor": 13200000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0205",
+        "name": "Transport",
+        "kind": "expense",
+        "essential": true,
+        "fiAnnualMinor": 3000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0206",
+        "name": "Utilities & phone",
+        "kind": "expense",
+        "essential": true,
+        "fiAnnualMinor": 3000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0207",
+        "name": "Insurance & health",
+        "kind": "expense",
+        "essential": true,
+        "fiAnnualMinor": 2400000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0208",
+        "name": "Family",
+        "kind": "expense",
+        "essential": true,
+        "fiAnnualMinor": 7200000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0209",
+        "name": "Travel",
+        "kind": "expense",
+        "essential": false,
+        "fiAnnualMinor": 9000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0210",
+        "name": "Leisure & shopping",
+        "kind": "expense",
+        "essential": false,
+        "fiAnnualMinor": 6000000,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-cat-0211",
+        "name": "Loan repayment",
+        "kind": "expense",
+        "essential": false,
+        "fiAnnualMinor": 0,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "incomeStreams": [],
+    "assumptionSets": [
+      {
+        "id": "demo-assumptions-base",
+        "name": "Base case",
+        "assets": [
+          {
+            "assetClass": "cash",
+            "expectedReturn": 0.012,
+            "volatility": 0.005,
+            "fee": 0,
+            "dividendYield": 0
+          },
+          {
+            "assetClass": "tw_equity",
+            "expectedReturn": 0.07,
+            "volatility": 0.2,
+            "fee": 0.003,
+            "dividendYield": 0.035
+          },
+          {
+            "assetClass": "us_equity",
+            "expectedReturn": 0.07,
+            "volatility": 0.17,
+            "fee": 0.001,
+            "dividendYield": 0.015
+          },
+          {
+            "assetClass": "global_equity",
+            "expectedReturn": 0.065,
+            "volatility": 0.16,
+            "fee": 0.002,
+            "dividendYield": 0.02
+          },
+          {
+            "assetClass": "bond",
+            "expectedReturn": 0.03,
+            "volatility": 0.06,
+            "fee": 0.001,
+            "dividendYield": 0.03
+          },
+          {
+            "assetClass": "property",
+            "expectedReturn": 0.03,
+            "volatility": 0.08,
+            "fee": 0,
+            "dividendYield": 0
+          },
+          {
+            "assetClass": "other",
+            "expectedReturn": 0.02,
+            "volatility": 0.03,
+            "fee": 0,
+            "dividendYield": 0
+          }
+        ],
+        "correlations": {
+          "tw_equity|us_equity": 0.6,
+          "tw_equity|global_equity": 0.65,
+          "us_equity|global_equity": 0.9,
+          "tw_equity|bond": 0.1,
+          "us_equity|bond": 0.1,
+          "global_equity|bond": 0.1,
+          "tw_equity|property": 0.3,
+          "us_equity|property": 0.2,
+          "global_equity|property": 0.25
+        },
+        "inflation": 0.02,
+        "inflationVolatility": 0.01,
+        "salaryGrowth": 0.025,
+        "fxDrift": 0,
+        "fxVolatility": 0.06,
+        "taiwan": {
+          "asOf": "2026-10-22",
+          "marginalTaxRate": 0.12,
+          "laborPension": {
+            "employerRate": 0.06,
+            "voluntaryRate": 0,
+            "maxVoluntaryRate": 0.06,
+            "accessAge": 60,
+            "minYearsForMonthly": 15,
+            "monthlyInsuredWageMinor": 9210000,
+            "wageCapMinor": 15000000
+          },
+          "laborInsurance": {
+            "enabled": true,
+            "claimAge": 65,
+            "maxYearsEarly": 5,
+            "maxYearsDelay": 5,
+            "adjustmentPerYear": 0.04,
+            "insuredYearsToDate": 11,
+            "minYearsForAnnuity": 15,
+            "avgMonthlyInsuredSalaryMinor": 4580000,
+            "salaryCapMinor": 4580000,
+            "rateA": 0.00775,
+            "flatAMinor": 300000,
+            "rateB": 0.0155,
+            "haircut": 0
+          },
+          "nhi": {
+            "supplementaryRate": 0.0211,
+            "supplementaryThresholdMinor": 2000000,
+            "dividendPaymentsPerYear": 4
+          },
+          "dividendTax": {
+            "mode": "best",
+            "creditRate": 0.085,
+            "creditCapMinor": 8000000,
+            "separateRate": 0.28
+          },
+          "usWithholdingRate": 0.3,
+          "amtOverseasThresholdMinor": 100000000
+        },
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-assumptions-cautious",
+        "name": "Cautious",
+        "assets": [
+          {
+            "assetClass": "cash",
+            "expectedReturn": -0.002999999999999999,
+            "volatility": 0.005,
+            "fee": 0,
+            "dividendYield": 0
+          },
+          {
+            "assetClass": "tw_equity",
+            "expectedReturn": 0.05500000000000001,
+            "volatility": 0.2,
+            "fee": 0.003,
+            "dividendYield": 0.035
+          },
+          {
+            "assetClass": "us_equity",
+            "expectedReturn": 0.05500000000000001,
+            "volatility": 0.17,
+            "fee": 0.001,
+            "dividendYield": 0.015
+          },
+          {
+            "assetClass": "global_equity",
+            "expectedReturn": 0.05,
+            "volatility": 0.16,
+            "fee": 0.002,
+            "dividendYield": 0.02
+          },
+          {
+            "assetClass": "bond",
+            "expectedReturn": 0.015,
+            "volatility": 0.06,
+            "fee": 0.001,
+            "dividendYield": 0.03
+          },
+          {
+            "assetClass": "property",
+            "expectedReturn": 0.015,
+            "volatility": 0.08,
+            "fee": 0,
+            "dividendYield": 0
+          },
+          {
+            "assetClass": "other",
+            "expectedReturn": 0.005000000000000001,
+            "volatility": 0.03,
+            "fee": 0,
+            "dividendYield": 0
+          }
+        ],
+        "correlations": {
+          "tw_equity|us_equity": 0.6,
+          "tw_equity|global_equity": 0.65,
+          "us_equity|global_equity": 0.9,
+          "tw_equity|bond": 0.1,
+          "us_equity|bond": 0.1,
+          "global_equity|bond": 0.1,
+          "tw_equity|property": 0.3,
+          "us_equity|property": 0.2,
+          "global_equity|property": 0.25
+        },
+        "inflation": 0.025,
+        "inflationVolatility": 0.01,
+        "salaryGrowth": 0.025,
+        "fxDrift": 0,
+        "fxVolatility": 0.06,
+        "taiwan": {
+          "asOf": "2026-10-22",
+          "marginalTaxRate": 0.12,
+          "laborPension": {
+            "employerRate": 0.06,
+            "voluntaryRate": 0,
+            "maxVoluntaryRate": 0.06,
+            "accessAge": 60,
+            "minYearsForMonthly": 15,
+            "monthlyInsuredWageMinor": 9210000,
+            "wageCapMinor": 15000000
+          },
+          "laborInsurance": {
+            "enabled": true,
+            "claimAge": 65,
+            "maxYearsEarly": 5,
+            "maxYearsDelay": 5,
+            "adjustmentPerYear": 0.04,
+            "insuredYearsToDate": 11,
+            "minYearsForAnnuity": 15,
+            "avgMonthlyInsuredSalaryMinor": 4580000,
+            "salaryCapMinor": 4580000,
+            "rateA": 0.00775,
+            "flatAMinor": 300000,
+            "rateB": 0.0155,
+            "haircut": 0
+          },
+          "nhi": {
+            "supplementaryRate": 0.0211,
+            "supplementaryThresholdMinor": 2000000,
+            "dividendPaymentsPerYear": 4
+          },
+          "dividendTax": {
+            "mode": "best",
+            "creditRate": 0.085,
+            "creditCapMinor": 8000000,
+            "separateRate": 0.28
+          },
+          "usWithholdingRate": 0.3,
+          "amtOverseasThresholdMinor": 100000000
+        },
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "demo-scn-0433",
+        "assumptionSetId": "demo-assumptions-base",
+        "isPlanOfRecord": true,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "name": "Baseline",
+        "overrides": {},
+        "events": [],
+        "withdrawalRule": {
+          "kind": "fixed_swr"
+        },
+        "seed": 42,
+        "lockedAt": "2026-03-31",
+        "lockedProjection": [
+          {
+            "year": 2026,
+            "age": 35,
+            "investable": 5136106.69,
+            "savings": 493396,
+            "spending": 805435
+          },
+          {
+            "year": 2027,
+            "age": 36,
+            "investable": 5863105.7021225495,
+            "savings": 499762.81862745085,
+            "spending": 805435
+          },
+          {
+            "year": 2028,
+            "age": 37,
+            "investable": 6620573.10230935,
+            "savings": 506160.8471501346,
+            "spending": 805435
+          },
+          {
+            "year": 2029,
+            "age": 38,
+            "investable": 7408019.1348528555,
+            "savings": 512590.23855773336,
+            "spending": 805435
+          },
+          {
+            "year": 2030,
+            "age": 39,
+            "investable": 8228337.221091546,
+            "savings": 519051.14658987895,
+            "spending": 805435
+          },
+          {
+            "year": 2031,
+            "age": 40,
+            "investable": 9082931.957436066,
+            "savings": 525543.7257398292,
+            "spending": 805435
+          },
+          {
+            "year": 2032,
+            "age": 41,
+            "investable": 9973269.382298468,
+            "savings": 532068.1312581617,
+            "spending": 805435
+          },
+          {
+            "year": 2033,
+            "age": 42,
+            "investable": 10900879.669863338,
+            "savings": 538624.519156486,
+            "spending": 805435
+          },
+          {
+            "year": 2034,
+            "age": 43,
+            "investable": 11867359.942003379,
+            "savings": 545213.0462111747,
+            "spending": 805435
+          },
+          {
+            "year": 2035,
+            "age": 44,
+            "investable": 12874377.20352141,
+            "savings": 551833.8699671119,
+            "spending": 805435
+          },
+          {
+            "year": 2036,
+            "age": 45,
+            "investable": 13923671.406128015,
+            "savings": 558487.1487414604,
+            "spending": 805435
+          },
+          {
+            "year": 2037,
+            "age": 46,
+            "investable": 15017058.646801265,
+            "savings": 565173.041627448,
+            "spending": 805435
+          },
+          {
+            "year": 2038,
+            "age": 47,
+            "investable": 16156434.506422747,
+            "savings": 571891.7084981708,
+            "spending": 805435
+          },
+          {
+            "year": 2039,
+            "age": 48,
+            "investable": 17343777.534842532,
+            "savings": 578643.3100104169,
+            "spending": 805435
+          },
+          {
+            "year": 2040,
+            "age": 49,
+            "investable": 18581152.888795696,
+            "savings": 585428.0076085073,
+            "spending": 805435
+          },
+          {
+            "year": 2041,
+            "age": 50,
+            "investable": 19870716.129374627,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2042,
+            "age": 51,
+            "investable": 19775443.323469754,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2043,
+            "age": 52,
+            "investable": 19681522.897631235,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2044,
+            "age": 53,
+            "investable": 19588793.220043372,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2045,
+            "age": 54,
+            "investable": 19497093.181731217,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2046,
+            "age": 55,
+            "investable": 19406262.05234634,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2047,
+            "age": 56,
+            "investable": 19316139.32560446,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2048,
+            "age": 57,
+            "investable": 19226564.554677106,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2049,
+            "age": 58,
+            "investable": 19137377.177811258,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2050,
+            "age": 59,
+            "investable": 19048416.33442038,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2051,
+            "age": 60,
+            "investable": 18959520.67185828,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2052,
+            "age": 61,
+            "investable": 18873270.567150846,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2053,
+            "age": 62,
+            "investable": 18789544.420633186,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2054,
+            "age": 63,
+            "investable": 18708222.25094295,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2055,
+            "age": 64,
+            "investable": 18629185.68398519,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2056,
+            "age": 65,
+            "investable": 18552317.933161102,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2057,
+            "age": 66,
+            "investable": 18707133.830837715,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2058,
+            "age": 67,
+            "investable": 18872449.329814367,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2059,
+            "age": 68,
+            "investable": 19048587.06292628,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2060,
+            "age": 69,
+            "investable": 19235888.246557098,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2061,
+            "age": 70,
+            "investable": 19434713.4116812,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2062,
+            "age": 71,
+            "investable": 19645443.16408118,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2063,
+            "age": 72,
+            "investable": 19868478.97543972,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2064,
+            "age": 73,
+            "investable": 20104244.007060155,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2065,
+            "age": 74,
+            "investable": 20353183.968026754,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2066,
+            "age": 75,
+            "investable": 20615768.009674545,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2067,
+            "age": 76,
+            "investable": 20892489.658299696,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2068,
+            "age": 77,
+            "investable": 21183867.788104706,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2069,
+            "age": 78,
+            "investable": 21490447.63643951,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2070,
+            "age": 79,
+            "investable": 21812801.86346895,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2071,
+            "age": 80,
+            "investable": 22151531.658470042,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2072,
+            "age": 81,
+            "investable": 22507267.895039167,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2073,
+            "age": 82,
+            "investable": 22880672.337569773,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2074,
+            "age": 83,
+            "investable": 23272438.901445977,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2075,
+            "age": 84,
+            "investable": 23683294.969486434,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2076,
+            "age": 85,
+            "investable": 24114002.767266728,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2077,
+            "age": 86,
+            "investable": 24565003.161183946,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2078,
+            "age": 87,
+            "investable": 25036239.031387124,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2079,
+            "age": 88,
+            "investable": 25528518.378541563,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2080,
+            "age": 89,
+            "investable": 26042685.933791563,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2081,
+            "age": 90,
+            "investable": 26579624.63609632,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2082,
+            "age": 91,
+            "investable": 27140257.175126124,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2083,
+            "age": 92,
+            "investable": 27725547.60251626,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2084,
+            "age": 93,
+            "investable": 28336503.01438706,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2085,
+            "age": 94,
+            "investable": 28974175.308155723,
+            "savings": 0,
+            "spending": 729912
+          },
+          {
+            "year": 2086,
+            "age": 95,
+            "investable": 29639663.016787827,
+            "savings": 0,
+            "spending": 0
+          }
+        ]
+      },
+      {
+        "id": "demo-scn-0434",
+        "assumptionSetId": "demo-assumptions-base",
+        "isPlanOfRecord": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "name": "Save 50%",
+        "overrides": {
+          "savingsRate": 0.5
+        },
+        "events": [],
+        "withdrawalRule": {
+          "kind": "guardrails",
+          "band": 0.2,
+          "step": 0.1
+        },
+        "seed": 42
+      },
+      {
+        "id": "demo-scn-0435",
+        "assumptionSetId": "demo-assumptions-base",
+        "isPlanOfRecord": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "name": "Barista FI at 45",
+        "overrides": {
+          "targetFiAge": 45,
+          "baristaIncome": {
+            "annualMinor": 36000000,
+            "untilAge": 55
+          }
+        },
+        "events": [],
+        "withdrawalRule": {
+          "kind": "fixed_swr"
+        },
+        "seed": 42
+      },
+      {
+        "id": "demo-scn-0436",
+        "assumptionSetId": "demo-assumptions-base",
+        "isPlanOfRecord": false,
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z",
+        "name": "Buy a flat in 2029",
+        "overrides": {
+          "currentSpendingMinor": 78000000
+        },
+        "events": [
+          {
+            "date": "2029-06-01",
+            "amountMinor": -300000000,
+            "description": "Down payment"
+          }
+        ],
+        "withdrawalRule": {
+          "kind": "fixed_swr"
+        },
+        "seed": 42
+      }
+    ],
+    "reviews": [
+      {
+        "id": "demo-rev-0437",
+        "date": "2026-03-31",
+        "type": "annual",
+        "planOfRecordId": "demo-scn-0433",
+        "notes": "First annual reset. Locked the baseline as plan of record.",
+        "decisions": [
+          "Keep 45% in US equity",
+          "Raise emergency fund to 6 months"
+        ],
+        "checklist": {},
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "id": "demo-rev-0438",
+        "date": "2026-09-30",
+        "type": "quarterly",
+        "planOfRecordId": "demo-scn-0433",
+        "notes": "Ahead of plan thanks to the raise in March.",
+        "decisions": [
+          "Test a 50% savings-rate scenario"
+        ],
+        "checklist": {},
+        "createdAt": "2026-10-01T00:00:00.000Z",
+        "updatedAt": "2026-10-01T00:00:00.000Z"
+      }
+    ]
+  }
+}

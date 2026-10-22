@@ -7,3 +7,4 @@ test-results
 sample-data
 docs/product-requirements.md
 docs/technical-design.md
+src/io/fixtures

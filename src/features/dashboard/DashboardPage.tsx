@@ -5,6 +5,7 @@ import { computeAlerts } from '@/domain/alerts';
 import { monthlyTotals } from '@/domain/cashflow';
 import { daysBetween, today } from '@/domain/dates';
 import { fiProgress, netWorthSeries } from '@/domain/networth';
+import { periodChanges } from '@/domain/reconcile';
 import { useAppData } from '@/app/data';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { LineChart } from '@/components/charts/LineChart';
@@ -60,6 +61,16 @@ export function DashboardPage() {
     totals,
     ctx.t12.annualExpense / 12,
   );
+  const lastChange = periodChanges(series.slice(-2), totals, data.fxRates, data.activeAssumptions.assets).at(
+    -1,
+  );
+  if (lastChange?.check?.flagged) {
+    alerts.push({
+      id: 'reconcile',
+      level: 'warning',
+      message: `Net worth changed by ${twdCompact(lastChange.change)} from ${lastChange.from} to ${lastChange.to}, which recorded savings (${twdCompact(lastChange.contributions)}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.`,
+    });
+  }
   const targetSum = Object.values(settings.targetAllocation).reduce((a, b) => a + (b ?? 0), 0);
   const byClass = (Object.keys(nw.byAssetClass) as AssetClass[])
     .filter((c) => nw.balances.some((b) => b.account.assetClass === c && b.bucket === 'liquid'))

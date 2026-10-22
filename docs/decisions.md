@@ -41,14 +41,46 @@ Defaults chosen where the PRD and technical design left a question open. Each is
 - **Plan of record** freezes the projection's investable path, savings and spending at the time it is
   locked; plan vs. actual interpolates the plan between yearly points.
 
-## Not built yet (P2 / later)
+## Phase 5 (P2) and design follow-ups
 
-- CSV import from bank and broker exports (POS-8); CSV export is in.
-- Transaction-level cash flow (ENG-2 P2) and the reconciliation flag (ENG-6).
-- Goal-change history (DST-7).
-- Historical backtest (LAB-7) and buy vs. rent (LAB-8).
-- Auto-save to a file with the File System Access API, encrypted export, PWA install.
-- Traditional Chinese UI.
+- **Schema v2.** Adds `CashFlow.date`, `Settings.cashFlowMode` and the `goalHistory` store. Dexie
+  `version(2)` upgrades an existing database in place; backup files migrate from v1 to v2 on import.
+  Both paths are tested against a real v1 file (`src/io/fixtures/backup-v1.json`).
+- **Transaction-level cash flow (ENG-2).** A per-user switch on the Cash flow screen. In
+  transaction mode the grid shows read-only sums and each month lists its dated entries. Monthly
+  mode keeps the editable grid; dated entries appear below it.
+- **CSV import (POS-8).** Column mapping instead of per-bank parsers, since every export differs.
+  Detects ISO, 民國 (115/10/22), day-first and month-first dates; signed or debit/credit amounts;
+  `(1,234)` and trailing-minus negatives. Transactions are de-duplicated on date + amount + kind +
+  description, so re-importing an overlapping statement is safe. Balances match account
+  nicknames. The mapping is remembered per header layout, in that browser only. Big5 files must be
+  saved as UTF-8 first.
+- **Reconciliation (ENG-6).** A period is flagged when the market return left after recorded
+  savings and FX falls outside expected return ± 3 standard deviations for the assets held, with
+  volatilities added as if fully correlated, plus a tolerance. The band is deliberately wide: it
+  catches missing entries, unrecorded transfers and misplaced digits, not small typos. Periods with
+  no cash-flow data are not checked.
+- **Goal history (DST-7).** Recorded automatically, once an FI budget exists, whenever tier, FI
+  spending, guaranteed income, SWR or target age changes. One record per day.
+- **Historical backtest (LAB-7).** Robert Shiller's monthly data (S&P composite with dividends,
+  CPI-U, 10-year Treasury yield), 1871–2022. It is built into annual January-to-January returns by
+  `scripts/build-history.ts`, with bond returns from a 10-year par bond repriced a year later.
+  Equities follow US stocks; bonds follow Treasuries; cash, property and other keep their assumed
+  real return; FX follows the assumed drift. Uses only start years with a full window (93 for a
+  60-year horizon) and wraps around when the horizon is longer than the data. US history is
+  kinder than most forward-looking assumptions.
+- **Buy vs. rent (LAB-8).** Monthly simulation: the renter invests the up-front cash and any
+  monthly difference at the same return. Not modelled: mortgage interest deduction, 自住 tax rates,
+  moving costs. "Create scenario" adds the down payment as a one-off event to a new scenario.
+- **Auto-save to file (design P1).** File System Access API (Chrome and Edge on desktop). The file
+  handle lives in a separate device-only IndexedDB, so it never enters a backup. After a browser
+  restart, writing needs one click ("Resume auto-save"). An active auto-save counts as a backup
+  for the reminder.
+- **Encrypted export (design P2).** AES-GCM-256 with a PBKDF2-SHA-256 key (600,000 iterations,
+  random salt and IV per file). Files end in `.encrypted.fi.json`, so `.gitignore` still blocks
+  them. A lost passphrase cannot be recovered.
+- **Installable / offline (design P2).** `vite-plugin-pwa` precaches the app. A new version waits
+  for "Reload" instead of replacing the page mid-session.
 
 ## Taiwan figures check (2026-10-22)
 

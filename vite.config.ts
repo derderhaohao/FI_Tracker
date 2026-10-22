@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // GitHub Pages serves the site from /<repo-name>/.
 const base = process.env.VITE_BASE ?? '/FI_Tracker/';
@@ -37,7 +38,34 @@ function cspPlugin(): Plugin {
 
 export default defineConfig({
   base,
-  plugins: [react(), tailwindcss(), cspPlugin()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    cspPlugin(),
+    // Installable, works offline (P2). New versions wait for the user to reload.
+    VitePWA({
+      registerType: 'prompt',
+      injectRegister: false,
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      manifest: {
+        name: 'FI Tracker',
+        short_name: 'FI Tracker',
+        description: 'Net worth, cash flow and FI strategy simulator. Data stays on this device.',
+        theme_color: '#0f766e',
+        background_color: '#f9f9f7',
+        display: 'standalone',
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png}'],
+        navigateFallback: 'index.html',
+      },
+    }),
+  ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

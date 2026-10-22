@@ -14,6 +14,8 @@ import { exportCsvFiles, parseCsv, toCsv } from './csv';
 import { buildDemoBackup } from './demo';
 import { migrateBackup } from './migrations';
 import demoFile from '../../sample-data/demo.json';
+import backupV1 from './fixtures/backup-v1.json';
+import Dexie from 'dexie';
 
 let n = 0;
 function freshDb() {
@@ -92,10 +94,34 @@ describe('database and backup', () => {
     expect(backupFileName('2026-10-22')).toBe('fi-tracker-2026-10-22.fi.json');
   });
 
-  it('migrates step by step and fails on an unknown version', () => {
-    expect(migrateBackup({ schemaVersion: 1, data: {} })).toEqual({ schemaVersion: 1, data: {} });
+  it('migrates a v1 backup file to the current schema', () => {
+    const parsed = parseBackup(backupV1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.file.schemaVersion).toBe(2);
+    expect(parsed.file.data.settings[0].cashFlowMode).toBe('monthly');
+    expect(parsed.file.data.goalHistory).toEqual([]);
+    expect(parsed.file.data.accounts).toEqual(backupV1.data.accounts);
+  });
+
+  it('fails on an unknown version', () => {
     expect(() => migrateBackup({ schemaVersion: 0 })).toThrow(/No migration/);
     expect(() => migrateBackup({ schemaVersion: '1' })).toThrow(/number/);
+  });
+
+  it('upgrades a v1 IndexedDB database in place', async () => {
+    const name = `upgrade-${Date.now()}`;
+    const v1 = new Dexie(name);
+    v1.version(1).stores({ settings: 'id', cashFlows: 'id, month, categoryId, [month+categoryId]' });
+    await v1.table('settings').put(backupV1.data.settings[0]);
+    await v1.table('cashFlows').bulkPut(backupV1.data.cashFlows.slice(0, 3));
+    v1.close();
+    const upgraded = new FiDatabase(name);
+    const s = await upgraded.settings.get('singleton');
+    expect(s?.cashFlowMode).toBe('monthly');
+    expect(s?.birthYear).toBe(backupV1.data.settings[0].birthYear);
+    expect(await upgraded.cashFlows.count()).toBe(3);
+    expect(await upgraded.goalHistory.count()).toBe(0);
   });
 });
 

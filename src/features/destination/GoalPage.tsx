@@ -17,6 +17,7 @@ import { db } from '@/db/db';
 import { newId, patch, save } from '@/db/repo';
 import { useAppData } from '@/app/data';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
+import { LineChart } from '@/components/charts/LineChart';
 import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -208,6 +209,72 @@ function IncomeStreams() {
         </tr>
       </tbody>
     </Table>
+  );
+}
+
+function GoalHistoryCard() {
+  const { goalHistory } = useAppData();
+  const rows = [...goalHistory].sort((a, b) => a.date.localeCompare(b.date));
+  return (
+    <Card className="lg:col-span-3">
+      <CardHeader
+        title="Goal history"
+        description="Recorded automatically whenever the FI budget, tier, SWR, guaranteed income or target age changes (one entry per day)."
+      />
+      <CardContent>
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No history yet. It starts once an FI budget is set.</p>
+        ) : (
+          <>
+            {rows.length > 1 && (
+              <LineChart
+                ariaLabel="FI number over time"
+                data={rows.map((r) => ({ date: r.date, fiNumber: fromMinor(r.fiNumberMinor) }))}
+                xKey="date"
+                series={[{ key: 'fiNumber', label: 'FI number', slot: 0 }]}
+                height={200}
+              />
+            )}
+            <Table className="mt-3">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Tier</th>
+                  <th className="text-right">FI spending / yr</th>
+                  <th className="text-right">Guaranteed / yr</th>
+                  <th className="text-right">SWR</th>
+                  <th className="text-right">Target age</th>
+                  <th className="text-right">FI number</th>
+                  <th className="text-right">Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows
+                  .map((r, i) => ({ r, prev: rows[i - 1] }))
+                  .reverse()
+                  .map(({ r, prev }) => {
+                    const change = prev ? fromMinor(r.fiNumberMinor - prev.fiNumberMinor) : undefined;
+                    return (
+                      <tr key={r.id}>
+                        <td>{r.date}</td>
+                        <td>{TIER_LABELS[r.fiTier]}</td>
+                        <td className="text-right">{twd(fromMinor(r.fiSpendingMinor))}</td>
+                        <td className="text-right">{twdCompact(fromMinor(r.guaranteedIncomeMinor))}</td>
+                        <td className="text-right">{pct(r.swr, 2)}</td>
+                        <td className="text-right">{r.targetFiAge ?? '—'}</td>
+                        <td className="text-right font-medium">{twdCompact(fromMinor(r.fiNumberMinor))}</td>
+                        <td className="text-right text-muted-foreground">
+                          {change === undefined ? 'first' : `${change >= 0 ? '+' : ''}${twdCompact(change)}`}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </Table>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -496,6 +563,8 @@ export function GoalPage() {
             )}
           </CardContent>
         </Card>
+
+        <GoalHistoryCard />
       </div>
       <p className="mt-4 text-xs text-subtle">
         Annual amounts are in today's TWD. Streams that are not inflation-linked lose real value over time.

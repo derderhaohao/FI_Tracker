@@ -9,6 +9,7 @@ import {
   incomeStreamSchema,
   liabilitySchema,
   reviewSchema,
+  goalSnapshotSchema,
   scenarioSchema,
   settingsSchema,
   snapshotSchema,
@@ -31,6 +32,7 @@ export const backupDataSchema = z.object({
   assumptionSets: z.array(assumptionSetSchema),
   scenarios: z.array(scenarioSchema),
   reviews: z.array(reviewSchema),
+  goalHistory: z.array(goalSnapshotSchema),
 });
 export type BackupData = z.infer<typeof backupDataSchema>;
 
