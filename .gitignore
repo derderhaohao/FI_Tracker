@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+playwright-report
+test-results
+*.tsbuildinfo
+.DS_Store
+
+# Personal financial data must never be committed.
+*.fi.json
+backups/
+.env*
