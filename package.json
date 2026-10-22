@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "e2e": "playwright test",
+    "perf": "tsx --tsconfig tsconfig.app.json scripts/perf-montecarlo.ts",
     "check:data": "node scripts/check-blocked-files.mjs"
   },
   "devDependencies": {

@@ -25,6 +25,8 @@ jobs:
       - run: npm run coverage
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run build
+      - name: Monte Carlo performance (10,000 runs under 5 s)
+        run: npm run perf
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: End-to-end smoke tests

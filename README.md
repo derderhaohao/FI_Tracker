@@ -59,6 +59,7 @@ npm test               # Vitest unit tests (domain, data, components)
 npm run coverage       # with coverage
 npm run build          # production build into dist/
 npm run e2e            # Playwright smoke tests against the built site
+npm run perf           # 10,000 Monte Carlo runs must finish in under 5 seconds
 npm run demo:generate  # regenerate sample-data/demo.json
 ```
 
