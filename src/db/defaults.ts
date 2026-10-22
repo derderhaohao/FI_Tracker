@@ -16,7 +16,8 @@ export function defaultSettings(assumptionSetId: string): Draft<Settings> {
     destination: {
       fiTier: 'full',
       fatMultiplier: 1.3,
-      nhiMonthlyMinor: 0,
+      // NHI category 6 (地區人口) self-paid premium, 2026.
+      nhiMonthlyMinor: 826_00,
       privateInsuranceAnnualMinor: 0,
       healthcareReserveAnnualMinor: 0,
     },

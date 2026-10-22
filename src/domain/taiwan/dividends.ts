@@ -35,7 +35,11 @@ export function usWithholding(D: number, t: TaiwanSettings): number {
   return Math.max(0, D) * t.usWithholdingRate;
 }
 
-/** True when overseas income may count toward the basic income tax (AMT). */
+/**
+ * True when overseas income must be counted in basic income for the basic income tax (AMT):
+ * once it reaches the threshold, all of it counts. Tax is due only if total basic income
+ * also exceeds the basic exemption, so this is a flag, not a tax.
+ */
 export function amtFlag(overseasIncome: number, t: TaiwanSettings): boolean {
-  return overseasIncome > fromMinor(t.amtOverseasThresholdMinor);
+  return overseasIncome >= fromMinor(t.amtOverseasThresholdMinor);
 }

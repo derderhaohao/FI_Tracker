@@ -49,3 +49,28 @@ Defaults chosen where the PRD and technical design left a question open. Each is
 - Historical backtest (LAB-7) and buy vs. rent (LAB-8).
 - Auto-save to a file with the File System Access API, encrypted export, PWA install.
 - Traditional Chinese UI.
+
+## Taiwan figures check (2026-10-22)
+
+Each default was checked against public sources (ministry pages and news reports of official
+announcements). Re-check before relying on a number; the as-of date is on the Settings screen.
+
+| Setting                        | Default                                                                                                 | Status                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 勞退 employer contribution     | 6% of monthly contribution wage                                                                         | Confirmed                                                                                     |
+| 勞退 voluntary contribution    | Up to 6%, deductible from taxable income                                                                | Confirmed                                                                                     |
+| 勞退 wage cap                  | NT$150,000 / month (2026 table)                                                                         | Confirmed                                                                                     |
+| 勞退 access                    | Age 60; 15+ years for a monthly pension, otherwise lump sum                                             | Confirmed                                                                                     |
+| 勞保 insured salary cap        | NT$45,800 / month                                                                                       | Confirmed (unchanged for years; raising it is under discussion)                               |
+| 勞保 annuity                   | max(salary × years × 0.775% + 3,000, salary × years × 1.55%); salary = average of the highest 60 months | Confirmed                                                                                     |
+| 勞保 claim age                 | 65 (born 1962 or later); up to 5 years early at −4%/yr, up to 5 years late at +4%/yr                    | Confirmed                                                                                     |
+| 勞保 minimum years for annuity | 15                                                                                                      | Confirmed                                                                                     |
+| NHI supplementary premium      | 2.11% on single dividend / interest payments ≥ NT$20,000                                                | Confirmed; a reform to yearly totals is proposed but on hold                                  |
+| NHI self-paid (category 6)     | NT$826 / month                                                                                          | Confirmed for 2026; now the default post-employment NHI cost                                  |
+| Domestic dividends             | 8.5% credit capped at NT$80,000 per household, or 28% separate taxation                                 | Confirmed                                                                                     |
+| US dividend withholding        | 30%                                                                                                     | Confirmed: no US–Taiwan tax treaty; relief bill (15%) passed the House, pending in the Senate |
+| Overseas income (AMT)          | Counts in basic income once household overseas income reaches NT$1,000,000                              | Corrected: the flag now starts at the threshold (was "above")                                 |
+
+Not modelled: the NT$7.5M basic exemption and 20% basic tax (the app only flags years when overseas
+income must be reported), and ETF distributions paid out of capital gains, which are exempt from
+income tax and the supplementary premium.

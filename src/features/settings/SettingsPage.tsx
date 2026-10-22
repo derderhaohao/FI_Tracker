@@ -402,8 +402,9 @@ function TaiwanEditor({ set }: { set: AssumptionSet }) {
   return (
     <div className="flex flex-col gap-5">
       <Notice tone="warning">
-        These values come from general knowledge and must be checked against current rules. Last checked:{' '}
-        <strong>{t.asOf}</strong>.
+        Rules change: check these values against 勞動部, 勞保局, 健保署 and 財政部 before relying on them.
+        Last checked: <strong>{t.asOf}</strong>. Pending changes to watch: NHI supplementary premium on yearly
+        totals instead of single payments, and US–Taiwan double-tax relief (would cut US withholding to 15%).
       </Notice>
       <div className={grid}>
         <Field label="Checked as of">
@@ -472,8 +473,11 @@ function TaiwanEditor({ set }: { set: AssumptionSet }) {
         />
       </h3>
       <div className={grid}>
-        {moneyField('Average monthly insured salary', t.laborInsurance.avgMonthlyInsuredSalaryMinor, (v) =>
-          tw((x) => void (x.laborInsurance.avgMonthlyInsuredSalaryMinor = v)),
+        {moneyField(
+          'Average monthly insured salary',
+          t.laborInsurance.avgMonthlyInsuredSalaryMinor,
+          (v) => tw((x) => void (x.laborInsurance.avgMonthlyInsuredSalaryMinor = v)),
+          'Average of your highest 60 months',
         )}
         {moneyField('Insured salary cap', t.laborInsurance.salaryCapMinor, (v) =>
           tw((x) => void (x.laborInsurance.salaryCapMinor = v)),

@@ -57,7 +57,7 @@ describe('Taiwan rules', () => {
     expect(nhiSupplementaryPremium(79_000, t)).toBe(0);
     expect(nhiSupplementaryPremium(80_000, t)).toBeCloseTo(80_000 * 0.0211);
     expect(usWithholding(1000, t)).toBe(300);
-    expect(amtFlag(1_000_001, t)).toBe(true);
-    expect(amtFlag(1_000_000, t)).toBe(false);
+    expect(amtFlag(1_000_000, t)).toBe(true);
+    expect(amtFlag(999_999, t)).toBe(false);
   });
 });
