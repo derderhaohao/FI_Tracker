@@ -109,3 +109,18 @@ test('goal history, offline manifest and loading fallback', async ({ page, reque
   expect(html).toContain('Loading FI Tracker');
   expect(errors).toEqual([]);
 });
+
+test('the account form validates and saves (zod resolver)', async ({ page }) => {
+  const errors = await loadDemo(page);
+  await page.goto('./#/accounts');
+  await page.getByRole('button', { name: 'Add account' }).first().click();
+  await page.getByRole('button', { name: 'Add account' }).last().click();
+  await expect(page.getByText('Give it a nickname')).toBeVisible();
+  await page.getByLabel('Nickname').fill('123456789');
+  await page.getByRole('button', { name: 'Add account' }).last().click();
+  await expect(page.getByText('Do not store account numbers; use a nickname.')).toBeVisible();
+  await page.getByLabel('Nickname').fill('Travel fund');
+  await page.getByRole('button', { name: 'Add account' }).last().click();
+  await expect(page.getByRole('cell', { name: 'Travel fund', exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});

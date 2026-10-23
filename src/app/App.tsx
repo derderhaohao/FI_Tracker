@@ -13,6 +13,7 @@ import { ProjectionPage } from '@/features/trajectory/ProjectionPage';
 import { LabPage } from '@/features/lab/LabPage';
 import { ReviewsPage } from '@/features/review/ReviewsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { SetupPage } from '@/features/setup/SetupPage';
 import { DataProvider } from './data';
 import { ErrorBoundary } from './ErrorBoundary';
 import { GoalHistoryRecorder } from './GoalHistoryRecorder';
@@ -72,6 +73,7 @@ export function App() {
               <Route path="lab" element={<LabPage />} />
               <Route path="reviews" element={<ReviewsPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="setup" element={<SetupPage />} />
               <Route path="*" element={<DashboardPage />} />
             </Route>
           </Routes>
