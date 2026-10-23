@@ -82,6 +82,22 @@ Defaults chosen where the PRD and technical design left a question open. Each is
 - **Installable / offline (design P2).** `vite-plugin-pwa` precaches the app. A new version waits
   for "Reload" instead of replacing the page mid-session.
 
+## First-time setup
+
+- A browser with no accounts shows a welcome screen instead of an empty Dashboard. It offers the
+  setup wizard or the demo data, and comes back after "Delete all data", so it needs no stored flag.
+- The wizard (`#/setup`) asks only for what the projection needs. Pay and spending are two monthly
+  totals, recorded for the last complete month: pay under "Salary", spending under a new essential
+  "Living costs" category that also holds the FI budget. The user splits it later.
+- Nothing is written until **Finish**, then everything is saved in one transaction. The draft is
+  kept in `sessionStorage` so a refresh does not lose it. The review step runs the real
+  projection on the unsaved records.
+- The target allocation becomes the user's current mix of usable investments (not 勞退, home,
+  insurance or loans). New savings follow it, and the allocation-drift alert does not fire on day
+  one against a default the user never chose.
+- The one-off "works offline" note now hides itself after 5 seconds, because it covered the
+  wizard's Next button.
+
 ## Taiwan figures check (2026-10-22)
 
 Each default was checked against public sources (ministry pages and news reports of official

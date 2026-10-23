@@ -10,8 +10,8 @@ import {
   ASSET_CLASS_LABELS,
   type Account,
   type AccountType,
-  type AssetClass,
 } from '@/domain/entities';
+import { accountDefaults } from '@/domain/accounts';
 import { formatMoney, fromMinor, parseMoneyInput } from '@/domain/money';
 import { db } from '@/db/db';
 import { newId, patch, save } from '@/db/repo';
@@ -20,15 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input, Select } from '@/components/ui/input';
 import { Badge, EmptyState, PageHeader, Table } from '@/components/ui/misc';
-
-const DEFAULT_CLASS: Record<AccountType, AssetClass> = {
-  cash: 'cash',
-  brokerage: 'tw_equity',
-  pension: 'other',
-  insurance: 'other',
-  property: 'property',
-  liability: 'other',
-};
 
 const formSchema = z
   .object({
@@ -139,9 +130,10 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
             {...register('type', {
               onChange: (e) => {
                 const t = e.target.value as AccountType;
-                setValue('assetClass', DEFAULT_CLASS[t]);
-                setValue('investable', t === 'cash' || t === 'brokerage' || t === 'pension');
-                if (t === 'pension') setValue('accessAge', '60');
+                const d = accountDefaults(t);
+                setValue('assetClass', d.assetClass);
+                setValue('investable', d.investable);
+                if (d.accessAge !== undefined) setValue('accessAge', String(d.accessAge));
               },
             })}
           >

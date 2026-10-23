@@ -40,14 +40,19 @@ Or open Settings → **Load demo data** to explore with made-up numbers.
 
 ### First real use
 
-1. **Settings → General:** birth year, horizon age, target allocation.
-2. **Accounts:** add each account by nickname (never account numbers).
-3. **Snapshots:** pick a date, press _Copy last period_, enter each balance and the USD/TWD rate.
-4. **Cash flow:** enter last month's income and spending; tag bonuses as lump sums.
-5. **Goal:** fill in the annual FI budget per category.
-6. **Settings → Taiwan settings:** insured wage, 勞保 years and salary. Check every value against
-   current rules first.
-7. **Settings → Backup:** export a backup and keep it outside the browser.
+A browser with no data opens a **welcome screen** with two choices:
+
+- **Set up my data:** a six-step guided setup (about 10 minutes) asking only what the projection
+  needs. Steps: birth year, today's account balances (and the USD rate if needed), monthly
+  take-home pay and spending, yearly spending once FI and the withdrawal rate, then optional
+  勞退/勞保 details. The last step previews your projected FI date; nothing is saved until you
+  press Finish.
+- **Look around with demo data:** a fictional household. Settings → _Delete all data_ brings the
+  welcome screen back.
+
+After setup, refine at your own pace: split "Living costs" into categories (Cash flow, Goal), set
+your target allocation (Settings), back up or turn on auto-save (Settings → Backup), and test
+strategies (Strategy Lab). Each month: update balances in Snapshots and last month's cash flow.
 
 ## Development
 

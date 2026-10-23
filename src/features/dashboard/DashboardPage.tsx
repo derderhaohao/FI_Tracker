@@ -7,6 +7,8 @@ import { daysBetween, today } from '@/domain/dates';
 import { fiProgress, netWorthSeries } from '@/domain/networth';
 import { periodChanges } from '@/domain/reconcile';
 import { useAppData } from '@/app/data';
+import { Welcome } from '@/features/setup/Welcome';
+import { NextSteps } from '@/features/setup/NextSteps';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { LineChart } from '@/components/charts/LineChart';
 import { ShareBars } from '@/components/charts/ShareBars';
@@ -26,17 +28,7 @@ export function DashboardPage() {
     [accounts, snapshots, data.fxRates, settings.birthYear],
   );
 
-  if (accounts.length === 0) {
-    return (
-      <>
-        <PageHeader title="Dashboard" />
-        <EmptyState title="Start with your accounts" to="/accounts" action="Add an account">
-          List each bank, broker, pension and insurance account by nickname. Then enter one balance per
-          account in Snapshots. Want to look around first? Load the demo data in Settings.
-        </EmptyState>
-      </>
-    );
-  }
+  if (accounts.length === 0) return <Welcome />;
   if (snapshots.length === 0) {
     return (
       <>
@@ -96,6 +88,7 @@ export function DashboardPage() {
         description={`As of the snapshot on ${ctx.asOfDate}. All amounts in TWD.`}
         actions={<AssumptionBadge set={data.activeAssumptions} />}
       />
+      <NextSteps />
       {ctx.warnings.length > 0 && (
         <div className="mb-4 flex flex-col gap-2">
           {ctx.warnings.map((w) => (

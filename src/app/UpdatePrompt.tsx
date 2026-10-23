@@ -1,13 +1,22 @@
+import { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/ui/button';
 
-/** Offline support: shows when a new version is ready, instead of switching mid-session. */
+/**
+ * Offline support: shows when a new version is ready, instead of switching mid-session.
+ * The one-off "works offline" note hides itself so it never covers buttons for long.
+ */
 export function UpdatePrompt() {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker,
   } = useRegisterSW();
+  useEffect(() => {
+    if (!offlineReady || needRefresh) return;
+    const timer = setTimeout(() => setOfflineReady(false), 5000);
+    return () => clearTimeout(timer);
+  }, [offlineReady, needRefresh, setOfflineReady]);
   if (!needRefresh && !offlineReady) return null;
   return (
     <div

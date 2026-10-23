@@ -57,7 +57,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
 
   await page.getByRole('button', { name: 'Delete all data' }).click();
   await page.getByRole('link', { name: 'Dashboard' }).first().click();
-  await expect(page.getByText('Start with your accounts')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome to FI Tracker' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Settings' }).first().click();
   await page.getByLabel('Backup file').setInputFiles(path);
