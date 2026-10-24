@@ -4,7 +4,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { Category, FiTier } from '@/domain/entities';
 import { coastFi, fiNumber, fiTarget } from '@/domain/fiNumber';
 import { fromMinor, parseMoneyInput } from '@/domain/money';
-import { guaranteedStreams, laborInsuranceYears, portfolioRealReturn } from '@/domain/projection';
+import { laborInsuranceYears, portfolioRealReturn, targetStreams } from '@/domain/projection';
 import { laborInsuranceAnnual } from '@/domain/taiwan/laborInsurance';
 import { db } from '@/db/db';
 import { newId, patch, save } from '@/db/repo';
@@ -18,7 +18,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
-import { budgetVsActual, pct, twd, twdCompact } from '@/lib/format';
+import { budgetVsActual, monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { addMonths } from '@/domain/dates';
+import { LOAN_CATEGORY, type LoanSchedule } from '@/domain/loans';
 import { t } from '@/i18n';
 
 const TIER_LABELS: Record<FiTier, string> = { lean: t('Lean'), full: t('Full'), fat: t('Fat') };
@@ -29,10 +31,21 @@ function updateDestination(changes: Partial<ReturnType<typeof useAppData>['setti
     .then((s) => s && patch(db.settings, 'singleton', { destination: { ...s.destination, ...changes } }));
 }
 
-function BudgetRow({ c, actual }: { c: Category; actual: number }) {
+function BudgetRow({ c, actual, loans }: { c: Category; actual: number; loans: LoanSchedule[] }) {
+  const mine = loans.filter((l) => (c.system === LOAN_CATEGORY ? l.mode === 'auto' : l.categoryId === c.id));
+  const until = mine.reduce((m, l) => (l.endMonth > m ? l.endMonth : m), '');
+  const loanNote = mine.length
+    ? t('Loan payments of {amount}/mo are added separately until {month}; leave them out of the FI budget.', {
+        amount: twd(mine.reduce((sum, l) => sum + l.monthly, 0)),
+        month: monthLabel(addMonths(until, -1)),
+      })
+    : undefined;
   return (
     <tr>
-      <td className="font-medium">{c.name}</td>
+      <td className="font-medium">
+        {c.name}
+        {loanNote && <div className="text-[11px] font-normal text-subtle">{loanNote}</div>}
+      </td>
       <td>
         <Checkbox
           label={t('Essential')}
@@ -41,12 +54,16 @@ function BudgetRow({ c, actual }: { c: Category; actual: number }) {
         />
       </td>
       <td className="w-44">
-        <MoneyInput
-          aria-label={t('FI budget for {name}', { name: c.name })}
-          value={c.fiAnnualMinor}
-          currency="TWD"
-          onCommit={(v) => void patch(db.categories, c.id, { fiAnnualMinor: v })}
-        />
+        {c.system === LOAN_CATEGORY ? (
+          <span className="text-subtle">—</span>
+        ) : (
+          <MoneyInput
+            aria-label={t('FI budget for {name}', { name: c.name })}
+            value={c.fiAnnualMinor}
+            currency="TWD"
+            onCommit={(v) => void patch(db.categories, c.id, { fiAnnualMinor: v })}
+          />
+        )}
       </td>
       <td className="text-right text-muted-foreground">{actual > 0 ? twd(actual) : '—'}</td>
       <td className="text-right text-muted-foreground">{budgetVsActual(c.fiAnnualMinor, actual)}</td>
@@ -305,7 +322,7 @@ export function GoalPage() {
       ? coastFi(
           fiTarget(
             baselineInput.fiSpending,
-            guaranteedStreams(baselineInput, targetAge),
+            targetStreams(baselineInput, targetAge),
             swr,
             targetAge,
             baselineInput.horizonAge,
@@ -318,7 +335,7 @@ export function GoalPage() {
     targetAge !== undefined
       ? fiTarget(
           baselineInput.fiSpending,
-          guaranteedStreams(baselineInput, targetAge),
+          targetStreams(baselineInput, targetAge),
           swr,
           targetAge,
           baselineInput.horizonAge,
@@ -349,7 +366,7 @@ export function GoalPage() {
         <Notice tone="warning" className="mb-4">
           {t(
             'No FI budget yet, so FI spending uses your trailing-12-month spending ({annualExpense}). Fill in the annual FI-phase amount per category below.',
-            { annualExpense: twd(ctx.t12.annualExpense) },
+            { annualExpense: twd(ctx.annualSpendingExLoans) },
           )}
         </Notice>
       )}
@@ -367,13 +384,15 @@ export function GoalPage() {
             }
             value={twdCompact(
               fiNumber(
-                ctx.fiSpendingFromT12 ? ctx.t12.annualExpense + tiers.postEmployment : tiers[tier],
+                ctx.fiSpendingFromT12 ? ctx.annualSpendingExLoans + tiers.postEmployment : tiers[tier],
                 G,
                 swr,
               ),
             )}
             sub={t('Spending {twd}/yr{v} ÷ SWR {swr}', {
-              twd: twd(ctx.fiSpendingFromT12 ? ctx.t12.annualExpense + tiers.postEmployment : tiers[tier]),
+              twd: twd(
+                ctx.fiSpendingFromT12 ? ctx.annualSpendingExLoans + tiers.postEmployment : tiers[tier],
+              ),
               v: G > 0 ? t(' − guaranteed {G}', { G: twdCompact(G) }) : '',
               swr: pct(swr, 2),
             })}
@@ -402,7 +421,7 @@ export function GoalPage() {
               </thead>
               <tbody>
                 {expense.map((c) => (
-                  <BudgetRow key={c.id} c={c} actual={ctx.t12.byCategory[c.id] ?? 0} />
+                  <BudgetRow key={c.id} c={c} actual={ctx.t12.byCategory[c.id] ?? 0} loans={ctx.loans} />
                 ))}
                 <tr className="font-medium">
                   <td>{t('Total')}</td>

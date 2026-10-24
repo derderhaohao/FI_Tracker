@@ -16,6 +16,9 @@ import { Badge, EmptyState, PageHeader, Segmented, Stat, Table } from '@/compone
 import { TransactionImport } from '@/features/import/CsvImport';
 import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
 import { t } from '@/i18n';
+import { Link } from 'react-router-dom';
+import { LoanNotice } from '@/components/LoanNotice';
+import { isActive, LOAN_CATEGORY, type LoanSchedule } from '@/domain/loans';
 
 const VISIBLE_MONTHS = 6;
 
@@ -30,11 +33,15 @@ function regularFlow(flows: readonly CashFlow[], month: string, categoryId: stri
   return flows.find((f) => f.month === month && f.categoryId === categoryId && isRegular(f));
 }
 
-async function setRegular(month: string, categoryId: string, minor: number | undefined) {
+/**
+ * Saves a grid cell. In the "Loan payments" row a typed amount replaces that month's scheduled
+ * payment, 0 included (a skipped payment); clearing the cell brings the schedule back.
+ */
+async function setRegular(month: string, categoryId: string, minor: number | undefined, keepZero = false) {
   const existing = (
     await db.cashFlows.where('[month+categoryId]').equals([month, categoryId]).toArray()
   ).find(isRegular);
-  if (minor === undefined || minor === 0) {
+  if (minor === undefined || (minor === 0 && !keepZero)) {
     if (existing) await db.cashFlows.delete(existing.id);
     return;
   }
@@ -53,6 +60,13 @@ async function setRegular(month: string, categoryId: string, minor: number | und
 function defaultDate(month: string): string {
   const t = today();
   return monthOf(t) === month ? t : `${month}-01`;
+}
+
+/** Loan payments the user keeps inside this category's spending, per month. */
+function includedLoans(loans: readonly LoanSchedule[], categoryId: string, month: string): number {
+  return loans
+    .filter((l) => l.mode === 'included' && l.categoryId === categoryId && isActive(l, month))
+    .reduce((sum, l) => sum + l.monthly, 0);
 }
 
 function Entries({ month, categories, mode }: { month: string; categories: Category[]; mode: CashFlowMode }) {
@@ -268,7 +282,8 @@ function Entries({ month, categories, mode }: { month: string; categories: Categ
 }
 
 export function CashFlowPage() {
-  const { cashFlows, categories, fxRates, settings } = useAppData();
+  const { cashFlows, categories, fxRates, settings, ctx } = useAppData();
+  const loans = ctx.loans;
   const mode = settings.cashFlowMode;
   const [importing, setImporting] = useState(false);
   const totals = useMemo(
@@ -294,7 +309,8 @@ export function CashFlowPage() {
       await saveMany(
         db.cashFlows,
         cashFlows
-          .filter((f) => f.month === prev && isRegular(f))
+          // Loan payments fill themselves from Accounts; never copy them.
+          .filter((f) => f.month === prev && isRegular(f) && !f.scheduled && !loanRow(f.categoryId))
           .map((f) => ({
             id: newId(),
             month: next,
@@ -318,6 +334,8 @@ export function CashFlowPage() {
     );
   }
 
+  const loanRow = (id: string) => categories.find((c) => c.id === id)?.system === LOAN_CATEGORY;
+
   const section = (title: string, cats: Category[]) => (
     <>
       <tr>
@@ -332,9 +350,23 @@ export function CashFlowPage() {
         <tr key={c.id}>
           <td className="sticky left-0 z-10 max-w-32 bg-surface sm:max-w-none sm:min-w-44">
             {c.name}
-            {c.kind === 'expense' && c.essential && (
+            {c.kind === 'expense' && c.essential && !c.system && (
               <span className="ml-1 text-xs text-subtle">{t('essential')}</span>
             )}
+            {c.system === LOAN_CATEGORY && (
+              <Link to="/accounts" className="block text-[11px] text-primary hover:underline">
+                {t('from loan terms in Accounts')}
+              </Link>
+            )}
+            {(() => {
+              const m = shown.at(-1);
+              const inc = m ? includedLoans(loans, c.id, m) : 0;
+              return inc > 0 ? (
+                <Link to="/accounts" className="block text-[11px] text-subtle hover:text-primary">
+                  {t('incl. {amount}/mo loan payment (Accounts)', { amount: twd(inc) })}
+                </Link>
+              ) : null;
+            })()}
           </td>
           {shown.map((m) => {
             const extra = byMonth.get(m)?.byCategory[c.id] ?? 0;
@@ -351,13 +383,23 @@ export function CashFlowPage() {
                     {extra ? twd(extra) : <span className="text-subtle">—</span>}
                   </button>
                 ) : (
-                  <MoneyInput
-                    compact
-                    aria-label={`${c.name} ${m}`}
-                    value={regular?.amountMinor}
-                    currency="TWD"
-                    onCommit={(v) => void setRegular(m, c.id, v)}
-                  />
+                  <div
+                    className={regular?.scheduled ? 'text-subtle' : undefined}
+                    title={
+                      regular?.scheduled ? t('Scheduled from Accounts; type to change this month') : undefined
+                    }
+                  >
+                    <MoneyInput
+                      compact
+                      aria-label={`${c.name} ${m}`}
+                      value={regular?.amountMinor}
+                      currency="TWD"
+                      onCommit={(v) => {
+                        if (regular?.scheduled && v === regular.amountMinor) return;
+                        void setRegular(m, c.id, v, c.system === LOAN_CATEGORY);
+                      }}
+                    />
+                  </div>
                 )}
                 {mode === 'monthly' && Math.abs(others) > 0.5 && (
                   <div className="mt-0.5 text-right text-[11px] text-subtle">
@@ -411,6 +453,7 @@ export function CashFlowPage() {
         }
       />
       {importing && <TransactionImport onClose={() => setImporting(false)} />}
+      <LoanNotice className="mb-4" />
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat
           label={t('Trailing 12 months income')}

@@ -1681,7 +1681,10 @@
         "accountId": "demo-acct-0008",
         "interestRate": 0.025,
         "monthlyPaymentMinor": 1250000,
-        "remainingMonths": 32,
+        "remainingMonths": 14,
+        "termsAsOf": "2026-10",
+        "cashFlow": "included",
+        "categoryId": "demo-cat-0211",
         "createdAt": "2026-10-01T00:00:00.000Z",
         "updatedAt": "2026-10-01T00:00:00.000Z"
       }
@@ -4262,425 +4265,425 @@
             "age": 35,
             "investable": 5136106.69,
             "savings": 493396,
-            "spending": 805435
+            "spending": 655435
           },
           {
             "year": 2027,
             "age": 36,
             "investable": 5796799.622588548,
-            "savings": 499762.81862745085,
-            "spending": 805435
+            "savings": 548142.1078431371,
+            "spending": 655435
           },
           {
             "year": 2028,
             "age": 37,
-            "investable": 6477602.718265646,
-            "savings": 506160.8471501346,
-            "spending": 805435
+            "investable": 6526482.468035128,
+            "savings": 656160.8471501346,
+            "spending": 655435
           },
           {
             "year": 2029,
             "age": 38,
-            "investable": 7177407.391297727,
-            "savings": 512590.23855773336,
-            "spending": 805435
+            "investable": 7378836.298026735,
+            "savings": 662590.2385577334,
+            "spending": 655435
           },
           {
             "year": 2030,
             "age": 39,
-            "investable": 7898290.482987058,
-            "savings": 519051.14658987895,
-            "spending": 805435
+            "investable": 8255441.88412788,
+            "savings": 669051.146589879,
+            "spending": 655435
           },
           {
             "year": 2031,
             "age": 40,
-            "investable": 8640851.25207628,
-            "savings": 525543.7257398292,
-            "spending": 805435
+            "investable": 9156996.197399067,
+            "savings": 675543.7257398292,
+            "spending": 655435
           },
           {
             "year": 2032,
             "age": 41,
-            "investable": 9405706.386319773,
-            "savings": 532068.1312581617,
-            "spending": 805435
+            "investable": 10084216.455725169,
+            "savings": 682068.1312581617,
+            "spending": 655435
           },
           {
             "year": 2033,
             "age": 42,
-            "investable": 10193490.512130905,
-            "savings": 538624.519156486,
-            "spending": 805435
+            "investable": 11037840.716436516,
+            "savings": 688624.519156486,
+            "spending": 655435
           },
           {
             "year": 2034,
             "age": 43,
-            "investable": 11004856.719209943,
-            "savings": 545213.0462111747,
-            "spending": 805435
+            "investable": 12018628.486354854,
+            "savings": 695213.0462111747,
+            "spending": 655435
           },
           {
             "year": 2035,
             "age": 44,
-            "investable": 11840477.10059498,
-            "savings": 551833.8699671119,
-            "spending": 805435
+            "investable": 13027361.3497789,
+            "savings": 701833.8699671119,
+            "spending": 655435
           },
           {
             "year": 2036,
             "age": 45,
-            "investable": 12701043.308591243,
-            "savings": 558487.1487414604,
-            "spending": 805435
+            "investable": 14064843.61493941,
+            "savings": 708487.1487414604,
+            "spending": 655435
           },
           {
             "year": 2037,
             "age": 46,
-            "investable": 13587267.12704771,
-            "savings": 565173.041627448,
-            "spending": 805435
+            "investable": 15131902.979469437,
+            "savings": 715173.041627448,
+            "spending": 655435
           },
           {
             "year": 2038,
             "age": 47,
-            "investable": 14499881.060463866,
-            "savings": 571891.7084981708,
-            "spending": 805435
+            "investable": 16229391.21545161,
+            "savings": 721891.7084981708,
+            "spending": 655435
           },
           {
             "year": 2039,
             "age": 48,
-            "investable": 15439638.940423703,
-            "savings": 578643.3100104169,
-            "spending": 805435
+            "investable": 17358184.87462098,
+            "savings": 728643.3100104169,
+            "spending": 655435
           },
           {
             "year": 2040,
             "age": 49,
-            "investable": 16407316.549868874,
-            "savings": 585428.0076085073,
-            "spending": 805435
+            "investable": 18519186.014319096,
+            "savings": 735428.0076085073,
+            "spending": 655435
           },
           {
             "year": 2041,
             "age": 50,
-            "investable": 17403712.26573806,
-            "savings": 592245.9635281567,
-            "spending": 805435
+            "investable": 19713322.94481262,
+            "savings": 0,
+            "spending": 729912
           },
           {
             "year": 2042,
             "age": 51,
-            "investable": 18429647.72051519,
-            "savings": 599097.3408003536,
-            "spending": 805435
+            "investable": 19382167.204282414,
+            "savings": 0,
+            "spending": 729912
           },
           {
             "year": 2043,
             "age": 52,
-            "investable": 19485968.483245444,
+            "investable": 19046297.54933683,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2044,
             "age": 53,
-            "investable": 19151020.792975094,
+            "investable": 18705439.695597716,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2045,
             "age": 54,
-            "investable": 18811022.58896504,
+            "investable": 18359314.565132838,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2046,
             "age": 55,
-            "investable": 18465695.281797793,
+            "investable": 18007638.104635283,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2047,
             "age": 56,
-            "investable": 18114755.296728462,
+            "investable": 17650121.096912384,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2048,
             "age": 57,
-            "investable": 17757913.88385772,
+            "investable": 17286468.96560105,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2049,
             "age": 58,
-            "investable": 17394876.92158076,
+            "investable": 16916381.573021468,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2050,
             "age": 59,
-            "investable": 17025344.71322391,
+            "investable": 16539553.011075905,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2051,
             "age": 60,
-            "investable": 16649011.77677507,
+            "investable": 16155671.3850935,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2052,
             "age": 61,
-            "investable": 16266604.501382856,
+            "investable": 15765411.685912611,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2053,
             "age": 62,
-            "investable": 15878871.630375266,
+            "investable": 15369469.618275797,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2054,
             "age": 63,
-            "investable": 15485516.498688914,
+            "investable": 14967539.888367284,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2055,
             "age": 64,
-            "investable": 15086236.403157722,
+            "investable": 14559310.919228125,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2056,
             "age": 65,
-            "investable": 14680722.415937519,
+            "investable": 14144464.65482302,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2057,
             "age": 66,
-            "investable": 14509823.645883024,
+            "investable": 13946632.03995983,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2058,
             "age": 67,
-            "investable": 14337466.37620301,
+            "investable": 13746586.88623487,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2059,
             "age": 68,
-            "investable": 14163520.944936844,
+            "investable": 13544175.90355441,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2060,
             "age": 69,
-            "investable": 13987855.632478692,
+            "investable": 13339243.11152081,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2061,
             "age": 70,
-            "investable": 13810336.588867163,
+            "investable": 13131629.746436752,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2062,
             "age": 71,
-            "investable": 13630827.757886853,
+            "investable": 12921174.1645316,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2063,
             "age": 72,
-            "investable": 13449190.797941303,
+            "investable": 12707711.74135454,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2064,
             "age": 73,
-            "investable": 13265284.999655742,
+            "investable": 12491074.767277148,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2065,
             "age": 74,
-            "investable": 13078967.200166602,
+            "investable": 12271092.339046253,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2066,
             "age": 75,
-            "investable": 12890091.69405323,
+            "investable": 12047590.24732546,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2067,
             "age": 76,
-            "investable": 12698510.14086534,
+            "investable": 11820390.86016143,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2068,
             "age": 77,
-            "investable": 12504071.469197894,
+            "investable": 11589313.00230819,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2069,
             "age": 78,
-            "investable": 12306621.777262727,
+            "investable": 11354171.830339935,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2070,
             "age": 79,
-            "investable": 12106004.229904091,
+            "investable": 11114778.703479588,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2071,
             "age": 80,
-            "investable": 11902058.952002507,
+            "investable": 10870941.05006725,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2072,
             "age": 81,
-            "investable": 11694622.918208752,
+            "investable": 10622462.229589012,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2073,
             "age": 82,
-            "investable": 11483529.838946821,
+            "investable": 10369141.39018301,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2074,
             "age": 83,
-            "investable": 11268610.042621663,
+            "investable": 10110773.321535796,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2075,
             "age": 84,
-            "investable": 11049690.353964278,
+            "investable": 9847148.303077932,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2076,
             "age": 85,
-            "investable": 10826593.968443342,
+            "investable": 9578051.94738366,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2077,
             "age": 86,
-            "investable": 10599140.322669009,
+            "investable": 9303265.038674975,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2078,
             "age": 87,
-            "investable": 10367144.960710894,
+            "investable": 9022563.366326021,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2079,
             "age": 88,
-            "investable": 10130419.396248352,
+            "investable": 8735717.55325896,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2080,
             "age": 89,
-            "investable": 9888770.970467256,
+            "investable": 8442492.87911758,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2081,
             "age": 90,
-            "investable": 9642002.705613328,
+            "investable": 8142649.098099951,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2082,
             "age": 91,
-            "investable": 9389913.154107945,
+            "investable": 7835940.251326229,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2083,
             "age": 92,
-            "investable": 9132296.24312782,
+            "investable": 7522114.473612386,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2084,
             "age": 93,
-            "investable": 8868941.11454562,
+            "investable": 7200913.794515172,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2085,
             "age": 94,
-            "investable": 8599631.96012387,
+            "investable": 6872073.933507999,
             "savings": 0,
             "spending": 729912
           },
           {
             "year": 2086,
             "age": 95,
-            "investable": 8324147.851849796,
+            "investable": 6535324.089141634,
             "savings": 0,
             "spending": 0
           }

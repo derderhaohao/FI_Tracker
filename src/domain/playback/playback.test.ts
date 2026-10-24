@@ -171,8 +171,10 @@ describe('the story on screen', () => {
   });
 
   it('a lucky decade ends higher and a pay rise saves more', () => {
+    // Higher at the end of the decade; it can end lower at 95, because it stops work sooner.
     const lucky = runPlayback(setup, resolve(story([], 'lucky_decade')));
-    expect(lucky.investable[lucky.months]).toBeGreaterThan(normal.investable[normal.months]);
+    expect(lucky.investable[120]).toBeGreaterThan(normal.investable[120]);
+    expect(lucky.retireMonth!).toBeLessThanOrEqual(normal.retireMonth!);
     const pay = runPlayback(setup, resolve(story([at('pay_rise', 12)])));
     expect(pay.investable[120]).toBeGreaterThan(normal.investable[120]);
   });

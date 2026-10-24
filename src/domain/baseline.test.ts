@@ -43,6 +43,9 @@ function data(): PlanData {
         interestRate: 0.02,
         monthlyPaymentMinor: 40_000_00,
         remainingMonths: 240,
+        termsAsOf: '2026-08',
+        cashFlow: 'included',
+        categoryId: 'exp',
         ...stamp,
       },
     ],
@@ -92,10 +95,17 @@ describe('baseline', () => {
       { assetClass: 'other', currency: 'TWD', value: 1_000_000, unlockAge: 60, pension: true },
     ]);
     expect(input.nonInvestable[0].value).toBe(12_000_000);
-    expect(input.liabilities[0]).toEqual({ balance: 8_000_000, rate: 0.02, annualPayment: 480_000 });
+    // 240 payments from 2026-08; the projection starts after September's.
+    expect(input.liabilities[0]).toEqual({
+      balance: 8_000_000,
+      rate: 0.02,
+      annualPayment: 480_000,
+      months: 238,
+    });
     expect(input.annualIncome).toBe(1_440_000);
-    expect(input.currentSpending).toBe(840_000);
-    expect(input.fiSpending).toBe(840_000);
+    // Spending of 70k a month holds the 40k loan payment, which now runs on its own schedule.
+    expect(input.currentSpending).toBe(360_000);
+    expect(input.fiSpending).toBe(360_000);
     expect(input.allocation.reduce((a, b) => a + b, 0)).toBeCloseTo(1);
     expect(input.rebalance).toBe(false);
   });
@@ -114,7 +124,7 @@ describe('baseline', () => {
     });
     expect(input.annualIncome).toBe(2_000_000);
     expect(input.fiSpending).toBeCloseTo(550_000);
-    expect(input.currentSpending).toBeCloseTo(924_000);
+    expect(input.currentSpending).toBeCloseTo(396_000);
     expect(input.retireAtAge).toBe(50);
     expect(input.rebalance).toBe(true);
     expect(input.allocation[ASSET_CLASSES.indexOf('us_equity')]).toBe(1);

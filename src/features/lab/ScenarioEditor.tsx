@@ -529,7 +529,11 @@ export function ScenarioEditor({
           )}
         </Field>
         <Field
-          label={t('Spending while working / year')}
+          label={
+            base.liabilities.some((l) => l.annualPayment > 0 && (l.months ?? 1) > 0)
+              ? t('Spending while working / year, loans aside')
+              : t('Spending while working / year')
+          }
           hint={
             <TodayHint
               today={twd(spendingNow(base))}

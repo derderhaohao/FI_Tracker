@@ -12,6 +12,7 @@ const MONEY_KEYS = [
   'spending',
   'savings',
   'withdrawal',
+  'loanPayments',
   'streamIncome',
 ] as const;
 

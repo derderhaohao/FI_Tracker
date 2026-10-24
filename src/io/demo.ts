@@ -323,7 +323,11 @@ export function buildDemoBackup(): BackupFile {
         accountId: accounts.loan.id,
         interestRate: 0.025,
         monthlyPaymentMinor: toMinor(12_500),
-        remainingMonths: 32,
+        // NT$170,000 left after September's payment: 14 more, the last one smaller.
+        remainingMonths: 14,
+        termsAsOf: addMonths(LAST_MONTH, 1),
+        cashFlow: 'included' as const,
+        categoryId: c.loan.id,
         ...at,
       },
     ],

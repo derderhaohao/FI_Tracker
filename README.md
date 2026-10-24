@@ -17,7 +17,7 @@ built in as editable settings.
 | Route          | Screen       | What it does                                                                                                                                                            |
 | -------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `#/`           | Dashboard    | Net worth, FI progress, projected FI date, savings rate, alerts, backup                                                                                                 |
-| `#/accounts`   | Accounts     | Account registry and liability terms                                                                                                                                    |
+| `#/accounts`   | Accounts     | Account registry and loan terms: the one place a loan payment is entered; it feeds Cash flow and every projection                                                       |
 | `#/snapshots`  | Snapshots    | Accounts × dates grid, FX per date, holdings, CSV import, change attribution with reconciliation check                                                                  |
 | `#/cashflow`   | Cash flow    | Monthly totals or individual transactions, CSV import from bank exports, lump sums, savings-rate trend                                                                  |
 | `#/goal`       | Goal         | FI budget and tiers, SWR, income streams, post-employment costs, target age, goal history                                                                               |

@@ -14,7 +14,6 @@ import {
 import { defaultCurrencyFor } from '../assumptions';
 import { buildProjectionInput, type BaselineContext, type PlanData, type ScenarioSpec } from '../baseline';
 import { BASE_CURRENCY } from '../fx';
-import { fromMinor } from '../money';
 import { mulberry32, normalSource, medianReturn } from '../montecarlo/rng';
 import {
   classIndex,
@@ -107,7 +106,10 @@ export interface PlaybackAccount {
   /** Real TWD at the start (owed amount for liabilities). */
   value0: number;
   rate?: number;
+  /** Nominal TWD a year, from the loan terms in Accounts. */
   payment?: number;
+  /** Monthly payments left at the start. */
+  months?: number;
   floating?: boolean;
   /** Created for new savings in a class with no account yet. */
   synthetic?: boolean;
@@ -200,6 +202,8 @@ export function playbackSetup(
   const input = buildProjectionInput(data, assumptions, spec, ctx);
   const accounts: PlaybackAccount[] = [];
   let pensionTaken = false;
+  // Liabilities come in the same order as the projection input's.
+  let liabilityIndex = 0;
   for (const b of ctx.netWorth.balances) {
     const a = b.account;
     const regions = regionsOf(a);
@@ -216,13 +220,15 @@ export function playbackSetup(
     };
     if (b.bucket === 'liability') {
       const terms = data.liabilities.find((l) => l.accountId === a.id);
+      const loan = input.liabilities[liabilityIndex++];
       accounts.push({
         ...base,
         bucket: 'liability',
         exposure: {},
         value0: b.twd,
         rate: terms?.interestRate ?? 0,
-        payment: terms ? fromMinor(terms.monthlyPaymentMinor) * 12 : 0,
+        payment: loan?.annualPayment ?? 0,
+        months: loan?.months,
         floating: terms?.floating ?? false,
       });
     } else if (b.bucket === 'locked') {
@@ -876,13 +882,26 @@ export function runPlayback(
         st.overseasIncome += (st.values[i] * y * st.inflationIndex) / 12;
     }
 
+    // Loan payments this month (nominal, so they shrink in real terms); the last one clears the rest.
+    let loanCash = 0;
+    const loanDue = accounts.map((a, i) => {
+      if (a.bucket !== 'liability') return { due: 0, paid: 0 };
+      const rate = (a.rate ?? 0) + (a.floating ? mortgageAdd : 0);
+      const due = st.values[i] * (1 + rate / 12);
+      const left = a.months === undefined ? Number.POSITIVE_INFINITY : a.months - m;
+      if (!a.payment || due <= 0 || left <= 0) return { due, paid: 0 };
+      const paid = left <= 1 ? due : Math.min(due, a.payment / 12 / st.inflationIndex);
+      loanCash += paid;
+      return { due, paid };
+    });
+
     half();
     // Flows land mid-month.
     let flow: number;
     if (!st.retiredThisYear) {
       const pay = payFactorAt(events, m);
       const income = st.monthlyIncome * pay;
-      const saving = income + st.monthlySavings;
+      const saving = income + st.monthlySavings - loanCash;
       const pausing = behaviour.kind === 'pause' && activeShockEvents(m).length > 0;
       if (saving >= 0) deposit(saving, pausing || !!st.sold);
       else withdraw(-saving, m);
@@ -896,19 +915,18 @@ export function runPlayback(
         extraFlow += pension;
       }
     } else {
-      if (st.monthlyWithdrawal >= 0) withdraw(st.monthlyWithdrawal, m);
-      else deposit(-st.monthlyWithdrawal);
-      flow = -st.monthlyWithdrawal;
+      const out = st.monthlyWithdrawal + loanCash;
+      if (out >= 0) withdraw(out, m);
+      else deposit(-out);
+      flow = -out;
     }
     half();
     st.guaranteed *= Math.pow(1 + setup.pensionFloor, 1 / 12) / inflM;
 
     // Loans amortise monthly.
     for (let i = 0; i < A; i++) {
-      const a = accounts[i];
-      if (a.bucket !== 'liability') continue;
-      const rate = (a.rate ?? 0) + (a.floating ? mortgageAdd : 0);
-      st.values[i] = Math.max(0, st.values[i] * (1 + rate / 12) - (a.payment ?? 0) / 12) / inflM;
+      if (accounts[i].bucket !== 'liability') continue;
+      st.values[i] = Math.max(0, loanDue[i].due - loanDue[i].paid) / inflM;
     }
     st.inflationIndex *= inflM;
     st.yearInflation *= inflM;

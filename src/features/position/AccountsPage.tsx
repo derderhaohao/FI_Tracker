@@ -14,9 +14,14 @@ import {
   REGIONS,
   type Account,
   type AccountType,
+  type Liability,
 } from '@/domain/entities';
 import { accountDefaults } from '@/domain/accounts';
 import { formatMoney, fromMinor, parseMoneyInput } from '@/domain/money';
+import { addMonths, monthOf, monthsBetween, today } from '@/domain/dates';
+import { monthLabel } from '@/lib/format';
+import { ensureLoanCategory } from '@/db/loanCategory';
+import { LoanNotice } from '@/components/LoanNotice';
 import { db } from '@/db/db';
 import { newId, patch, save } from '@/db/repo';
 import { useAppData } from '@/app/data';
@@ -50,6 +55,8 @@ const formSchema = z
       .regex(/^(\s*(TW|US|JP|EU|EM|Other)\s+\d{1,3}(\.\d+)?\s*,?)*$/, t('Use pairs like “US 62, EU 15”')),
     floating: z.boolean(),
     propertyAccountId: z.string(),
+    cashFlow: z.enum(['included', 'auto']),
+    categoryId: z.string(),
   })
   .refine((v) => !/\d{6,}/.test(v.nickname), {
     path: ['nickname'],
@@ -74,6 +81,8 @@ function emptyForm(): FormValues {
     exposure: '',
     floating: false,
     propertyAccountId: '',
+    cashFlow: 'included',
+    categoryId: '',
   };
 }
 
@@ -97,9 +106,17 @@ function parseExposure(text: string): Account['exposure'] {
 }
 
 function AccountForm({ account, onDone }: { account?: Account; onDone: () => void }) {
-  const { liabilities } = useAppData();
+  const { liabilities, categories } = useAppData();
 
   const terms = account ? liabilities.find((l) => l.accountId === account.id) : undefined;
+  const thisMonth = monthOf(today());
+  // The term is stored as of the month it was entered; show what is left now.
+  const remainingNow = terms
+    ? Math.max(
+        0,
+        terms.remainingMonths - monthsBetween(terms.termsAsOf ?? monthOf(terms.updatedAt), thisMonth),
+      )
+    : undefined;
   const {
     register,
     handleSubmit,
@@ -119,18 +136,24 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           accessAge: account.accessAge?.toString() ?? '',
           interestRate: terms ? String(terms.interestRate * 100) : '',
           monthlyPayment: terms ? String(fromMinor(terms.monthlyPaymentMinor)) : '',
-          remainingMonths: terms ? String(terms.remainingMonths) : '',
+          remainingMonths: remainingNow !== undefined ? String(remainingNow) : '',
           region: account.region ?? '',
           location: account.location ?? '',
           exposure: exposureText(account.exposure),
           floating: terms?.floating ?? false,
           propertyAccountId: terms?.propertyAccountId ?? '',
+          cashFlow: terms?.cashFlow ?? 'included',
+          categoryId: terms?.categoryId ?? '',
         }
       : emptyForm(),
   });
   const type = watch('type');
   const assetClass = watch('assetClass');
   const region = watch('region');
+  const cashFlow = watch('cashFlow');
+  const payment = parseMoneyInput(watch('monthlyPayment') ?? '');
+  const remaining = Number(watch('remainingMonths') || 0);
+  const spendingCategories = categories.filter((c) => c.kind === 'expense' && !c.system);
   const { accounts } = useAppData();
   const properties = accounts.filter((a) => a.assetClass === 'property' && a.id !== account?.id);
 
@@ -160,7 +183,11 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
         remainingMonths: v.remainingMonths === '' ? 0 : Number(v.remainingMonths),
         floating: v.floating,
         propertyAccountId: v.propertyAccountId || undefined,
+        termsAsOf: thisMonth,
+        cashFlow: v.cashFlow,
+        categoryId: v.cashFlow === 'included' ? v.categoryId || undefined : undefined,
       });
+      if (v.cashFlow === 'auto') await ensureLoanCategory();
     } else if (terms) {
       await db.liabilities.delete(id);
     }
@@ -289,9 +316,56 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           <Field label={t('Monthly payment')}>
             {(id) => <Input id={id} inputMode="decimal" {...register('monthlyPayment')} />}
           </Field>
-          <Field label={t('Remaining term (months)')} error={errors.remainingMonths?.message}>
+          <Field
+            label={t('Remaining term (months)')}
+            error={errors.remainingMonths?.message}
+            hint={
+              remaining > 0
+                ? t('Last payment {month}', { month: monthLabel(addMonths(thisMonth, remaining - 1)) })
+                : undefined
+            }
+          >
             {(id) => <Input id={id} inputMode="numeric" {...register('remainingMonths')} />}
           </Field>
+          <Field
+            label={t('In Cash flow, this payment is')}
+            className="sm:col-span-2"
+            hint={
+              cashFlow === 'auto'
+                ? t(
+                    'A “Loan payments” row fills itself in Cash flow every month until the loan ends. Leave the payment out of your other categories.',
+                  )
+                : t(
+                    'Nothing to type twice: the plan reads the payment from here, takes it out of everyday spending, and stops it when the loan ends.',
+                  )
+            }
+          >
+            {(id) => (
+              <Select id={id} {...register('cashFlow')}>
+                <option value="included">{t('Already part of my spending')}</option>
+                <option value="auto">{t('Not in my cash flow: add it automatically')}</option>
+              </Select>
+            )}
+          </Field>
+          {cashFlow === 'included' && (
+            <Field label={t('In category')} hint={t('Where your monthly spending includes it')}>
+              {(id) => (
+                <Select id={id} {...register('categoryId')}>
+                  <option value="">{t('— somewhere in my spending —')}</option>
+                  {spendingCategories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          )}
+          {!!payment && payment > 0 && remaining === 0 && (
+            <p className="text-xs text-subtle sm:col-span-2 lg:col-span-4">
+              {t('Add the remaining term so the plan knows when the payments stop.')}
+            </p>
+          )}
         </>
       )}
       <datalist id="currencies">
@@ -313,7 +387,12 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
 }
 
 export function AccountsPage() {
-  const { accounts, liabilities, snapshots } = useAppData();
+  const { accounts, liabilities, snapshots, categories } = useAppData();
+  const whereText = (terms: Liability) => {
+    if (terms.cashFlow === 'auto') return t('added to Cash flow automatically');
+    const c = categories.find((x) => x.id === terms.categoryId);
+    return c ? t('in {name}', { name: c.name }) : t('in your spending');
+  };
   const [editing, setEditing] = useState<Account | 'new' | undefined>(
     accounts.length === 0 ? 'new' : undefined,
   );
@@ -341,6 +420,7 @@ export function AccountsPage() {
           </Button>
         }
       />
+      <LoanNotice className="mb-4" link={false} />
       {editing && (
         <Card className="mb-4">
           <CardHeader
@@ -427,8 +507,17 @@ export function AccountsPage() {
                                 fromMinor(terms.monthlyPaymentMinor),
                                 a.currency,
                               ),
-                              remainingMonths: terms.remainingMonths,
-                            })
+                              remainingMonths: Math.max(
+                                0,
+                                terms.remainingMonths -
+                                  monthsBetween(
+                                    terms.termsAsOf ?? monthOf(terms.updatedAt),
+                                    monthOf(today()),
+                                  ),
+                              ),
+                            }) +
+                            ' · ' +
+                            whereText(terms)
                           : ''}
                       </td>
                       <td>
