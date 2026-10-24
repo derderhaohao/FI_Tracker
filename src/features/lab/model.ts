@@ -157,6 +157,12 @@ function drivers(base: LabRow, other: LabRow): Driver[] {
       text: `you spend ${p}% ${fb < fa ? 'less' : 'more'} each year after you stop`,
     });
   }
+  for (const st of other.input.stress ?? [])
+    if (!(base.input.stress ?? []).some((b) => b.name === st.name))
+      out.push({
+        direction: st.shocks.some((x) => x.d > 0) || (st.lump ?? 0) < 0 || (st.pay?.factor ?? 1) < 1 ? -1 : 1,
+        text: `of the “${st.name}” story`,
+      });
   if (other.input.crash && !base.input.crash)
     out.push({
       direction: -1,

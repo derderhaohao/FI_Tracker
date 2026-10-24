@@ -5,10 +5,12 @@ import {
   ASSET_CLASS_LABELS,
   type Scenario,
   type ScenarioLevers,
+  type Severity,
   type WithdrawalRule,
 } from '@/domain/entities';
 import { formatMinor, parseMoneyInput } from '@/domain/money';
 import { defaultWithdrawalRule, WITHDRAWAL_RULE_LABELS } from '@/domain/withdrawal';
+import { customToEvent, EVENTS, SEVERITY_LABELS } from '@/domain/playback/library';
 import { db } from '@/db/db';
 import { patch } from '@/db/repo';
 import { useAppData } from '@/app/data';
@@ -66,6 +68,113 @@ function Section({
       {hint && <p className="mb-2 text-xs text-muted-foreground">{hint}</p>}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{children}</div>
     </fieldset>
+  );
+}
+
+/** Library world events in every simulated future (PRD playback, EN-8). */
+function WorldEvents({ s }: { s: Scenario }) {
+  const { settings } = useAppData();
+  const list = s.overrides.stressEvents ?? [];
+  const options = [
+    ...EVENTS.filter((e) => e.group !== 'backdrop'),
+    ...(settings.customEvents ?? []).map(customToEvent),
+  ];
+  const [eventId, setEventId] = useState('gfc');
+  const [timing, setTiming] = useState<'afterStop' | 'year'>('afterStop');
+  const [years, setYears] = useState(5);
+  const [severity, setSeverity] = useState<Severity>('typical');
+  return (
+    <div className="sm:col-span-2 xl:col-span-3">
+      <div className="mb-1 text-sm font-medium">World events</div>
+      <p className="mb-2 text-xs text-muted-foreground">
+        The same events as the Projection playback, applied to every simulated future. Hypothetical stress
+        stories, not forecasts.
+      </p>
+      {list.length > 0 && (
+        <ul className="mb-2 flex flex-col gap-1 text-sm">
+          {list.map((e, i) => (
+            <li key={i} className="flex items-center gap-2">
+              <span className="font-medium">
+                {options.find((x) => x.id === e.eventId)?.name ?? e.eventId}
+              </span>
+              <span className="text-muted-foreground">
+                {e.timing === 'afterStop' ? 'just after you stop work' : `in year ${e.years}`} ·{' '}
+                {SEVERITY_LABELS[e.severity]}
+              </span>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Remove world event"
+                onClick={() => void setLevers(s, { stressEvents: list.filter((_, j) => j !== i) })}
+              >
+                <Trash2 />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex flex-wrap items-end gap-2">
+        <Select
+          aria-label="World event"
+          className="h-8 w-56"
+          value={eventId}
+          onChange={(e) => setEventId(e.target.value)}
+        >
+          {options.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.name}
+            </option>
+          ))}
+        </Select>
+        <Select
+          aria-label="When it starts"
+          className="h-8 w-48"
+          value={timing}
+          onChange={(e) => setTiming(e.target.value as 'afterStop' | 'year')}
+        >
+          <option value="afterStop">Just after I stop work</option>
+          <option value="year">In a chosen year</option>
+        </Select>
+        {timing === 'year' && (
+          <Input
+            aria-label="Year"
+            className="h-8 w-20"
+            type="number"
+            min={0}
+            max={60}
+            value={years}
+            onChange={(e) => setYears(Number(e.target.value))}
+          />
+        )}
+        <Select
+          aria-label="Severity"
+          className="h-8 w-28"
+          value={severity}
+          onChange={(e) => setSeverity(e.target.value as Severity)}
+        >
+          {(['mild', 'typical', 'severe'] as Severity[]).map((x) => (
+            <option key={x} value={x}>
+              {SEVERITY_LABELS[x]}
+            </option>
+          ))}
+        </Select>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={list.length >= 5}
+          onClick={() =>
+            void setLevers(s, {
+              stressEvents: [
+                ...list,
+                { eventId, timing, years: timing === 'year' ? years : undefined, severity },
+              ],
+            })
+          }
+        >
+          <Plus aria-hidden /> Add
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -836,6 +945,7 @@ export function ScenarioEditor({
             />
           )}
         </Field>
+        <WorldEvents s={s} />
       </Section>
 
       <Section

@@ -11,6 +11,7 @@ import { BASE_CURRENCY } from './fx';
 import { laborInsuranceAnnual } from './taiwan/laborInsurance';
 import { amtFlag, domesticDividendTax, nhiSupplementaryPremium } from './taiwan/dividends';
 import { applyWithdrawalRule } from './withdrawal';
+import { shockMultiplier, type Factor, type LevelShock, type RateShock } from './playback/library';
 import { medianReturn } from './montecarlo/rng';
 
 /**
@@ -105,7 +106,101 @@ export interface ProjectionInput {
   events: ProjectionEvent[];
   /** Equities fall by `drop` in total over the first `years` years after stopping work. */
   crash?: { drop: number; years: number };
+  /** Library events applied to every path (EN-8), resolved and scaled by severity. */
+  stress?: StressEvent[];
   taiwan: TaiwanSettings;
+}
+
+export interface StressEvent {
+  name: string;
+  /** Month the event starts, or after stopping work. */
+  start?: number;
+  afterStop?: boolean;
+  shocks: LevelShock[];
+  rates: RateShock[];
+  pay?: { factor: number; months?: number };
+  lump?: number;
+}
+
+/** How each asset class follows the library's market factors (a global fund uses the preset region split). */
+const CLASS_FACTORS: Record<AssetClass, Partial<Record<Factor, number>>> = {
+  cash: {},
+  tw_equity: { tw_equity: 1 },
+  us_equity: { us_equity: 1 },
+  global_equity: { us_equity: 0.62, eu_equity: 0.15, jp_equity: 0.06, em_equity: 0.11 },
+  bond: { bonds: 1 },
+  property: { tw_property: 1 },
+  other: {},
+};
+
+function overlap(start: number, months: number, from: number, to: number): number {
+  return Math.max(0, Math.min(start + months, to) - Math.max(start, from)) / (to - from);
+}
+
+/**
+ * Bends year k's draw for the stress events: market factors move by the change in their
+ * shock shape over the year, rate shocks by the share of the year they run. Returns the
+ * year's average pay factor and any one-off amount.
+ */
+export function applyStress(
+  input: ProjectionInput,
+  k: number,
+  retireAge: number | undefined,
+  draw: YearDraw,
+): { pay: number; lump: number } {
+  let pay = 1;
+  let lump = 0;
+  for (const e of input.stress ?? []) {
+    const s = e.afterStop
+      ? retireAge !== undefined
+        ? (retireAge - input.startAge) * 12
+        : undefined
+      : e.start;
+    if (s === undefined) continue;
+    const t0 = 12 * k - s;
+    const t1 = t0 + 12;
+    if (t1 <= 0) continue;
+    const ratio = (f: Factor) => {
+      let r = 1;
+      for (const sh of e.shocks) if (sh.factor === f) r *= shockMultiplier(sh, t1) / shockMultiplier(sh, t0);
+      return r;
+    };
+    for (let i = 0; i < N_ASSETS; i++) {
+      let exposed = 0;
+      let moved = 0;
+      for (const [f, w] of Object.entries(CLASS_FACTORS[ASSET_CLASSES[i]])) {
+        exposed += w ?? 0;
+        moved += (w ?? 0) * ratio(f as Factor);
+      }
+      draw.nominal[i] = (1 + draw.nominal[i]) * (moved + 1 - exposed) - 1;
+    }
+    draw.fx = (1 + draw.fx) * ratio('usd') - 1;
+    for (const r of e.rates) {
+      const frac = overlap(s, r.months, 12 * k, 12 * k + 12);
+      if (frac <= 0) continue;
+      if (r.kind === 'inflation') draw.inflation += r.pts * frac;
+      else if (r.kind === 'cash') draw.nominal[classIndex.get('cash')!] += r.pts * frac;
+      else if (r.kind === 'cashLevel') {
+        const c = classIndex.get('cash')!;
+        draw.nominal[c] = draw.nominal[c] * (1 - frac) + r.pts * frac;
+      } else if (r.kind === 'equityTrend' || r.kind === 'equityRealZero') {
+        for (const cls of ['tw_equity', 'us_equity', 'global_equity'] as const) {
+          const c = classIndex.get(cls)!;
+          draw.nominal[c] =
+            r.kind === 'equityTrend'
+              ? draw.nominal[c] + r.pts * frac
+              : draw.nominal[c] * (1 - frac) + draw.inflation * frac;
+        }
+      }
+    }
+    if (e.pay) {
+      const months = e.pay.months ?? Infinity;
+      const frac = overlap(s, months === Infinity ? 1e6 : months, 12 * k, 12 * k + 12);
+      pay *= 1 - frac + frac * e.pay.factor;
+    }
+    if (e.lump && s >= 12 * k && s < 12 * k + 12) lump += e.lump;
+  }
+  return { pay, lump };
 }
 
 export interface YearDraw {
@@ -232,7 +327,7 @@ export function expectedDraw(input: ProjectionInput): YearDraw {
 
 const EQUITY = new Set<AssetClass>(['tw_equity', 'us_equity', 'global_equity']);
 
-const classIndex = new Map<AssetClass, number>(ASSET_CLASSES.map((c, i) => [c, i]));
+export const classIndex = new Map<AssetClass, number>(ASSET_CLASSES.map((c, i) => [c, i]));
 
 function total(buckets: readonly Bucket[]): number {
   let s = 0;
@@ -292,14 +387,14 @@ function rebalance(liquid: Bucket[], allocation: readonly number[]): void {
   }
 }
 
-function incomeFor(input: ProjectionInput, age: number, base: number, factor: number): number {
+export function incomeFor(input: ProjectionInput, age: number, base: number, factor: number): number {
   for (const ch of input.incomeChanges) {
     if (age >= ch.fromAge && (ch.toAge === undefined || age < ch.toAge)) return ch.annualIncome * factor;
   }
   return base;
 }
 
-function streamIncomeAt(
+export function streamIncomeAt(
   input: ProjectionInput,
   age: number,
   retireAge: number,
@@ -434,32 +529,40 @@ export function simulate(
       const yearly = Math.pow(1 - input.crash.drop, 1 / input.crash.years) - 1;
       for (let i = 0; i < N_ASSETS; i++) if (EQUITY.has(ASSET_CLASSES[i])) draw.nominal[i] = yearly;
     }
+    const stress = input.stress?.length ? applyStress(input, k, retireAge, draw) : { pay: 1, lump: 0 };
     const flows: Partial<YearRow> = { retired };
 
     // 1. Events for this year.
     let eventAmount = 0;
     for (const e of input.events) if (e.year === input.startYear + k) eventAmount += e.amount;
+    eventAmount += stress.lump;
     if (eventAmount > 0) deposit(liquid, input.allocation, eventAmount);
     else if (eventAmount < 0 && !withdraw(liquid, -eventAmount) && depletionAge === undefined)
       depletionAge = age;
     flows.eventAmount = eventAmount;
 
+    // 2–3. This year's flows, decided at the start of the year. They land mid-year, so they
+    // earn half a year's return: the same as spreading them over twelve months, which keeps
+    // this yearly engine in step with the monthly playback engine.
+    let applyFlows: () => void;
     if (!retired) {
       // 2. Before FI: savings to liquid by target allocation, 勞退 to locked.
       const base = input.annualIncome * incomeFactor;
-      const income = incomeFor(input, age, base, incomeFactor);
+      const income = incomeFor(input, age, base, incomeFactor) * stress.pay;
       const spending =
         input.savingsRate !== undefined ? base * (1 - input.savingsRate) : input.currentSpending;
       const working = income > 0 ? incomeFactor : 0;
       const savings = income - spending + input.pension.liquidDelta * working;
-      if (savings >= 0) deposit(liquid, input.allocation, savings);
-      else if (!withdraw(liquid, -savings) && depletionAge === undefined) depletionAge = age;
       const contribution = (input.pension.employer + input.pension.voluntary) * working;
-      if (contribution > 0) {
-        const pensionBucket = locked.find((b) => b.pension);
-        if (pensionBucket) pensionBucket.value += contribution;
-        else addTo(liquid, 'other', BASE_CURRENCY, contribution);
-      }
+      applyFlows = () => {
+        if (savings >= 0) deposit(liquid, input.allocation, savings);
+        else if (!withdraw(liquid, -savings) && depletionAge === undefined) depletionAge = age;
+        if (contribution > 0) {
+          const pensionBucket = locked.find((b) => b.pension);
+          if (pensionBucket) pensionBucket.value += contribution;
+          else addTo(liquid, 'other', BASE_CURRENCY, contribution);
+        }
+      };
       Object.assign(flows, { income, spending, savings, pensionContribution: contribution });
     } else {
       // 3. After FI: withdraw spending minus active income streams.
@@ -479,43 +582,52 @@ export function simulate(
       spendingNow = result.spending;
       if (input.fiSpending > 0)
         minSpendingRatio = Math.min(minSpendingRatio, result.spending / input.fiSpending);
-      if (result.withdrawal >= 0) {
-        if (!withdraw(liquid, result.withdrawal) && depletionAge === undefined) depletionAge = age;
-      } else {
-        deposit(liquid, input.allocation, -result.withdrawal);
-      }
+      applyFlows = () => {
+        if (result.withdrawal >= 0) {
+          if (!withdraw(liquid, result.withdrawal) && depletionAge === undefined) depletionAge = age;
+        } else {
+          deposit(liquid, input.allocation, -result.withdrawal);
+        }
+      };
       Object.assign(flows, { spending: result.spending, withdrawal: result.withdrawal, streamIncome });
     }
 
     // 4. Returns net of fees and Taiwan frictions; 5. FX on foreign-currency assets.
+    // Applied in two halves around the flows.
     const growth = 1 + draw.inflation;
     let taxDrag = 0;
     let overseasIncome = 0;
-    for (const b of liquid) {
-      if (b.value <= 0) continue;
-      const a = input.assets[classIndex.get(b.assetClass) ?? 0];
-      let drag = 0;
-      if (a.dividendYield > 0 && b.assetClass !== 'cash') {
-        const dividendsNominal = b.value * a.dividendYield * inflationIndex;
-        if (b.currency !== BASE_CURRENCY) {
-          drag = a.dividendYield * tw.usWithholdingRate;
-          overseasIncome += dividendsNominal;
-        } else if (b.assetClass === 'tw_equity') {
-          const tax =
-            domesticDividendTax(dividendsNominal, tw) + nhiSupplementaryPremium(dividendsNominal, tw);
-          drag = tax / (b.value * inflationIndex);
+    const halfYear = () => {
+      for (const b of liquid) {
+        if (b.value <= 0) continue;
+        const a = input.assets[classIndex.get(b.assetClass) ?? 0];
+        let drag = 0;
+        if (a.dividendYield > 0 && b.assetClass !== 'cash') {
+          const dividendsNominal = b.value * a.dividendYield * inflationIndex;
+          if (b.currency !== BASE_CURRENCY) {
+            drag = a.dividendYield * tw.usWithholdingRate;
+            overseasIncome += dividendsNominal / 2;
+          } else if (b.assetClass === 'tw_equity') {
+            const tax =
+              domesticDividendTax(dividendsNominal, tw) + nhiSupplementaryPremium(dividendsNominal, tw);
+            drag = tax / (b.value * inflationIndex);
+          }
         }
+        taxDrag += (drag * b.value) / 2;
+        b.value *= Math.sqrt((1 + draw.nominal[classIndex.get(b.assetClass) ?? 0] - a.fee - drag) / growth);
       }
-      taxDrag += drag * b.value;
-      b.value *= (1 + draw.nominal[classIndex.get(b.assetClass) ?? 0] - a.fee - drag) / growth;
-    }
-    for (const b of [...locked, ...nonInv]) {
-      const i = classIndex.get(b.assetClass) ?? 0;
-      b.value *= (1 + draw.nominal[i] - input.assets[i].fee) / growth;
-    }
-    for (const b of [...liquid, ...locked, ...nonInv]) {
-      if (b.currency !== BASE_CURRENCY) b.value *= 1 + draw.fx;
-    }
+      for (const b of [...locked, ...nonInv]) {
+        const i = classIndex.get(b.assetClass) ?? 0;
+        b.value *= Math.sqrt((1 + draw.nominal[i] - input.assets[i].fee) / growth);
+      }
+      const fxHalf = Math.sqrt(1 + draw.fx);
+      for (const b of [...liquid, ...locked, ...nonInv]) {
+        if (b.currency !== BASE_CURRENCY) b.value *= fxHalf;
+      }
+    };
+    halfYear();
+    applyFlows();
+    halfYear();
     for (const l of liabilities) l.balance = Math.max(0, l.balance * (1 + l.rate) - l.annualPayment) / growth;
     inflationIndex *= growth;
     incomeFactor *= (1 + input.salaryGrowth) / growth;

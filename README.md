@@ -21,7 +21,7 @@ built in as editable settings.
 | `#/snapshots`  | Snapshots    | Accounts × dates grid, FX per date, holdings, CSV import, change attribution with reconciliation check                                                                  |
 | `#/cashflow`   | Cash flow    | Monthly totals or individual transactions, CSV import from bank exports, lump sums, savings-rate trend                                                                  |
 | `#/goal`       | Goal         | FI budget and tiers, SWR, income streams, post-employment costs, target age, goal history                                                                               |
-| `#/projection` | Projection   | Baseline projection, FI target, sensitivity, year table                                                                                                                 |
+| `#/projection` | Projection   | Baseline projection, FI target, sensitivity, year table; Play mode: month-by-month playback of 29 hypothetical stories with live events                                 |
 | `#/lab`        | Strategy Lab | A plain verdict per plan, what-if templates, comparison against your plan today, simulated futures and past markets (1871–2022), what would make it safer, buy vs. rent |
 | `#/reviews`    | Reviews      | Checklists, plan vs. actual, review log                                                                                                                                 |
 | `#/settings`   | Settings     | Assumptions, Taiwan settings, categories, backup / restore, encrypted export, auto-save, demo data                                                                      |

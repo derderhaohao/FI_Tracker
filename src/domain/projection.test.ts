@@ -17,18 +17,18 @@ describe('deterministic projection', () => {
     r,
   );
 
-  it('grows savings at the real return, contributions at the start of each year', () => {
+  it('grows savings at the real return, contributions in the middle of each year', () => {
     const result = runProjection(base);
     for (const k of [1, 5, 10]) {
-      const expected = P * (1 + r) ** k + (s * (1 + r) * ((1 + r) ** k - 1)) / r;
+      const expected = P * (1 + r) ** k + (s * Math.sqrt(1 + r) * ((1 + r) ** k - 1)) / r;
       expect(result.rows[k].liquid).toBeCloseTo(expected, 4);
     }
   });
 
   it('reaches FI when the closed form says so', () => {
     const result = runProjection(base);
-    // Start-of-year contributions are the closed form with s × (1 + r).
-    const n = yearsToFi(P, s * (1 + r), T, r);
+    // Mid-year contributions are the closed form with s × √(1 + r).
+    const n = yearsToFi(P, s * Math.sqrt(1 + r), T, r);
     expect(result.fiAge).toBe(40 + Math.ceil(n));
     expect(result.yearsToFi!).toBeGreaterThan(Math.floor(n));
     expect(Math.abs(result.yearsToFi! - n)).toBeLessThan(0.1);
@@ -144,7 +144,9 @@ describe('deterministic projection', () => {
     );
     const result = runProjection(input);
     expect(result.rows[1].liquid).toBeCloseTo(1_000_000 * (1 + 0.07 - 0.001 - 0.02 * 0.3) * 0.99, 4);
-    expect(result.rows[1].overseasIncome).toBeCloseTo(20_000);
+    // Dividends are counted on each half-year's balance.
+    expect(result.rows[1].overseasIncome).toBeGreaterThan(20_000);
+    expect(result.rows[1].overseasIncome).toBeLessThan(20_500);
     expect(result.rows[1].amt).toBe(false);
   });
 

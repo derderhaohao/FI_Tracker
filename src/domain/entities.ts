@@ -20,6 +20,40 @@ export const ASSET_CLASSES = [
 export const ACCOUNT_TYPES = ['cash', 'brokerage', 'pension', 'insurance', 'property', 'liability'] as const;
 
 export const assetClassSchema = z.enum(ASSET_CLASSES);
+
+/** Where an account's money is invested (PRD playback, DM-3). */
+export const REGIONS = ['TW', 'US', 'JP', 'EU', 'EM', 'Global'] as const;
+export type Region = (typeof REGIONS)[number];
+export const REGION_LABELS: Record<Region, string> = {
+  TW: 'Taiwan',
+  US: 'US',
+  JP: 'Japan',
+  EU: 'Europe',
+  EM: 'China/EM',
+  Global: 'Global',
+};
+export const regionSchema = z.enum(REGIONS);
+
+/** Property location (DM-5). */
+export const LOCATIONS = ['taipei', 'taichung', 'kaohsiung', 'other_tw', 'tokyo', 'other_jp', 'us'] as const;
+export type PropertyLocation = (typeof LOCATIONS)[number];
+export const LOCATION_LABELS: Record<PropertyLocation, string> = {
+  taipei: 'Taipei / New Taipei',
+  taichung: 'Taichung',
+  kaohsiung: 'Kaohsiung',
+  other_tw: 'Other Taiwan',
+  tokyo: 'Tokyo',
+  other_jp: 'Other Japan',
+  us: 'US',
+};
+export const locationSchema = z.enum(LOCATIONS);
+
+/** A fund's split by region, as shares summing to 1 (DM-4). */
+export const exposureSchema = z.partialRecord(
+  z.enum(['TW', 'US', 'JP', 'EU', 'EM', 'Other']),
+  z.number().min(0).max(1),
+);
+export type Exposure = z.infer<typeof exposureSchema>;
 export const accountTypeSchema = z.enum(ACCOUNT_TYPES);
 export type AssetClass = z.infer<typeof assetClassSchema>;
 export type AccountType = z.infer<typeof accountTypeSchema>;
@@ -84,6 +118,72 @@ export const alertSettingsSchema = z.object({
 });
 export type AlertSettings = z.infer<typeof alertSettingsSchema>;
 
+// ---------- Projection playback ----------
+
+export const severitySchema = z.enum(['mild', 'typical', 'severe']);
+export type Severity = z.infer<typeof severitySchema>;
+
+export const playbackSettingsSchema = z.object({
+  /** 勞退 fund mix for stories (DM-7), shares summing to 1. */
+  pensionMix: z.object({ tw_equity: z.number(), global_equity: z.number(), bond: z.number() }),
+  /** 勞退 guaranteed minimum yearly return, applied to the balance when it unlocks. */
+  pensionFloor: z.number().min(0).max(0.1),
+  /** Pause for 3 seconds at each event start. */
+  autoPause: z.boolean(),
+  /** Pause when an event is fired live. */
+  pauseOnFire: z.boolean(),
+  /** Up to 6 pinned palette events. */
+  favourites: z.array(z.string()).max(6),
+});
+export type PlaybackSettings = z.infer<typeof playbackSettingsSchema>;
+
+export const storyEventSchema = z.object({
+  uid: z.string(),
+  eventId: z.string(),
+  /** Months from the start of the projection. */
+  start: z.number().int().min(0).max(1500),
+  severity: severitySchema,
+  source: z.enum(['scheduled', 'live']),
+  /** Overrides an event's amount (lump sums, TWD) or pay change (multiplier). */
+  amount: z.number().optional(),
+});
+export type StoryEvent = z.infer<typeof storyEventSchema>;
+
+export const behaviourSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('keep') }),
+  z.object({ kind: z.literal('pause') }),
+  z.object({ kind: z.literal('sell'), fall: z.number().min(0.05).max(0.9) }),
+]);
+export type Behaviour = z.infer<typeof behaviourSchema>;
+
+export const storySchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).max(80),
+  backdrop: z.string(),
+  events: z.array(storyEventSchema).max(50),
+  behaviour: behaviourSchema,
+  /** Seed for market noise; no noise when absent. */
+  noiseSeed: z.number().int().optional(),
+});
+export type Story = z.infer<typeof storySchema>;
+
+export const levelShockSchema = z.object({
+  factor: z.string(),
+  d: z.number().min(-5).max(0.95),
+  a: z.number().min(0).max(600),
+  h: z.number().min(0).max(600),
+  r: z.number().min(0).max(1200),
+  p: z.number().min(0).max(1),
+});
+
+export const customEventSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).max(60),
+  story: z.string().max(200),
+  shocks: z.array(levelShockSchema).min(1).max(12),
+});
+export type CustomEvent = z.infer<typeof customEventSchema>;
+
 export const settingsSchema = z.object({
   id: z.literal('singleton'),
   baseCurrency: z.literal('TWD'),
@@ -103,6 +203,12 @@ export const settingsSchema = z.object({
   backupPrompt: z.enum(['setup', 'review']).optional(),
   /** Monthly totals per category (default) or individual dated transactions (ENG-2). */
   cashFlowMode: z.enum(['monthly', 'transactions']),
+  /** Projection playback preferences. */
+  playback: playbackSettingsSchema.optional(),
+  /** Saved playback stories (SC-8, LE-12). */
+  stories: z.array(storySchema).max(100).optional(),
+  /** Custom events from the event builder (SC-9). */
+  customEvents: z.array(customEventSchema).max(50).optional(),
   ...audit,
 });
 export type Settings = z.infer<typeof settingsSchema>;
@@ -119,6 +225,12 @@ export const accountSchema = z.object({
   investable: z.boolean(),
   accessAge: ageSchema.optional(),
   archived: z.boolean(),
+  /** Region for playback stories; derived from class and currency when absent. */
+  region: regionSchema.optional(),
+  /** Region split for global funds; a preset when absent. */
+  exposure: exposureSchema.optional(),
+  /** Property location; derived from currency when absent. */
+  location: locationSchema.optional(),
   ...audit,
 });
 export type Account = z.infer<typeof accountSchema>;
@@ -161,6 +273,10 @@ export const liabilitySchema = z.object({
   interestRate: z.number().min(0).max(1),
   monthlyPaymentMinor: minorSchema.min(0),
   remainingMonths: z.number().int().min(0).max(1200),
+  /** Floating rate: follows rate shocks in playback stories (DM-6). */
+  floating: z.boolean().optional(),
+  /** The property this loan is secured on. */
+  propertyAccountId: idSchema.optional(),
   ...audit,
 });
 export type Liability = z.infer<typeof liabilitySchema>;
@@ -325,6 +441,19 @@ export const scenarioLeversSchema = z.object({
   swr: z.number().min(0.01).max(0.1).optional(),
   /** Added to every asset class's expected return (sensitivity). */
   returnShift: z.number().min(-0.2).max(0.2).optional(),
+  /** World events from the playback library, injected into every simulated future (EN-8). */
+  stressEvents: z
+    .array(
+      z.object({
+        eventId: z.string(),
+        timing: z.enum(['afterStop', 'year']),
+        /** Years from now when timing is 'year'. */
+        years: z.number().int().min(0).max(80).optional(),
+        severity: severitySchema,
+      }),
+    )
+    .max(5)
+    .optional(),
   /** Stress test: equities fall by `drop` in total over the first `years` years after stopping work. */
   crash: z.object({ drop: z.number().min(0).max(0.9), years: z.number().int().min(1).max(5) }).optional(),
 });
