@@ -126,11 +126,13 @@ export function PlaybackView() {
     let lastPaint = 0;
     let lastTable = 0;
     const tick = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
-      last = now;
+      // rAF timestamps can trail performance.now() slightly: never step backwards.
+      const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+      last = Math.max(last, now);
       if (now >= pausedUntil.current) {
         const before = monthRef.current;
-        const rate = speed === 'smart' ? pace[Math.min(path.months, Math.floor(before))] : Number(speed);
+        const rate =
+          speed === 'smart' ? pace[Math.max(0, Math.min(path.months, Math.floor(before)))] : Number(speed);
         let next = Math.min(path.months, before + dt * rate);
         for (let m = Math.floor(before) + 1; m <= Math.floor(next); m++) {
           if (showEvent(m) && pb.playback.autoPause) {
@@ -227,7 +229,7 @@ export function PlaybackView() {
     return () => window.removeEventListener('keydown', onKey);
   }, [pb, reduced, jump, fire]);
 
-  const m = Math.round(month);
+  const m = Math.max(0, Math.min(path.months, Math.round(month) || 0));
   const k = (x: number) => (nominal ? path.inflationIndex[x] : 1);
   const change = m > 0 ? path.total[m] * k(m) - path.total[m - 1] * k(m - 1) : 0;
   const changePct =
