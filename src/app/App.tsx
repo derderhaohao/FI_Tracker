@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { db } from '@/db/db';
-import { ensureDefaults, requestPersistence } from '@/db/defaults';
+import { ensureDefaults } from '@/db/defaults';
 import { importBackup } from '@/io/backup';
 import { buildDemoBackup } from '@/io/demo';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
@@ -15,12 +15,14 @@ import { ReviewsPage } from '@/features/review/ReviewsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { SetupPage } from '@/features/setup/SetupPage';
 import { DataProvider } from './data';
+import { PlanHealthProvider } from './planHealth';
 import { ErrorBoundary } from './ErrorBoundary';
 import { GoalHistoryRecorder } from './GoalHistoryRecorder';
 import { AutoSaver } from './AutoSaver';
 import { UpdatePrompt } from './UpdatePrompt';
 import { initAutosave } from '@/lib/autosave';
 import { Layout } from './Layout';
+import { NotFound } from './NotFound';
 
 /** `npm run demo` opens `#/settings?demo=1`: load the demo data when the database is empty. */
 async function loadDemoIfRequested(): Promise<void> {
@@ -50,7 +52,6 @@ export function App() {
           `Could not open the local database (${e instanceof Error ? e.message : String(e)}). Private browsing may block storage.`,
         ),
       );
-    void requestPersistence();
     void initAutosave();
   }, []);
 
@@ -58,26 +59,28 @@ export function App() {
   return (
     <ErrorBoundary>
       <DataProvider fallback={<Loading />}>
-        <GoalHistoryRecorder />
-        <AutoSaver />
-        <UpdatePrompt />
-        <HashRouter>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="accounts" element={<AccountsPage />} />
-              <Route path="snapshots" element={<SnapshotsPage />} />
-              <Route path="cashflow" element={<CashFlowPage />} />
-              <Route path="goal" element={<GoalPage />} />
-              <Route path="projection" element={<ProjectionPage />} />
-              <Route path="lab" element={<LabPage />} />
-              <Route path="reviews" element={<ReviewsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="setup" element={<SetupPage />} />
-              <Route path="*" element={<DashboardPage />} />
-            </Route>
-          </Routes>
-        </HashRouter>
+        <PlanHealthProvider>
+          <GoalHistoryRecorder />
+          <AutoSaver />
+          <UpdatePrompt />
+          <HashRouter>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="accounts" element={<AccountsPage />} />
+                <Route path="snapshots" element={<SnapshotsPage />} />
+                <Route path="cashflow" element={<CashFlowPage />} />
+                <Route path="goal" element={<GoalPage />} />
+                <Route path="projection" element={<ProjectionPage />} />
+                <Route path="lab" element={<LabPage />} />
+                <Route path="reviews" element={<ReviewsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="setup" element={<SetupPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </HashRouter>
+        </PlanHealthProvider>
       </DataProvider>
     </ErrorBoundary>
   );

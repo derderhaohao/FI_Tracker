@@ -43,6 +43,12 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
+/** `YYYY-MM-DD` plus `n` days. */
+export function addDays(date: string, n: number): string {
+  const t = Date.parse(`${date.slice(0, 10)}T00:00:00Z`) + n * 86_400_000;
+  return new Date(t).toISOString().slice(0, 10);
+}
+
 /** Age reached during the year of `date`. */
 export function ageAt(birthYear: number, date: string): number {
   return yearOf(date) - birthYear;

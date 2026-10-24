@@ -65,15 +65,16 @@ describe('plain-language helpers', () => {
     expect(savingsRateOf(makeInput({ annualIncome: 0 }))).toBeUndefined();
   });
 
-  it('uses the PRD tier thresholds and never rounds a real risk away', () => {
+  it('uses the shared tier thresholds and rounding', () => {
     expect(tierOf(0.85)).toBe('on_track');
-    expect(tierOf(0.84)).toBe('borderline');
-    expect(tierOf(0.7)).toBe('borderline');
+    expect(tierOf(0.84)).toBe('watch');
+    expect(tierOf(0.7)).toBe('watch');
     expect(tierOf(0.69)).toBe('at_risk');
     expect(outOfTen(0.6)).toBe(6);
-    expect(outOfTen(0.97)).toBe(9);
+    expect(outOfTen(0.97)).toBe(10);
+    expect(outOfTen(0.94)).toBe(9);
     expect(outOfTen(1)).toBe(10);
-    expect(outOfTen(0.02)).toBe(1);
+    expect(outOfTen(0.02)).toBe(0);
   });
 
   it('writes the verdict sentence with the typical run-out age', () => {
@@ -82,7 +83,7 @@ describe('plain-language helpers', () => {
     expect(v.lasts).toBe(
       `In 6 of 10 simulated futures your money lasts to ${today.input.horizonAge}; in the other 4 it runs out, typically around age 81.`,
     );
-    expect(v.reach).toBe('You reach your target in every simulation; the risk comes after you stop.');
+    expect(v.reach).toBe('You reach your target in nearly every simulation; the risk comes after you stop.');
     expect(v.tier).toBe('at_risk');
     expect(verdict(today, data.ctx.asOfDate).lasts).toBeUndefined();
   });

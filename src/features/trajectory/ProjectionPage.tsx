@@ -5,6 +5,7 @@ import { sensitivity } from '@/domain/sensitivity';
 import { useAppData, assumptionSetFor } from '@/app/data';
 import { useUi } from '@/state/ui';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
+import { PlanHealthCard } from '@/components/PlanHealthCard';
 import { LineChart } from '@/components/charts/LineChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -27,6 +28,7 @@ export function ProjectionPage() {
     return { result: runProjection(input), sens: sensitivity(data, assumptions, BASELINE_SPEC, ctx) };
   }, [data, assumptions, ctx]);
   const rows = toMode(result.rows, valueMode);
+  const fiRow = result.fiAge !== undefined ? result.rows[result.fiAge - ctx.startAge] : undefined;
 
   return (
     <>
@@ -52,6 +54,14 @@ export function ProjectionPage() {
           </>
         }
       />
+      <PlanHealthCard
+        compact
+        note={
+          setId !== data.activeAssumptions.id
+            ? `The status uses your active assumption set (${data.activeAssumptions.name}); the chart below uses ${assumptions.name}.`
+            : 'The chart is the typical path: one future where markets return their typical amount every year. The status counts how often the money lasts across 1,000 simulated futures, so it can be lower even when this line never reaches zero.'
+        }
+      />
       {ctx.warnings.map((w) => (
         <Notice key={w} tone="warning" className="mb-2">
           {w}
@@ -60,25 +70,33 @@ export function ProjectionPage() {
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat
-          label="Projected FI date"
+          label="Most likely FI date"
           value={
             result.yearsToFi !== undefined ? dateAfterYears(ctx.asOfDate, result.yearsToFi) : 'Not reached'
           }
           sub={result.fiAge !== undefined ? `Age ${result.fiAge}` : `By age ${settings.horizonAge}`}
         />
         <Stat
-          label="Investable at FI"
-          value={result.netWorthAtFi !== undefined ? twdCompact(result.netWorthAtFi) : '—'}
-          sub={`Target today ${twdCompact(result.rows[0]?.fiTarget ?? 0)} (incl. bridge)`}
+          label="Usable investments at FI"
+          value={fiRow ? twdCompact(fiRow.liquid) : '—'}
+          sub={
+            fiRow
+              ? `Money needed at ${result.fiAge}: ${twdCompact(fiRow.fiTarget)}. Plus ${twdCompact(fiRow.locked)} locked pension, which unlocks later.`
+              : `Money needed today: ${twdCompact(result.rows[0]?.fiTarget ?? 0)}`
+          }
         />
         <Stat
-          label={`Investable at age ${settings.horizonAge}`}
+          label={`Left at age ${settings.horizonAge}`}
           value={twdCompact(
             valueMode === 'nominal'
               ? result.balanceAtHorizon * (result.rows.at(-1)?.inflationIndex ?? 1)
               : result.balanceAtHorizon,
           )}
-          sub={result.success ? 'Money lasts to the horizon' : `Runs out at age ${result.depletionAge}`}
+          sub={
+            result.success
+              ? 'Left on the typical path; see the status above for the risk'
+              : `Runs out at age ${result.depletionAge} on the typical path`
+          }
         />
         <Stat
           label="Overseas income (AMT)"
@@ -90,7 +108,7 @@ export function ProjectionPage() {
       <Card className="mb-4">
         <CardHeader
           title="Investable net worth against the FI target"
-          description="Investable includes locked pension; the FI target is what liquid assets must cover to retire that year (FI number + bridge fund)."
+          description="Investable includes locked pension. Money needed is what usable investments must cover to stop work that year: the FI number plus a bridge until pensions start. It falls with age because fewer years are left to fund."
         />
         <CardContent>
           <LineChart
@@ -103,7 +121,7 @@ export function ProjectionPage() {
             }
             series={[
               { key: 'investable', label: 'Investable', slot: 0, area: true },
-              { key: 'fiTarget', label: 'FI target', slot: 1, dashed: true },
+              { key: 'fiTarget', label: 'Money needed', slot: 1, dashed: true },
               { key: 'totalNetWorth', label: 'Total net worth', slot: 2 },
             ]}
             height={320}

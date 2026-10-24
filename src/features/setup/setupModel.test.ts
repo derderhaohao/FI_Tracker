@@ -3,7 +3,10 @@ import type { Category } from '@/domain/entities';
 import { toMinor } from '@/domain/money';
 import {
   buildSetupRecords,
+  CASH_WARNING,
+  chosenMix,
   currentMix,
+  MIX_PRESETS,
   draftAccount,
   emptyDraft,
   LIVING_COSTS,
@@ -45,6 +48,7 @@ function fullDraft(): SetupDraft {
     avgInsuredSalaryMinor: toMinor(45_800),
     claimAge: 65,
   };
+  d.mix = 'current';
   return d;
 }
 
@@ -103,8 +107,9 @@ describe('setup records', () => {
     expect(r.settings.birthYear).toBe(1988);
     expect(r.settings.defaultSwr).toBe(0.04);
     expect(r.settings.destination.targetFiAge).toBe(50);
-    // Target allocation = current usable mix: 800k cash and 1.28M US equity (勞退 excluded).
+    // The chosen mix: the current usable mix, 800k cash and 1.28M US equity (勞退 excluded).
     expect(r.settings.targetAllocation).toEqual({ cash: 0.38, us_equity: 0.62 });
+    expect(r.settings.backupPrompt).toBe('setup');
     expect(r.assumptionSet.taiwan.laborPension.monthlyInsuredWageMinor).toBe(toMinor(92_100));
     expect(r.assumptionSet.taiwan.laborInsurance.insuredYearsToDate).toBe(12);
     expect(r.assumptionSet.taiwan.laborInsurance.avgMonthlyInsuredSalaryMinor).toBe(toMinor(45_800));
@@ -156,5 +161,21 @@ describe('setup records', () => {
     expect(p.investableNow).toBe(800_000 + 40_000 * 32);
     // (600k FI spending + 826 × 12 NHI from the default settings) ÷ 4%
     expect(p.fiNumber).toBeCloseTo((600_000 + (ctx.settings.destination.nhiMonthlyMinor * 12) / 100) / 0.04);
+  });
+});
+
+describe('investment mix for new savings', () => {
+  it('must be chosen, and can be the current mix or a preset', () => {
+    const d = fullDraft();
+    expect(validateStep(5, { ...d, mix: undefined }, 2026)).toEqual([
+      'Choose how your new savings will be invested.',
+    ]);
+    expect(chosenMix({ ...d, mix: 'balanced' })).toEqual(MIX_PRESETS.balanced.allocation);
+    const sum = (a: Record<string, number | undefined>) =>
+      Object.values(a).reduce<number>((x, y) => x + (y ?? 0), 0);
+    for (const p of Object.values(MIX_PRESETS)) expect(sum(p.allocation)).toBeCloseTo(1, 9);
+    expect(chosenMix(d)!.cash).toBeGreaterThan(CASH_WARNING);
+    const noUsable = { ...d, accounts: [{ ...draftAccount('pension'), balanceMinor: 100 }] };
+    expect(validateStep(5, noUsable, 2026)[0]).toMatch(/no current mix/);
   });
 });

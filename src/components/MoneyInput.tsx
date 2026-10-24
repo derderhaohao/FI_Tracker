@@ -16,6 +16,8 @@ export interface MoneyInputProps {
   /** TWD per unit, to show the TWD equivalent beside a foreign amount. */
   twdRate?: number;
   allowNegative?: boolean;
+  /** Grid cells: no currency prefix (the row says it), so the whole amount fits on a phone. */
+  compact?: boolean;
   id?: string;
   className?: string;
   placeholder?: string;
@@ -32,6 +34,7 @@ export function MoneyInput({
   onCommit,
   twdRate,
   allowNegative = false,
+  compact = false,
   id,
   className,
   placeholder,
@@ -66,14 +69,19 @@ export function MoneyInput({
   return (
     <div className={cn('flex flex-col', className)}>
       <div className="relative">
-        <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-subtle">
-          {currency}
-        </span>
+        {!compact && (
+          <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-subtle">
+            {currency}
+          </span>
+        )}
         <input
           id={id}
           inputMode="decimal"
           size={10}
-          className="h-8 w-full min-w-0 rounded-md border border-input bg-surface pr-2 pl-11 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-critical"
+          className={cn(
+            'h-8 w-full min-w-0 rounded-md border border-input bg-surface pr-2 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-critical',
+            compact ? 'pl-2' : 'pl-11',
+          )}
           value={text}
           placeholder={placeholder ?? '—'}
           aria-invalid={invalid || undefined}

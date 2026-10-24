@@ -320,7 +320,7 @@ export function CashFlowPage() {
       </tr>
       {cats.map((c) => (
         <tr key={c.id}>
-          <td className="sticky left-0 z-10 min-w-44 bg-surface">
+          <td className="sticky left-0 z-10 max-w-32 bg-surface sm:max-w-none sm:min-w-44">
             {c.name}
             {c.kind === 'expense' && c.essential && (
               <span className="ml-1 text-xs text-subtle">essential</span>
@@ -331,7 +331,7 @@ export function CashFlowPage() {
             const regular = regularFlow(cashFlows, m, c.id);
             const others = extra - (regular ? regular.amountMinor / 100 : 0);
             return (
-              <td key={m} className="w-36 align-top">
+              <td key={m} className="w-36 min-w-28 align-top">
                 {mode === 'transactions' ? (
                   <button
                     className="block w-full py-1 text-right hover:text-primary"
@@ -342,6 +342,7 @@ export function CashFlowPage() {
                   </button>
                 ) : (
                   <MoneyInput
+                    compact
                     aria-label={`${c.name} ${m}`}
                     value={regular?.amountMinor}
                     currency="TWD"

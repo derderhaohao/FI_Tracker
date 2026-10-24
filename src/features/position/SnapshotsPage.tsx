@@ -382,7 +382,7 @@ export function SnapshotsPage() {
               <tbody>
                 {active.map((a) => (
                   <tr key={a.id}>
-                    <td className="sticky left-0 bg-surface">
+                    <td className="sticky left-0 z-10 max-w-36 bg-surface sm:max-w-none">
                       <div className="font-medium">{a.nickname}</div>
                       <div className="text-xs text-subtle">
                         {a.type === 'liability' ? 'Owed' : a.institution} · {a.currency}
@@ -402,8 +402,9 @@ export function SnapshotsPage() {
                     {shown.map((d) => {
                       const s = snapshots.find((x) => x.accountId === a.id && x.date === d);
                       return (
-                        <td key={d} className="w-36 align-top">
+                        <td key={d} className="w-36 min-w-28 align-top">
                           <MoneyInput
+                            compact
                             aria-label={`${a.nickname} on ${d}`}
                             value={s?.balanceMinor}
                             currency={a.currency}

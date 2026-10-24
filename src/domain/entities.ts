@@ -99,6 +99,8 @@ export const settingsSchema = z.object({
   lastBackupAt: z.string().optional(),
   /** True after a snapshot is saved and before the next backup. */
   snapshotSinceBackup: z.boolean(),
+  /** A backup prompt is waiting: after setup or after a review (cleared by a backup or "later"). */
+  backupPrompt: z.enum(['setup', 'review']).optional(),
   /** Monthly totals per category (default) or individual dated transactions (ENG-2). */
   cashFlowMode: z.enum(['monthly', 'transactions']),
   ...audit,

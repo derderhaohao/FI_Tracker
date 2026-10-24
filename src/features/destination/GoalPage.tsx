@@ -2,28 +2,22 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import type { Category, FiTier } from '@/domain/entities';
-import {
-  coastFi,
-  fiNumber,
-  fiTarget,
-  permanentIncome,
-  requiredAnnualSavings,
-  yearsToFi,
-} from '@/domain/fiNumber';
+import { fiNumber, fiTarget } from '@/domain/fiNumber';
 import { fromMinor, parseMoneyInput } from '@/domain/money';
-import { guaranteedStreams, laborInsuranceYears, portfolioRealReturn } from '@/domain/projection';
+import { guaranteedStreams, laborInsuranceYears } from '@/domain/projection';
 import { laborInsuranceAnnual } from '@/domain/taiwan/laborInsurance';
 import { db } from '@/db/db';
 import { newId, patch, save } from '@/db/repo';
 import { useAppData } from '@/app/data';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
+import { PlanHealthCard } from '@/components/PlanHealthCard';
 import { LineChart } from '@/components/charts/LineChart';
 import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
-import { pct, twd, twdCompact } from '@/lib/format';
+import { budgetVsActual, pct, twd, twdCompact } from '@/lib/format';
 
 const TIER_LABELS: Record<FiTier, string> = { lean: 'Lean', full: 'Full', fat: 'Fat' };
 
@@ -53,9 +47,7 @@ function BudgetRow({ c, actual }: { c: Category; actual: number }) {
         />
       </td>
       <td className="text-right text-muted-foreground">{actual > 0 ? twd(actual) : '—'}</td>
-      <td className="text-right text-muted-foreground">
-        {c.fiAnnualMinor !== undefined && actual > 0 ? pct(fromMinor(c.fiAnnualMinor) / actual - 1, 0) : ''}
-      </td>
+      <td className="text-right text-muted-foreground">{budgetVsActual(c.fiAnnualMinor, actual)}</td>
     </tr>
   );
 }
@@ -284,8 +276,8 @@ export function GoalPage() {
   const d = settings.destination;
   const expense = categories.filter((c) => c.kind === 'expense');
   const startAge = ctx.startAge;
-  const streamsNow = guaranteedStreams(baselineInput, startAge);
-  const G = permanentIncome(streamsNow, baselineInput.horizonAge);
+  // Valued at the plan's stop age, like the Dashboard's FI number.
+  const G = data.guaranteedIncome;
   const swr = settings.defaultSwr;
   const tiers = ctx.tiers;
   const li = activeAssumptions.taiwan.laborInsurance;
@@ -299,9 +291,8 @@ export function GoalPage() {
     : 0;
 
   const targetAge = d.targetFiAge;
-  const r = portfolioRealReturn(baselineInput);
-  const P = ctx.netWorth.investable;
-  const target =
+  const planAge = data.baseline.retireAge ?? data.baseline.fiAge;
+  const targetMoney =
     targetAge !== undefined
       ? fiTarget(
           baselineInput.fiSpending,
@@ -311,14 +302,6 @@ export function GoalPage() {
           baselineInput.horizonAge,
         )
       : undefined;
-  const yearsLeft = targetAge !== undefined ? targetAge - startAge : undefined;
-  const needAnnual =
-    target !== undefined && yearsLeft !== undefined
-      ? requiredAnnualSavings(P, target, r, yearsLeft)
-      : undefined;
-  const currentMonthly = ctx.t12.monthsWithData > 0 ? ctx.t12.savings / ctx.t12.monthsWithData : 0;
-  const coast = target !== undefined && yearsLeft !== undefined ? coastFi(target, r, yearsLeft) : undefined;
-  const closedFormYears = yearsToFi(P, Math.max(0, currentMonthly * 12), data.fiNumberNow, r);
 
   return (
     <>
@@ -326,6 +309,14 @@ export function GoalPage() {
         title="Goal"
         description="What FI means for you: the FI-phase budget by category, guaranteed income, and the safe withdrawal rate."
         actions={<AssumptionBadge set={activeAssumptions} />}
+      />
+      <PlanHealthCard
+        compact
+        note={
+          G > 0
+            ? `The FI numbers below count ${twdCompact(G)} a year of guaranteed income, as the plan receives it if you stop at ${data.planStopAge}.`
+            : undefined
+        }
       />
       {ctx.fiSpendingFromT12 && (
         <Notice tone="warning" className="mb-4">
@@ -370,7 +361,7 @@ export function GoalPage() {
                   <th>Tier</th>
                   <th>FI budget / year</th>
                   <th className="text-right">Last 12 months</th>
-                  <th className="text-right">vs actual</th>
+                  <th className="text-right">Budget vs now</th>
                 </tr>
               </thead>
               <tbody>
@@ -387,6 +378,7 @@ export function GoalPage() {
               </tbody>
             </Table>
             <p className="mt-2 text-xs text-subtle">
+              “Budget vs now”: how much more or less the FI budget is than you spent in the last 12 months.
               Lean counts essential categories only. Fat multiplies Full by the fat multiplier. Trailing
               actuals cover {ctx.t12.monthsWithData} month
               {ctx.t12.monthsWithData === 1 ? '' : 's'}; add categories in Settings.
@@ -441,7 +433,7 @@ export function GoalPage() {
                 />
               )}
             </Field>
-            <Field label="Target FI age" hint="Optional; shows the savings needed to get there">
+            <Field label="Target FI age" hint="Optional; compares it with your plan below">
               {(id) => (
                 <NumberInput
                   id={id}
@@ -516,53 +508,46 @@ export function GoalPage() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
-          <CardHeader
-            title="Quick estimates"
-            description={`Closed-form checks at an expected real return of ${pct(r, 2)} (target allocation, net of fees). The year-by-year projection is the number of record.`}
-          />
-          <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <Stat
-              label="Years to FI at current savings"
-              value={Number.isFinite(closedFormYears) ? closedFormYears.toFixed(1) : 'Never'}
-              sub={`Saving ${twdCompact(currentMonthly)}/month`}
+        {targetAge !== undefined && (
+          <Card className="lg:col-span-3">
+            <CardHeader
+              title={`Your target age: ${targetAge}`}
+              description="From the same year-by-year projection as the Dashboard, so the answers match."
             />
-            {targetAge !== undefined &&
-            target !== undefined &&
-            needAnnual !== undefined &&
-            coast !== undefined ? (
-              <>
-                <Stat
-                  label={`FI target at age ${targetAge}`}
-                  value={twdCompact(target)}
-                  sub="FI number plus bridge fund for income that starts later"
-                />
-                <Stat
-                  label={`Savings needed for age ${targetAge}`}
-                  value={`${twdCompact(needAnnual / 12)}/mo`}
-                  sub={
-                    currentMonthly > 0
-                      ? `You save ${twdCompact(currentMonthly)}/mo (${needAnnual / 12 <= currentMonthly ? 'on track' : 'short'})`
-                      : undefined
-                  }
-                />
-                <Stat
-                  label="Coast FI"
-                  value={twdCompact(coast)}
-                  sub={
-                    P >= coast
-                      ? 'Reached: no more saving needed for the target age'
-                      : `${pct(P / coast, 0)} of the way`
-                  }
-                />
-              </>
-            ) : (
-              <p className="self-center text-sm text-muted-foreground md:col-span-3">
-                Set a target FI age to see the savings needed and the Coast FI amount.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+            <CardContent className="text-sm">
+              {planAge === undefined ? (
+                <p>
+                  On the typical path your investments do not reach the money needed before{' '}
+                  {settings.horizonAge}, so {targetAge} is out of reach at today's savings.
+                </p>
+              ) : planAge <= targetAge ? (
+                <p>
+                  On the typical path you could stop at {planAge}
+                  {planAge < targetAge
+                    ? `, ${targetAge - planAge} year${targetAge - planAge === 1 ? '' : 's'} before your target`
+                    : ', right on your target'}
+                  .
+                </p>
+              ) : (
+                <p>
+                  On the typical path you could stop at {planAge}, {planAge - targetAge} year
+                  {planAge - targetAge === 1 ? '' : 's'} after your target. To see what closes the gap, try
+                  “Retire at {targetAge}” in the{' '}
+                  <Link to="/lab" className="text-primary hover:underline">
+                    Strategy Lab
+                  </Link>
+                  : it shows the chance your money lasts and which changes help most.
+                </p>
+              )}
+              {targetMoney !== undefined && (
+                <p className="mt-1 text-muted-foreground">
+                  Money needed to stop at {targetAge}: {twdCompact(targetMoney)} in usable investments (FI
+                  number plus a bridge until pensions start).
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <GoalHistoryCard />
       </div>

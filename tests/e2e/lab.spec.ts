@@ -19,7 +19,7 @@ test('Strategy Lab answers in plain words first (Simple view)', async ({ page })
   await expect(verdict.getByText(/In \d+ of 10 simulated futures your money lasts to 95/)).toBeVisible({
     timeout: 20_000,
   });
-  await expect(verdict.getByRole('img', { name: /of 10 simulated futures last/ })).toBeVisible();
+  await expect(verdict.getByRole('img', { name: /simulated futures last$/ })).toBeVisible();
   await expect(verdict.getByText('Why these differ.')).toBeVisible();
 
   // The built-in row and the comparison with it.
@@ -84,5 +84,41 @@ test('a what-if from a template, safer variants and reaching a target', async ({
     .getByRole('button', { name: 'Save' })
     .click();
   await expect(page.getByRole('heading', { name: 'Edit: Retire at 47: stop at 48' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('every page shows the same status and stop-work age (review: one answer)', async ({ page }) => {
+  const errors = await loadDemo(page);
+  const health = async (path: string) => {
+    await page.goto(`./#${path}`);
+    const card = page.getByLabel('Plan health');
+    await expect(card.getByText(/^(On track|Watch|At risk)$/)).toBeVisible({ timeout: 20_000 });
+    const status = await card.getByText(/^(On track|Watch|At risk)$/).innerText();
+    const age = (await card.innerText()).match(/(?:Most likely age|most likely at) (\d+)/)?.[1];
+    return { status, age };
+  };
+  const dashboard = await health('/');
+  expect(dashboard.age).toBeDefined();
+  expect(await health('/projection')).toEqual(dashboard);
+  expect(await health('/goal')).toEqual(dashboard);
+  await page.goto('./#/lab');
+  const verdict = page.getByLabel('Verdict');
+  await expect(verdict.getByText(dashboard.status, { exact: true })).toBeVisible({ timeout: 20_000 });
+  await expect(verdict.getByText(new RegExp(`stop working at ${dashboard.age} `))).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('phone navigation reaches every page in two taps', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  const errors = await loadDemo(page);
+  const bar = page.getByRole('navigation', { name: 'Main' }).last();
+  await expect(bar.getByRole('link')).toHaveCount(4);
+  for (const name of ['Accounts', 'Goal', 'Projection', 'Reviews', 'Settings']) {
+    await bar.getByRole('button', { name: 'More pages' }).click();
+    await page.getByRole('navigation', { name: 'More pages' }).getByRole('link', { name }).click();
+    await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+  }
+  await page.goto('./#/strategy');
+  await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
   expect(errors).toEqual([]);
 });

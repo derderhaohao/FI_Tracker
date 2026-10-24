@@ -6,6 +6,7 @@ import { medianReturn } from '@/domain/montecarlo/rng';
 import { prepare, runProjection, type ProjectionInput, type ProjectionResult } from '@/domain/projection';
 import { assumptionSetFor, type AppData } from '@/app/data';
 import { dateAfterYears } from '@/lib/format';
+import { chanceDots, lastsSentence, planStatus, STATUS_LABELS, type PlanStatus } from '@/domain/planStatus';
 
 /**
  * Pure helpers behind the Strategy Lab's plain-language view (PRD R3–R6): the verdict,
@@ -79,28 +80,8 @@ export function savingsRateOf(input: ProjectionInput): number | undefined {
   return input.annualIncome > 0 ? annualSavings(input) / input.annualIncome : undefined;
 }
 
-export type Tier = 'on_track' | 'borderline' | 'at_risk';
-
-export const TIER_LABELS: Record<Tier, string> = {
-  on_track: 'On track',
-  borderline: 'Borderline',
-  at_risk: 'At risk',
-};
-
-/** PRD thresholds: On track 85%+, Borderline 70–84%, At risk under 70%. */
-export function tierOf(chance: number): Tier {
-  if (chance >= 0.85) return 'on_track';
-  if (chance >= 0.7) return 'borderline';
-  return 'at_risk';
-}
-
-/** Whole futures out of ten, never rounding a real risk to zero or a real chance to ten. */
-export function outOfTen(chance: number): number {
-  const n = Math.round(chance * 10);
-  if (n === 10 && chance < 0.995) return 9;
-  if (n === 0 && chance > 0.005) return 1;
-  return n;
-}
+export type Tier = PlanStatus;
+export { STATUS_LABELS as TIER_LABELS, planStatus as tierOf, chanceDots as outOfTen };
 
 export interface Verdict {
   /** "You could stop working at 49 (Nov 2037)." */
@@ -127,25 +108,17 @@ export function verdict(
         ? `You plan to stop working at ${age} (${date}).`
         : `You could stop working at ${age} (${date}).`;
   if (!mc) return { stop };
-  const h = input.horizonAge;
-  const n = outOfTen(mc.successRate);
-  const dep =
-    mc.depletionAgeP50 !== undefined ? `, typically around age ${Math.round(mc.depletionAgeP50)}` : '';
-  let lasts: string;
-  if (mc.successRate >= 0.995) lasts = `In every simulated future your money lasts to ${h}.`;
-  else if (n === 0) lasts = `In almost every simulated future your money runs out before ${h}${dep}.`;
-  else
-    lasts = `In ${n} of 10 simulated futures your money lasts to ${h}; in the other ${10 - n} it runs out${dep}.`;
+  const lasts = lastsSentence(mc.successRate, input.horizonAge, mc.depletionAgeP50);
   let reach: string | undefined;
   if (input.retireAtAge === undefined) {
-    if (mc.fiRate >= 0.995)
+    if (mc.fiRate >= 0.95)
       reach =
-        mc.successRate < 0.995
-          ? 'You reach your target in every simulation; the risk comes after you stop.'
-          : 'You reach your target in every simulation.';
-    else reach = `You reach your target in ${outOfTen(mc.fiRate)} of 10 simulations.`;
+        mc.successRate < 0.95
+          ? 'You reach your target in nearly every simulation; the risk comes after you stop.'
+          : 'You reach your target in nearly every simulation.';
+    else reach = `You reach your target in ${chanceDots(mc.fiRate)} of 10 simulations.`;
   }
-  return { stop, lasts, reach, tier: tierOf(mc.successRate) };
+  return { stop, lasts, reach, tier: planStatus(mc.successRate) };
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;

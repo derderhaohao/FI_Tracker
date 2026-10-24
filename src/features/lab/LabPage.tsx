@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Table } from '@/components/ui/misc';
 import { Term } from '@/components/ui/term';
+import { chanceDots, chanceText } from '@/domain/planStatus';
 import type { GlossaryParams } from '@/lib/glossary';
 import { pct, twdCompact } from '@/lib/format';
 import { inflationIndex } from '@/lib/valueMode';
@@ -30,7 +31,6 @@ import {
   evaluateRow,
   explainDifference,
   nameCheck,
-  outOfTen,
   stopAge,
   stopDate,
   TODAY_ID,
@@ -448,8 +448,8 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                               <div>
                                 <Dots
                                   small
-                                  filled={outOfTen(m.summary.successRate)}
-                                  label={`${outOfTen(m.summary.successRate)} of 10`}
+                                  filled={chanceDots(m.summary.successRate)}
+                                  label={chanceText(m.summary.successRate)}
                                 />
                               </div>
                             </span>
