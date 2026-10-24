@@ -11,6 +11,7 @@ import { BASE_CURRENCY } from './fx';
 import { laborInsuranceAnnual } from './taiwan/laborInsurance';
 import { amtFlag, domesticDividendTax, nhiSupplementaryPremium } from './taiwan/dividends';
 import { applyWithdrawalRule } from './withdrawal';
+import { medianReturn } from './montecarlo/rng';
 
 /**
  * Year-by-year projection in real TWD (TRJ-2). The deterministic projection and the
@@ -76,7 +77,12 @@ export interface ProjectionInput {
   /** Annual FI-phase spending S, including post-employment costs. */
   fiSpending: number;
   streams: ProjectionStream[];
-  barista?: { annual: number; untilAge: number };
+  /** Part-time income after stopping; `inTarget` false leaves it out of the money-needed target. */
+  barista?: { annual: number; untilAge: number; inTarget?: boolean };
+  /** When retiring at FI: keep working this many years after first reaching the target. */
+  workExtraYears?: number;
+  /** Spending the money-needed target is sized on, when different from FI spending. */
+  targetSpending?: number;
   laborInsurance?: { settings: TaiwanSettings['laborInsurance']; claimAge: number; haircut: number };
   /** 勞退 per year while working: into the locked bucket, and the change to take-home savings. */
   pension: { employer: number; voluntary: number; liquidDelta: number; accessAge: number };
@@ -97,6 +103,8 @@ export interface ProjectionInput {
   fxDrift: number;
   fxVolatility: number;
   events: ProjectionEvent[];
+  /** Equities fall by `drop` in total over the first `years` years after stopping work. */
+  crash?: { drop: number; years: number };
   taiwan: TaiwanSettings;
 }
 
@@ -183,7 +191,12 @@ export function guaranteedStreams(input: ProjectionInput, retireAge: number): Gu
     );
     if (annual > 0) out.push({ startAge: li.claimAge, annual });
   }
-  if (input.barista && input.barista.untilAge > retireAge && input.barista.annual > 0) {
+  if (
+    input.barista &&
+    input.barista.inTarget !== false &&
+    input.barista.untilAge > retireAge &&
+    input.barista.annual > 0
+  ) {
     out.push({ startAge: retireAge, endAge: input.barista.untilAge, annual: input.barista.annual });
   }
   return out;
@@ -194,17 +207,30 @@ export function prepare(input: ProjectionInput): Prepared {
   const required = new Float64Array(years + 1);
   for (let k = 0; k <= years; k++) {
     const age = input.startAge + k;
-    required[k] = fiTarget(input.fiSpending, guaranteedStreams(input, age), input.swr, age, input.horizonAge);
+    required[k] = fiTarget(
+      input.targetSpending ?? input.fiSpending,
+      guaranteedStreams(input, age),
+      input.swr,
+      age,
+      input.horizonAge,
+    );
   }
   return { input, years, required };
 }
 
-/** Expected-value draw used by the deterministic projection. */
+/**
+ * Typical-year draw used by the deterministic projection: each class returns its median
+ * (compounded) return, so the typical path sits inside the Monte Carlo middle band
+ * instead of above it. With zero volatility this is the expected return.
+ */
 export function expectedDraw(input: ProjectionInput): YearDraw {
   const nominal = new Float64Array(N_ASSETS);
-  for (let i = 0; i < N_ASSETS; i++) nominal[i] = input.assets[i].expectedReturn + input.returnShift;
+  for (let i = 0; i < N_ASSETS; i++)
+    nominal[i] = medianReturn(input.assets[i].expectedReturn + input.returnShift, input.assets[i].volatility);
   return { nominal, inflation: input.inflation, fx: input.fxDrift };
 }
+
+const EQUITY = new Set<AssetClass>(['tw_equity', 'us_equity', 'global_equity']);
 
 const classIndex = new Map<AssetClass, number>(ASSET_CLASSES.map((c, i) => [c, i]));
 
@@ -387,7 +413,9 @@ export function simulate(
   for (let k = 0; k < years; k++) {
     const age = input.startAge + k;
     const retired =
-      input.retireAtAge !== undefined ? age >= input.retireAtAge : fiAge !== undefined && age >= fiAge;
+      input.retireAtAge !== undefined
+        ? age >= input.retireAtAge
+        : fiAge !== undefined && age >= fiAge + (input.workExtraYears ?? 0);
     if (retired && retireAge === undefined) {
       retireAge = age;
       spendingNow = input.fiSpending;
@@ -402,6 +430,10 @@ export function simulate(
       }
     }
     fillDraw(k, draw);
+    if (input.crash && retireAge !== undefined && age < retireAge + input.crash.years) {
+      const yearly = Math.pow(1 - input.crash.drop, 1 / input.crash.years) - 1;
+      for (let i = 0; i < N_ASSETS; i++) if (EQUITY.has(ASSET_CLASSES[i])) draw.nominal[i] = yearly;
+    }
     const flows: Partial<YearRow> = { retired };
 
     // 1. Events for this year.
@@ -538,13 +570,13 @@ export function runProjection(input: ProjectionInput): ProjectionResult {
   );
 }
 
-/** Expected real return of the target allocation, net of fees (for closed-form estimates). */
+/** Typical (median) real return of the target allocation, net of fees (for closed-form estimates). */
 export function portfolioRealReturn(input: ProjectionInput): number {
   let r = 0;
   for (let i = 0; i < N_ASSETS; i++) {
     const a = input.assets[i];
-    r +=
-      input.allocation[i] * ((1 + a.expectedReturn + input.returnShift - a.fee) / (1 + input.inflation) - 1);
+    const typical = medianReturn(a.expectedReturn + input.returnShift, a.volatility);
+    r += input.allocation[i] * ((1 + typical - a.fee) / (1 + input.inflation) - 1);
   }
   return r;
 }

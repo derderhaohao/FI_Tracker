@@ -39,11 +39,12 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await expect(page.getByText('Start').first()).toBeVisible();
   await expect(page.getByText('2026-10-31 · age 35')).toBeVisible();
 
-  // Strategy Lab: run Monte Carlo for the compared scenarios.
+  // Strategy Lab: simulated futures run on their own and lead with a plain verdict.
   await page.getByRole('link', { name: 'Strategy Lab' }).first().click();
-  await page.getByRole('button', { name: 'Run Monte Carlo' }).click();
-  await expect(page.getByText('Success rate').first()).toBeVisible();
-  await expect(page.locator('td', { hasText: /^\d+%$/ }).first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/simulated futures your money (lasts|runs out)/)).toBeVisible({
+    timeout: 20_000,
+  });
+  await expect(page.locator('td', { hasText: /^\d+%/ }).first()).toBeVisible();
 
   // Export, wipe, and re-import.
   await page.getByRole('link', { name: 'Settings' }).first().click();

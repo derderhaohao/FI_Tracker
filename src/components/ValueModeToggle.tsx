@@ -6,12 +6,12 @@ export function ValueModeToggle() {
   const { valueMode, setValueMode } = useUi();
   return (
     <Segmented
-      label="Real or nominal values"
+      label="Today's or future money"
       value={valueMode}
       onChange={setValueMode}
       options={[
-        { value: 'real', label: "Today's TWD" },
-        { value: 'nominal', label: 'Nominal' },
+        { value: 'real', label: "Today's money" },
+        { value: 'nominal', label: 'Future money' },
       ]}
     />
   );

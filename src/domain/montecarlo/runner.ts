@@ -13,12 +13,16 @@ export interface MonteCarloSummary {
   ages: number[];
   /** Investable net worth (real TWD) per age. */
   p10: number[];
+  p40: number[];
   p50: number[];
+  p60: number[];
   p90: number[];
   /** Share of runs where liquid investable stays above zero to the horizon age. */
   successRate: number;
   /** Share of runs that reach FI at all. */
   fiRate: number;
+  /** Median age the money runs out, over the runs where it does. */
+  depletionAgeP50?: number;
   fiAgeP10?: number;
   fiAgeP50?: number;
   fiAgeP90?: number;
@@ -59,6 +63,7 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
 
   const paths = new Float64Array(runs * (years + 1));
   const fiAges: number[] = [];
+  const depletionAges: number[] = [];
   const horizon = new Float64Array(runs);
   const minSpending = new Float64Array(runs);
   let successes = 0;
@@ -79,6 +84,7 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
     );
     paths.set(result.investable, r * (years + 1));
     if (result.success) successes += 1;
+    else if (result.depletionAge !== undefined) depletionAges.push(result.depletionAge);
     if (result.fiAge !== undefined) fiAges.push(result.fiAge);
     horizon[r] = result.balanceAtHorizon;
     minSpending[r] = result.minSpendingRatio;
@@ -86,7 +92,9 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
 
   const ages: number[] = [];
   const p10: number[] = [];
+  const p40: number[] = [];
   const p50: number[] = [];
+  const p60: number[] = [];
   const p90: number[] = [];
   const column = new Float64Array(runs);
   for (let k = 0; k <= years; k++) {
@@ -94,11 +102,14 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
     column.sort();
     ages.push(input.startAge + k);
     p10.push(percentile(column, 0.1));
+    p40.push(percentile(column, 0.4));
     p50.push(percentile(column, 0.5));
+    p60.push(percentile(column, 0.6));
     p90.push(percentile(column, 0.9));
   }
 
   fiAges.sort((a, b) => a - b);
+  depletionAges.sort((a, b) => a - b);
   const counts = new Map<number, number>();
   for (const a of fiAges) counts.set(a, (counts.get(a) ?? 0) + 1);
   horizon.sort();
@@ -109,10 +120,13 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
     seed: options.seed,
     ages,
     p10,
+    p40,
     p50,
+    p60,
     p90,
     successRate: successes / runs,
     fiRate: fiAges.length / runs,
+    depletionAgeP50: depletionAges.length ? percentile(depletionAges, 0.5) : undefined,
     fiAgeP10: fiAges.length ? percentile(fiAges, 0.1) : undefined,
     fiAgeP50: fiAges.length ? percentile(fiAges, 0.5) : undefined,
     fiAgeP90: fiAges.length ? percentile(fiAges, 0.9) : undefined,

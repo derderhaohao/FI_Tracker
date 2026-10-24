@@ -305,13 +305,26 @@ export const scenarioLeversSchema = z.object({
   allocation: allocationSchema.optional(),
   /** Stop working at this age, whether or not FI has been reached. */
   targetFiAge: ageSchema.optional(),
-  baristaIncome: z.object({ annualMinor: minorSchema.min(0), untilAge: ageSchema }).optional(),
+  baristaIncome: z
+    .object({
+      annualMinor: minorSchema.min(0),
+      untilAge: ageSchema,
+      /** False: don't count it towards reaching the target (stop no earlier because of it). */
+      inTarget: z.boolean().optional(),
+    })
+    .optional(),
+  /** When stopping at FI: keep working this many years after first reaching the target. */
+  workExtraYears: z.number().int().min(0).max(30).optional(),
+  /** Size the money-needed target on this yearly spending instead of FI spending. */
+  targetSpendingMinor: minorSchema.min(0).optional(),
   laborPensionVoluntaryRate: z.number().min(0).max(0.06).optional(),
   laborInsuranceClaimAge: ageSchema.optional(),
   laborInsuranceHaircut: z.number().min(0).max(1).optional(),
   swr: z.number().min(0.01).max(0.1).optional(),
   /** Added to every asset class's expected return (sensitivity). */
   returnShift: z.number().min(-0.2).max(0.2).optional(),
+  /** Stress test: equities fall by `drop` in total over the first `years` years after stopping work. */
+  crash: z.object({ drop: z.number().min(0).max(0.9), years: z.number().int().min(1).max(5) }).optional(),
 });
 export type ScenarioLevers = z.infer<typeof scenarioLeversSchema>;
 

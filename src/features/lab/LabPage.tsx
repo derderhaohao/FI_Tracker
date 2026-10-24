@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Copy, Lock, Play, Plus, Trash2 } from 'lucide-react';
-import type { Scenario } from '@/domain/entities';
+import { Copy, HelpCircle, Lock, Play, Plus, Trash2 } from 'lucide-react';
+import type { Scenario, ScenarioLevers } from '@/domain/entities';
 import { MAX_RUNS } from '@/domain/montecarlo/runner';
 import { db } from '@/db/db';
 import { newId, save } from '@/db/repo';
@@ -9,25 +9,39 @@ import { MAX_COMPARE, useUi } from '@/state/ui';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { BandChart } from '@/components/charts/BandChart';
+import { PLAIN_BAND_LABELS, TECHNICAL_BAND_LABELS } from '@/components/charts/bandLabels';
 import { LineChart } from '@/components/charts/LineChart';
 import { useChartTheme } from '@/components/charts/theme';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select } from '@/components/ui/input';
-import { Badge, EmptyState, Notice, PageHeader, Table } from '@/components/ui/misc';
-import { dateAfterYears, pct, twdCompact } from '@/lib/format';
+import { Badge, Notice, PageHeader, Segmented, Table } from '@/components/ui/misc';
+import { Term } from '@/components/ui/term';
+import type { GlossaryParams } from '@/lib/glossary';
+import { pct, twdCompact } from '@/lib/format';
 import { inflationIndex } from '@/lib/valueMode';
 import { ScenarioEditor } from './ScenarioEditor';
-import { evaluate, lockPlanOfRecord, newScenarioDraft, type Evaluated } from './actions';
+import { lockPlanOfRecord, newScenarioDraft } from './actions';
 import { BacktestCard } from './BacktestCard';
 import { BuyVsRentPanel } from './BuyVsRent';
-import { HISTORY, runBacktest } from '@/domain/backtest';
-import { Segmented } from '@/components/ui/misc';
+import { ChecksPanel } from './ChecksPanel';
+import { Dots } from './Dots';
+import {
+  evaluateRow,
+  explainDifference,
+  nameCheck,
+  outOfTen,
+  stopAge,
+  stopDate,
+  TODAY_ID,
+  verdict,
+  type LabRow,
+} from './model';
+import { SaferCard } from './SaferCard';
+import { StarterCard, TemplatePicker } from './StarterCard';
+import type { TemplateResult } from './templates';
 import { signature, useMonteCarlo } from './useMonteCarlo';
-
-function withBacktest(e: Evaluated) {
-  return { ...e, slot: 0, backtest: runBacktest(e.input) };
-}
+import { VerdictCard } from './VerdictCard';
 
 type LabTab = 'scenarios' | 'buyrent';
 
@@ -64,7 +78,7 @@ export function LabPage() {
 
 function ScenarioLab({ tabs }: { tabs: ReactNode }) {
   const data = useAppData();
-  const { scenarios, ctx } = data;
+  const { scenarios, ctx, settings } = data;
   const theme = useChartTheme();
   const {
     selectedScenarioId,
@@ -77,59 +91,82 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
     mcSeed,
     setMcSeed,
     valueMode,
+    labView,
+    setLabView,
+    labStarter,
+    setLabStarter,
   } = useUi();
+  const advanced = labView === 'advanced';
   const mc = useMonteCarlo();
   const sorted = useMemo(
     () => [...scenarios].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [scenarios],
   );
-  const selected = sorted.find((s) => s.id === selectedScenarioId) ?? sorted[0];
+  const selectedScenario = sorted.find((s) => s.id === selectedScenarioId);
 
   useEffect(() => {
     const valid = Object.keys(compare).filter((id) => scenarios.some((s) => s.id === id));
     if (valid.length === 0 && sorted.length > 0) setCompare(sorted.slice(0, 3).map((s) => s.id));
   }, [compare, scenarios, sorted, setCompare]);
 
+  const today = useMemo(() => evaluateRow(data), [data]);
   const compared = useMemo(
     () =>
       sorted
         .filter((s) => s.id in compare)
-        .map((s) => {
-          const e = evaluate(data, s);
-          return { ...e, slot: compare[s.id], backtest: runBacktest(e.input) };
-        })
+        .map((s) => ({ ...evaluateRow(data, s), slot: compare[s.id] }))
         .sort((a, b) => a.slot - b.slot),
     [sorted, compare, data],
   );
-
-  if (sorted.length === 0) {
+  const selected: LabRow & { slot: number } = useMemo(() => {
+    if (!selectedScenario) return { ...today, slot: 0 };
     return (
-      <>
-        <PageHeader
-          title="Strategy Lab"
-          description="Test alternatives against the same real data."
-          actions={tabs}
-        />
-        <EmptyState title="No scenarios yet">
-          A scenario is the baseline plus named overrides: savings rate, income changes, spending, allocation,
-          FI age, one-off events and part-time income.
-          <div className="mt-4">
-            <Button
-              onClick={async () => {
-                const s = await save(db.scenarios, newScenarioDraft(data, 'Baseline'));
-                selectScenario(s.id);
-              }}
-            >
-              <Plus aria-hidden /> Create a baseline scenario
-            </Button>
-          </div>
-        </EmptyState>
-      </>
+      compared.find((c) => c.id === selectedScenario.id) ?? {
+        ...evaluateRow(data, selectedScenario),
+        slot: 0,
+      }
     );
-  }
+  }, [selectedScenario, compared, today, data]);
 
-  const create = async (from?: Scenario) => {
-    let draft = newScenarioDraft(data, `Scenario ${sorted.length + 1}`);
+  // Simulated futures run automatically for every visible row (PRD R3).
+  const jobs = useMemo(() => {
+    const rows = [today, ...compared];
+    if (!rows.some((r) => r.id === selected.id)) rows.push(selected);
+    return rows.map((r) => ({ id: r.id, input: r.input, sig: signature(r.input, mcRuns, mcSeed) }));
+  }, [today, compared, selected, mcRuns, mcSeed]);
+  const staleJobs = jobs.filter((j) => mc.results[j.id]?.signature !== j.sig);
+  const staleKey = staleJobs.map((j) => j.id + j.sig).join(',');
+  const { run } = mc;
+  useEffect(() => {
+    if (!staleKey) return;
+    const t = setTimeout(() => void run(staleJobs, mcRuns, mcSeed), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- staleKey captures the jobs
+  }, [staleKey, run, mcRuns, mcSeed]);
+
+  const resultFor = (r: LabRow) => mc.results[r.id];
+  const fresh = (r: LabRow) => resultFor(r)?.signature === signature(r.input, mcRuns, mcSeed);
+  const chanceOf = (r: LabRow) => resultFor(r)?.summary.successRate;
+
+  const params: GlossaryParams = {
+    runs: mcRuns,
+    horizonAge: selected.input.horizonAge,
+    firstYear: selected.backtest.firstYear,
+    lastYear: selected.backtest.lastYear,
+    fiSpending: selected.input.fiSpending,
+    swr: selected.input.swr,
+  };
+
+  const addScenario = async (name: string, overrides: ScenarioLevers, events: Scenario['events'] = []) => {
+    const draft = { ...newScenarioDraft(data, name), overrides, events };
+    await save(db.scenarios, draft);
+    selectScenario(draft.id);
+    if (Object.keys(compare).length < MAX_COMPARE) toggleCompare(draft.id);
+  };
+  const fromTemplate = (t: TemplateResult) => addScenario(t.name, t.overrides, t.events);
+
+  const duplicate = async (from?: Scenario) => {
+    let draft = newScenarioDraft(data, 'My plan (copy)');
     if (from) {
       const {
         createdAt: _c,
@@ -152,29 +189,25 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
     if (selectedScenarioId === s.id) selectScenario(undefined);
   };
 
-  const runAll = () =>
-    void mc.run(
-      compared.map((c) => ({ id: c.scenario.id, input: c.input })),
-      mcRuns,
-      mcSeed,
-    );
+  const hasCustom = sorted.some(
+    (s) =>
+      Object.keys(s.overrides).length > 0 || s.events.length > 0 || s.withdrawalRule.kind !== 'fixed_swr',
+  );
+  const showStarter = labStarter === 'shown' || (labStarter === 'auto' && !hasCustom);
 
-  const maxLen = Math.max(...compared.map((c) => c.result.rows.length), 0);
+  const chartList = [today, ...compared];
+  const maxLen = Math.max(...chartList.map((c) => c.result.rows.length), 0);
   const chartRows = Array.from({ length: maxLen }, (_, k) => {
     const row: Record<string, number> = { age: ctx.startAge + k };
-    for (const c of compared) {
+    for (const c of chartList) {
       const r = c.result.rows[k];
-      if (r) row[c.scenario.id] = valueMode === 'nominal' ? r.investable * r.inflationIndex : r.investable;
+      if (r) row[c.id] = valueMode === 'nominal' ? r.investable * r.inflationIndex : r.investable;
     }
     return row;
   });
 
-  const selectedEval =
-    compared.find((c) => c.scenario.id === selected.id) ?? withBacktest(evaluate(data, selected));
-  const selectedMc = mc.results[selected.id];
-  const selectedMcFresh =
-    selectedMc && selectedMc.signature === signature(selectedEval.input, mcRuns, mcSeed);
-  const idx = (k: number) => (valueMode === 'nominal' ? inflationIndex(selectedEval.input.inflation, k) : 1);
+  const selectedMc = resultFor(selected);
+  const idx = (k: number) => (valueMode === 'nominal' ? inflationIndex(selected.input.inflation, k) : 1);
   const bandRows = selectedMc
     ? selectedMc.summary.ages.map((age, k) => ({
         age,
@@ -182,161 +215,266 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
         p50: selectedMc.summary.p50[k] * idx(k),
         p90: selectedMc.summary.p90[k] * idx(k),
         band: [selectedMc.summary.p10[k] * idx(k), selectedMc.summary.p90[k] * idx(k)] as [number, number],
-        target: selectedEval.fiTargets[k] * idx(k),
+        target: selected.fiTargets[k] * idx(k),
+        typical: selected.result.investable[k] * idx(k),
       }))
     : [];
+  const markers: { age: number; label: string }[] = [];
+  const selStop = stopAge(selected.result);
+  if (selStop !== undefined) markers.push({ age: selStop, label: 'Stop work' });
+  if (selected.input.locked.some((b) => b.pension) || selected.input.pension.employer > 0)
+    markers.push({ age: selected.input.pension.accessAge, label: '勞退 unlocks' });
+  if (selected.input.laborInsurance)
+    markers.push({ age: selected.input.laborInsurance.claimAge, label: '勞保 starts' });
+
+  const todayVerdict = verdict(today, ctx.asOfDate, fresh(today) ? resultFor(today)?.summary : undefined);
+  /** Unticked scenarios only need a name in the table. */
+  const placeholder = (s: Scenario): LabRow => ({ ...today, id: s.id, name: s.name, scenario: s });
+  const rowsInTable: (LabRow & { slot?: number; stored?: Scenario })[] = [
+    today,
+    ...sorted.map((s) => {
+      const c = compared.find((x) => x.id === s.id);
+      return c ? { ...c, stored: s } : { ...placeholder(s), stored: s };
+    }),
+  ];
 
   return (
     <>
       <PageHeader
         title="Strategy Lab"
-        description="A scenario is the baseline plus named overrides. Compare up to five side by side, then test them with Monte Carlo."
+        description="Will your plan work, and what would make it safer? Try a what-if and compare it with your plan today."
         actions={
           <>
             {tabs}
+            <Segmented
+              label="Simple or advanced view"
+              value={labView}
+              onChange={setLabView}
+              options={[
+                { value: 'simple', label: 'Simple' },
+                { value: 'advanced', label: 'Advanced' },
+              ]}
+            />
             <ValueModeToggle />
-            <AssumptionBadge set={assumptionSetFor(data, selected.assumptionSetId)} />
+            {!showStarter && (
+              <Button size="sm" variant="ghost" onClick={() => setLabStarter('shown')}>
+                <HelpCircle aria-hidden /> How this works
+              </Button>
+            )}
+            {advanced && (
+              <AssumptionBadge
+                set={assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id)}
+              />
+            )}
           </>
         }
+      />
+      <p className="-mt-2 mb-4 text-xs text-muted-foreground">
+        {valueMode === 'real'
+          ? "All amounts in today's money (inflation removed)."
+          : `All amounts in future money, with ${pct(selected.input.inflation, 1)} inflation a year.`}
+      </p>
+
+      {mc.error && (
+        <Notice tone="critical" className="mb-3">
+          Simulations failed: {mc.error}
+        </Notice>
+      )}
+
+      {showStarter && (
+        <StarterCard
+          today={today}
+          todaySentence={[todayVerdict.stop, todayVerdict.lasts].filter(Boolean).join(' ')}
+          onCreate={fromTemplate}
+          onDismiss={() => setLabStarter('dismissed')}
+        />
+      )}
+
+      <VerdictCard
+        row={selected}
+        mc={selectedMc?.summary}
+        stale={!fresh(selected)}
+        asOfDate={ctx.asOfDate}
+        params={params}
+        advanced={advanced}
       />
 
       <Card className="mb-4">
         <CardHeader
-          title="Compare"
-          description={`Tick up to ${MAX_COMPARE} scenarios. Monte Carlo runs share one seed, so differences come from the strategy, not from luck.`}
+          title="Compare what-ifs"
+          description={`Tick up to ${MAX_COMPARE} scenarios. Every one replays the same simulated futures, so differences come from the plan, not from luck.`}
           actions={
-            <>
-              <Select
-                aria-label="Monte Carlo runs"
-                className="h-8 w-32"
-                value={mcRuns}
-                onChange={(e) => setMcRuns(Number(e.target.value))}
-              >
-                {[1000, 2000, 5000, MAX_RUNS].map((n) => (
-                  <option key={n} value={n}>
-                    {n.toLocaleString()} runs
-                  </option>
-                ))}
-              </Select>
-              <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                Seed
-                <input
-                  aria-label="Comparison seed"
-                  type="number"
-                  className="h-8 w-20 rounded-md border border-input bg-surface px-2 text-right text-sm"
-                  value={mcSeed}
-                  onChange={(e) =>
-                    Number.isFinite(Number(e.target.value)) && setMcSeed(Math.round(Number(e.target.value)))
-                  }
-                />
-              </label>
-              <Button size="sm" onClick={runAll} disabled={mc.running || compared.length === 0}>
-                <Play aria-hidden /> {mc.running ? 'Running…' : 'Run Monte Carlo'}
-              </Button>
-            </>
+            advanced ? (
+              <>
+                <Select
+                  aria-label="Monte Carlo runs"
+                  className="h-8 w-32"
+                  value={mcRuns}
+                  onChange={(e) => setMcRuns(Number(e.target.value))}
+                >
+                  {[1000, 2000, 5000, MAX_RUNS].map((n) => (
+                    <option key={n} value={n}>
+                      {n.toLocaleString()} runs
+                    </option>
+                  ))}
+                </Select>
+                <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Term k="simulationId" params={params} advanced />
+                  <input
+                    aria-label="Comparison seed"
+                    type="number"
+                    className="h-8 w-20 rounded-md border border-input bg-surface px-2 text-right text-sm"
+                    value={mcSeed}
+                    onChange={(e) =>
+                      Number.isFinite(Number(e.target.value)) && setMcSeed(Math.round(Number(e.target.value)))
+                    }
+                  />
+                </label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={mc.running}
+                  onClick={() => void mc.run(jobs, mcRuns, mcSeed)}
+                >
+                  <Play aria-hidden /> {mc.running ? 'Running…' : 'Rerun'}
+                </Button>
+              </>
+            ) : undefined
           }
         />
         <CardContent>
-          {mc.error && (
-            <Notice tone="critical" className="mb-3">
-              Monte Carlo failed: {mc.error}
-            </Notice>
-          )}
           <Table>
             <thead>
               <tr>
                 <th className="w-8" />
-                <th>Scenario</th>
-                <th className="text-right">FI date</th>
-                <th className="text-right">FI age</th>
-                <th className="text-right">Success rate</th>
-                <th
-                  className="text-right"
-                  title={`Share of starting years ${HISTORY[0].year}–${HISTORY.at(-1)!.year} in which the money lasts`}
-                >
-                  Historical
+                <th className="min-w-48">Scenario</th>
+                <th className="text-right">
+                  <Term k="stopAge" params={params} advanced={advanced} />
                 </th>
-                <th className="text-right">FI age P10–P90</th>
-                <th className="text-right">Investable at FI</th>
-                <th className="text-right">At horizon</th>
+                <th className="text-right">
+                  <Term k="chanceLasts" params={params} advanced={advanced} />
+                </th>
+                <th className="text-right">
+                  <Term k="pastMarkets" params={params} advanced={advanced} />
+                </th>
+                <th className="text-right">vs your plan</th>
+                {advanced && (
+                  <>
+                    <th className="text-right">
+                      <Term k="stopRange" params={params} advanced />
+                    </th>
+                    <th className="text-right">
+                      <Term k="investAtStop" params={params} advanced />
+                    </th>
+                    <th className="text-right">
+                      <Term k="leftAtHorizon" params={params} advanced />
+                    </th>
+                  </>
+                )}
                 <th className="w-24" />
               </tr>
             </thead>
             <tbody>
-              {sorted.map((s) => {
-                const c = compared.find((x) => x.scenario.id === s.id);
-                const m = mc.results[s.id];
-                const fresh = c && m && m.signature === signature(c.input, mcRuns, mcSeed);
+              {rowsInTable.map((r) => {
+                const isToday = r.id === TODAY_ID;
+                const s = r.stored;
+                const shown = isToday || (s && s.id in compare);
+                const m = resultFor(r);
+                const chance = shown && fresh(r) ? m?.summary.successRate : undefined;
+                const diff =
+                  !isToday && shown ? explainDifference(today, r, chanceOf(today), chance) : undefined;
+                const warning = !isToday && shown && s ? nameCheck(s.name, today, r) : undefined;
+                const age = stopAge(r.result);
                 return (
-                  <tr key={s.id} className={s.id === selected.id ? 'bg-surface-2' : undefined}>
+                  <tr key={r.id} className={r.id === selected.id ? 'bg-surface-2' : undefined}>
                     <td>
-                      <input
-                        type="checkbox"
-                        aria-label={`Compare ${s.name}`}
-                        checked={s.id in compare}
-                        disabled={!(s.id in compare) && Object.keys(compare).length >= MAX_COMPARE}
-                        onChange={() => toggleCompare(s.id)}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        className="flex items-center gap-2 text-left font-medium hover:underline"
-                        onClick={() => selectScenario(s.id)}
-                      >
-                        {c && (
-                          <span
-                            className="inline-block size-2.5 rounded-full"
-                            style={{ background: theme.series[c.slot] }}
-                            aria-hidden
-                          />
-                        )}
-                        {s.name}
-                      </button>
-                      {s.isPlanOfRecord && (
-                        <Badge tone="primary" className="mt-0.5">
-                          <Lock className="size-3" aria-hidden /> Plan of record
-                        </Badge>
+                      {s && (
+                        <input
+                          type="checkbox"
+                          aria-label={`Compare ${s.name}`}
+                          checked={s.id in compare}
+                          disabled={!(s.id in compare) && Object.keys(compare).length >= MAX_COMPARE}
+                          onChange={() => toggleCompare(s.id)}
+                        />
                       )}
                     </td>
-                    {c ? (
+                    <td className="max-w-xs min-w-48">
+                      <button
+                        className="flex items-center gap-2 text-left font-medium hover:underline"
+                        onClick={() => selectScenario(isToday ? undefined : r.id)}
+                      >
+                        <span
+                          className="inline-block size-2.5 shrink-0 rounded-full"
+                          style={{
+                            background: isToday
+                              ? theme.axis
+                              : r.slot !== undefined && s && s.id in compare
+                                ? theme.series[r.slot]
+                                : 'transparent',
+                          }}
+                          aria-hidden
+                        />
+                        {r.name}
+                      </button>
+                      {isToday && <div className="text-xs text-subtle">Always uses your latest data</div>}
+                      {s?.isPlanOfRecord && (
+                        <Badge tone="primary" className="mt-0.5">
+                          <Lock className="size-3" aria-hidden /> My plan
+                        </Badge>
+                      )}
+                      {diff?.cause && (
+                        <div className="mt-0.5 text-xs text-muted-foreground">{diff.cause}</div>
+                      )}
+                      {warning && <div className="mt-0.5 text-xs text-warning">{warning}</div>}
+                    </td>
+                    {shown ? (
                       <>
                         <td className="text-right">
-                          {c.result.yearsToFi !== undefined
-                            ? dateAfterYears(ctx.asOfDate, c.result.yearsToFi)
-                            : 'Not reached'}
-                        </td>
-                        <td className="text-right">{c.result.retireAge ?? c.result.fiAge ?? '—'}</td>
-                        <td className="text-right">
-                          {m ? (
-                            <span
-                              className={fresh ? undefined : 'text-subtle'}
-                              title={fresh ? undefined : 'Inputs changed since this run'}
-                            >
-                              {pct(m.summary.successRate, 0)}
-                            </span>
+                          {age !== undefined ? (
+                            <>
+                              {age}
+                              <div className="text-xs text-subtle">
+                                {stopDate(r.input, r.result, ctx.asOfDate)}
+                              </div>
+                            </>
                           ) : (
-                            <span className="text-subtle">
-                              {c.result.success ? 'det. ✓' : `det. ✗ ${c.result.depletionAge}`}
-                            </span>
+                            'Not reached'
                           )}
                         </td>
                         <td className="text-right">
-                          <span title={`${c.backtest.runs} starting years`}>
-                            {pct(c.backtest.successRate, 0)}
-                          </span>
+                          {m ? (
+                            <span className={fresh(r) ? undefined : 'text-subtle'}>
+                              {pct(m.summary.successRate, 0)}
+                              <div>
+                                <Dots
+                                  small
+                                  filled={outOfTen(m.summary.successRate)}
+                                  label={`${outOfTen(m.summary.successRate)} of 10`}
+                                />
+                              </div>
+                            </span>
+                          ) : (
+                            <span className="text-subtle">…</span>
+                          )}
                         </td>
-                        <td className="text-right">
-                          {m?.summary.fiAgeP10 !== undefined
-                            ? `${Math.round(m.summary.fiAgeP10)}–${Math.round(m.summary.fiAgeP90!)}`
-                            : '—'}
-                        </td>
-                        <td className="text-right">
-                          {c.result.netWorthAtFi !== undefined ? twdCompact(c.result.netWorthAtFi) : '—'}
-                        </td>
-                        <td className="text-right">{twdCompact(c.result.balanceAtHorizon)}</td>
+                        <td className="text-right">{pct(r.backtest.successRate, 0)}</td>
+                        <td className="text-right whitespace-nowrap">{isToday ? '—' : diff?.short}</td>
+                        {advanced && (
+                          <>
+                            <td className="text-right">
+                              {m?.summary.fiAgeP10 !== undefined
+                                ? `${Math.round(m.summary.fiAgeP10)}–${Math.round(m.summary.fiAgeP90!)}`
+                                : '—'}
+                            </td>
+                            <td className="text-right">
+                              {r.result.netWorthAtFi !== undefined ? twdCompact(r.result.netWorthAtFi) : '—'}
+                            </td>
+                            <td className="text-right">{twdCompact(r.result.balanceAtHorizon)}</td>
+                          </>
+                        )}
                       </>
                     ) : (
-                      <td colSpan={7} className="text-right text-subtle">
+                      <td colSpan={advanced ? 7 : 4} className="text-right text-subtle">
                         Tick to compare
                       </td>
                     )}
@@ -345,19 +483,21 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          aria-label={`Duplicate ${s.name}`}
-                          onClick={() => void create(s)}
+                          aria-label={isToday ? 'Copy your plan today to edit' : `Duplicate ${r.name}`}
+                          onClick={() => void duplicate(s)}
                         >
                           <Copy />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          aria-label={`Delete ${s.name}`}
-                          onClick={() => void remove(s)}
-                        >
-                          <Trash2 />
-                        </Button>
+                        {s && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label={`Delete ${s.name}`}
+                            onClick={() => void remove(s)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -365,96 +505,118 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
               })}
             </tbody>
           </Table>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => void create()}>
-              <Plus aria-hidden /> New scenario
-            </Button>
-            <span className="text-xs text-subtle">
-              FI age shows the age you stop working. Success = liquid assets stay above zero to age{' '}
-              {data.settings.horizonAge}; “det.” is the deterministic result before Monte Carlo runs.
-            </span>
-          </div>
-          {compared.length > 0 && (
+          {!showStarter && (
             <div className="mt-4">
-              <LineChart
-                ariaLabel="Investable net worth by scenario"
-                data={chartRows}
-                xKey="age"
-                tooltipTitle={(r) => `Age ${r.age}`}
-                series={compared.map((c) => ({ key: c.scenario.id, label: c.scenario.name, slot: c.slot }))}
-                height={300}
-              />
+              <div className="mb-2 text-sm font-medium">Try a what-if</div>
+              <TemplatePicker today={today} onCreate={fromTemplate} />
+              <Button size="sm" variant="ghost" className="mt-2" onClick={() => void duplicate()}>
+                <Plus aria-hidden /> Blank copy of your plan
+              </Button>
             </div>
           )}
+          <div className="mt-4">
+            <div className="mb-1 text-sm font-medium">
+              Investments by age, <Term k="typicalPath" params={params} advanced={advanced} />
+            </div>
+            <LineChart
+              ariaLabel="Investments by scenario"
+              data={chartRows}
+              xKey="age"
+              tooltipTitle={(r) => `Age ${r.age}`}
+              series={[
+                { key: TODAY_ID, label: today.name, slot: 0, color: theme.axis, dashed: true },
+                ...compared.map((c) => ({ key: c.id, label: c.name, slot: c.slot })),
+              ]}
+              height={280}
+            />
+          </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-5">
         <Card className="xl:col-span-3">
-          <CardHeader
-            title={`Edit: ${selected.name}`}
-            actions={
-              !selected.isPlanOfRecord ? (
-                <Button size="sm" variant="outline" onClick={() => void lockPlanOfRecord(data, selected)}>
-                  <Lock aria-hidden /> Lock as plan of record
+          {selected.scenario ? (
+            <>
+              <CardHeader
+                title={`Edit: ${selected.scenario.name}`}
+                actions={
+                  !selected.scenario.isPlanOfRecord ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void lockPlanOfRecord(data, selected.scenario!)}
+                    >
+                      <Lock aria-hidden /> Set as my plan
+                    </Button>
+                  ) : (
+                    <Badge tone="primary">My plan since {selected.scenario.lockedAt}</Badge>
+                  )
+                }
+              />
+              <CardContent>
+                <p className="-mt-2 mb-3 text-xs text-muted-foreground">
+                  “Set as my plan” saves this scenario's projection; the Dashboard then tracks your real
+                  progress against it.
+                </p>
+                <ScenarioEditor
+                  key={selected.scenario.id}
+                  s={selected.scenario}
+                  today={today}
+                  row={selected}
+                  advanced={advanced}
+                  params={params}
+                />
+              </CardContent>
+            </>
+          ) : (
+            <>
+              <CardHeader title="Your plan today" />
+              <CardContent className="text-sm">
+                <p className="text-muted-foreground">
+                  This row always follows your latest balances, cash flow and FI budget, so it can't be edited
+                  here. To try changes, start a what-if or make a copy.
+                </p>
+                <Button size="sm" className="mt-3" onClick={() => void duplicate()}>
+                  <Copy aria-hidden /> Make a copy to edit
                 </Button>
-              ) : (
-                <Badge tone="primary">Plan of record since {selected.lockedAt}</Badge>
-              )
-            }
-          />
-          <CardContent>
-            <ScenarioEditor key={selected.id} s={selected} />
-          </CardContent>
+              </CardContent>
+            </>
+          )}
         </Card>
         <Card className="xl:col-span-2">
           <CardHeader
-            title="Monte Carlo"
+            title={`Range of futures: ${selected.name}`}
             description={
-              selectedMc
-                ? `${selectedMc.summary.runs.toLocaleString()} runs · seed ${selectedMc.summary.seed} · ${Math.round(selectedMc.summary.elapsedMs)} ms${selectedMcFresh ? '' : ' · inputs changed, rerun'}`
-                : 'Returns, volatility and correlation per asset class, plus random inflation and FX.'
-            }
-            actions={
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={mc.running}
-                onClick={() => void mc.run([{ id: selected.id, input: selectedEval.input }], mcRuns, mcSeed)}
-              >
-                <Play aria-hidden /> Run
-              </Button>
+              advanced && selectedMc
+                ? `${selectedMc.summary.runs.toLocaleString()} runs · seed ${selectedMc.summary.seed} · ${Math.round(selectedMc.summary.elapsedMs)} ms${fresh(selected) ? '' : ' · updating'}`
+                : 'Investments by age across the simulated futures.'
             }
           />
           <CardContent>
             {selectedMc ? (
               <>
-                <div className="mb-3 grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <div className="text-muted-foreground">Success rate</div>
-                    <div className="text-xl font-semibold">{pct(selectedMc.summary.successRate, 0)}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Median FI age</div>
-                    <div className="text-xl font-semibold">
-                      {selectedMc.summary.fiAgeP50 !== undefined
-                        ? Math.round(selectedMc.summary.fiAgeP50)
-                        : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Reach FI</div>
-                    <div className="text-xl font-semibold">{pct(selectedMc.summary.fiRate, 0)}</div>
-                  </div>
-                </div>
-                <BandChart data={bandRows} slot={selectedEval.slot} />
+                <BandChart
+                  data={bandRows}
+                  slot={selected.slot}
+                  labels={advanced ? TECHNICAL_BAND_LABELS : PLAIN_BAND_LABELS}
+                  capAge={70}
+                  markers={markers}
+                  shadeRunsOut
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  The band holds 8 in 10 futures: 1 in 10 does worse than its lower edge and 1 in 10 better
+                  than its upper edge. The dashed “Money needed” line falls with age because fewer years are
+                  left to pay for and pensions start; while your investments stay above it, the rest of the
+                  plan is funded.
+                </p>
                 {selectedMc.summary.minSpendingRatioP50 < 0.999 && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Median lowest spending: {pct(selectedMc.summary.minSpendingRatioP50, 0)} of the FI budget
+                    In a typical future your spending is cut to{' '}
+                    {pct(selectedMc.summary.minSpendingRatioP50, 0)} of your FI budget at its lowest
                     (withdrawal rule cuts).
                   </p>
                 )}
-                {selectedMc.summary.fiAgeDistribution.length > 0 && (
+                {advanced && selectedMc.summary.fiAgeDistribution.length > 0 && (
                   <details className="mt-3 text-sm">
                     <summary className="cursor-pointer text-muted-foreground">FI age distribution</summary>
                     <Table className="mt-2">
@@ -471,14 +633,29 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                 )}
               </>
             ) : (
-              <EmptyState title="Not run yet">
-                Run Monte Carlo to see the P10 / P50 / P90 bands and the success rate.
-              </EmptyState>
+              <p className="py-10 text-center text-sm text-subtle">Simulating…</p>
             )}
           </CardContent>
         </Card>
       </div>
-      <BacktestCard name={selected.name} evaluation={selectedEval} />
+
+      <SaferCard
+        row={selected}
+        chance={fresh(selected) ? chanceOf(selected) : undefined}
+        runs={mcRuns}
+        seed={mcSeed}
+        onSave={(name, overrides) => addScenario(name, overrides, selected.spec.events)}
+      />
+      <BacktestCard row={selected} slot={selected.slot} advanced={advanced} />
+      <ChecksPanel
+        row={selected}
+        runs={mcRuns}
+        setName={assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id).name}
+      />
+      <p className="mt-4 text-xs text-subtle">
+        Defaults: {settings.horizonAge} is the age your money must last to (Settings). Results are what-ifs,
+        not advice.
+      </p>
     </>
   );
 }
