@@ -1069,7 +1069,6 @@ export const ZH_TW: Record<string, string> = {
   'Give it a nickname': '請取一個暱稱',
   'Use a 3-letter code such as TWD or USD': '請使用 3 個字母的代碼，例如 TWD 或 USD',
   'Whole years': '整數年',
-  'Whole months': '整數月',
   'Use pairs like “US 62, EU 15”': '請使用「US 62, EU 15」這樣的格式',
   'Do not store account numbers; use a nickname.': '不要儲存帳號；請使用暱稱。',
   Nickname: '暱稱',
@@ -1092,7 +1091,6 @@ export const ZH_TW: Record<string, string> = {
   'Secured on': '擔保品',
   'Interest rate (% a year)': '利率（年利率 %）',
   'Monthly payment': '每月還款',
-  'Remaining term (months)': '剩餘期數（月）',
   'Save account': '儲存帳戶',
   'Add account': '新增帳戶',
   Cancel: '取消',
@@ -1111,8 +1109,6 @@ export const ZH_TW: Record<string, string> = {
   'From age {accessAge}': '{accessAge} 歲起',
   Yes: '是',
   No: '否',
-  '{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths} mo':
-    '{toFixed}% · {monthlyPaymentMinor}／月 · {remainingMonths} 個月',
   'Restore {nickname}': '還原 {nickname}',
   'Archive {nickname}': '封存 {nickname}',
   'Delete {nickname}': '刪除 {nickname}',
@@ -2005,7 +2001,6 @@ export const ZH_TW: Record<string, string> = {
   'incl. {amount}/mo loan payment (Accounts)': '含每月 {amount} 貸款還款（帳戶）',
   'Scheduled from Accounts; type to change this month': '依「帳戶」排定；輸入金額即可修改本月',
   'Spending while working / year, loans aside': '工作期間支出／年（不含貸款）',
-  'Last payment {month}': '最後一期 {month}',
   'In Cash flow, this payment is': '這筆還款在現金流中',
   'A “Loan payments” row fills itself in Cash flow every month until the loan ends. Leave the payment out of your other categories.':
     '現金流中的「貸款還款」列會每月自動填入，直到貸款結束。請不要再把這筆還款記在其他類別中。',
@@ -2016,8 +2011,6 @@ export const ZH_TW: Record<string, string> = {
   'In category': '所在類別',
   'Where your monthly spending includes it': '你每月支出中包含它的類別',
   '— somewhere in my spending —': '— 在我的支出中某處 —',
-  'Add the remaining term so the plan knows when the payments stop.':
-    '請填入剩餘期數，讓計畫知道還款何時結束。',
   'added to Cash flow automatically': '自動加入現金流',
   'in {name}': '在{name}中',
   'in your spending': '在你的支出中',
@@ -2025,4 +2018,21 @@ export const ZH_TW: Record<string, string> = {
   'Spending while working, loans aside': '工作期間支出（不含貸款）',
   'Loan · {name}': '貸款 · {name}',
   '{amount}/mo until {month}': '每月 {amount}，到 {month}',
+  // loan term worked out from the balance
+  'Enter this loan’s balance in Snapshots and the term is worked out from it.':
+    '在「快照」輸入這筆貸款的餘額，就會據此算出剩餘期數。',
+  'Paid off.': '已還清。',
+  'Enter the monthly payment and the term is worked out from the balance.':
+    '輸入每月還款，就會依餘額算出剩餘期數。',
+  '{payment} a month does not cover the interest ({interest}), so this loan is never repaid at this payment.':
+    '每月 {payment} 不足以支付利息（{interest}），以這個還款金額永遠還不清這筆貸款。',
+  'Paid off in 1 month · last payment {month}.': '1 個月後還清 · 最後一期 {month}。',
+  'Paid off in {n} months · last payment {month}.': '{n} 個月後還清 · 最後一期 {month}。',
+  'Worked out from the balance of {balance} on {date}, the rate and the payment; it updates with each new balance.':
+    '依 {date} 的餘額 {balance}、利率與還款金額計算；每次輸入新餘額都會自動更新。',
+  'Remaining term': '剩餘期數',
+  'never repaid': '永遠還不清',
+  '{n} mo': '{n} 個月',
+  '{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths}':
+    '{toFixed}% · 每月 {monthlyPaymentMinor} · {remainingMonths}',
 };

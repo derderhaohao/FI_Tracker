@@ -22,6 +22,11 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   // Switch it to "add automatically": a Loan payments row fills itself, and a month can be changed.
   await page.goto('./#/accounts');
   await page.getByRole('button', { name: 'Edit Car loan' }).click();
+  // No term to type: it is worked out from the latest balance, the rate and the payment.
+  await expect(page.getByLabel('Remaining term (months)')).toHaveCount(0);
+  await expect(page.getByTestId('loan-term')).toContainText(
+    'Paid off in 14 months · last payment Nov 2027. Worked out from the balance of NT$170,000 on 2026-09-30',
+  );
   await page.getByLabel('In Cash flow, this payment is').selectOption('auto');
   await page.getByRole('button', { name: 'Save account' }).click();
   await expect(page.getByText(/added to Cash flow automatically/)).toBeVisible();
@@ -34,5 +39,16 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   await page.reload();
   await expect(page.getByLabel('Loan payments 2026-09', { exact: true })).toHaveValue('50,000');
   await expect(page.getByLabel('Loan payments 2026-08', { exact: true })).toHaveValue('12,500');
+
+  // A new, lower balance shortens the term by itself.
+  await page.goto('./#/snapshots');
+  await page.getByLabel('Snapshot date').fill('2026-10-31');
+  await page.getByRole('button', { name: 'Copy last period' }).click();
+  const owed = page.getByLabel('Car loan on 2026-10-31');
+  await owed.fill('50,000');
+  await owed.press('Enter');
+  await page.goto('./#/accounts');
+  await page.getByRole('button', { name: 'Edit Car loan' }).click();
+  await expect(page.getByTestId('loan-term')).toContainText('Paid off in 5 months · last payment Mar 2027');
   expect(errors).toEqual([]);
 });
