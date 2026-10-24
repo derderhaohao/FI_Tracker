@@ -6,6 +6,7 @@ import {
   type Draft,
 } from './entities';
 import { defaultTaiwanSettings } from './taiwan/defaults';
+import { t } from '@/i18n';
 
 /** Correlation key with the two classes in ASSET_CLASSES order. */
 export function correlationKey(a: AssetClass, b: AssetClass): string {
@@ -56,7 +57,7 @@ export function defaultAssumptionSet(id: string): Draft<AssumptionSet> {
   };
   return {
     id,
-    name: 'Base case',
+    name: t('Base case'),
     assets,
     correlations,
     inflation: 0.02,

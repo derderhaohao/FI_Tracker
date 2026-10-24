@@ -1,4 +1,5 @@
 import type { Category, Draft, Settings } from '@/domain/entities';
+import { t } from '@/i18n';
 import { defaultAssumptionSet } from '@/domain/assumptions';
 import { db, type FiDatabase } from './db';
 import { newId, save, saveMany } from './repo';
@@ -28,19 +29,19 @@ export function defaultSettings(assumptionSetId: string): Draft<Settings> {
 }
 
 export const DEFAULT_CATEGORIES: Omit<Draft<Category>, 'id'>[] = [
-  { name: 'Salary', kind: 'income', essential: false },
-  { name: 'Bonus', kind: 'income', essential: false },
-  { name: 'Dividends', kind: 'income', essential: false },
-  { name: 'Other income', kind: 'income', essential: false },
-  { name: 'Housing', kind: 'expense', essential: true },
-  { name: 'Food', kind: 'expense', essential: true },
-  { name: 'Transport', kind: 'expense', essential: true },
-  { name: 'Utilities & phone', kind: 'expense', essential: true },
-  { name: 'Insurance & health', kind: 'expense', essential: true },
-  { name: 'Family', kind: 'expense', essential: true },
-  { name: 'Travel', kind: 'expense', essential: false },
-  { name: 'Leisure & shopping', kind: 'expense', essential: false },
-  { name: 'Other', kind: 'expense', essential: false },
+  { name: t('Salary'), kind: 'income', essential: false },
+  { name: t('Bonus'), kind: 'income', essential: false },
+  { name: t('Dividends'), kind: 'income', essential: false },
+  { name: t('Other income'), kind: 'income', essential: false },
+  { name: t('Housing'), kind: 'expense', essential: true },
+  { name: t('Food'), kind: 'expense', essential: true },
+  { name: t('Transport'), kind: 'expense', essential: true },
+  { name: t('Utilities & phone'), kind: 'expense', essential: true },
+  { name: t('Insurance & health'), kind: 'expense', essential: true },
+  { name: t('Family'), kind: 'expense', essential: true },
+  { name: t('Travel'), kind: 'expense', essential: false },
+  { name: t('Leisure & shopping'), kind: 'expense', essential: false },
+  { name: t('Other'), kind: 'expense', essential: false },
 ];
 
 /** Creates settings, a base-case assumption set and starter categories on first run. */

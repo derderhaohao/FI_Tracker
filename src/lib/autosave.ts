@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { create } from 'zustand';
 import { exportBackup } from '@/io/backup';
+import { t } from '@/i18n';
 
 /**
  * Auto-save to a file (technical design, P1): in Chrome and Edge the File System
@@ -101,7 +102,7 @@ export async function enableAutosave(): Promise<void> {
   try {
     const h = await picker({
       suggestedName: 'fi-tracker-autosave.fi.json',
-      types: [{ description: 'FI Tracker backup', accept: { 'application/json': ['.json'] } }],
+      types: [{ description: t('FI Tracker backup'), accept: { 'application/json': ['.json'] } }],
     });
     handle = h;
     await deviceDb.device.put({ id: 'autosave', handle: h, fileName: h.name });

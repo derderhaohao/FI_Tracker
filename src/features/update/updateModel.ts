@@ -1,6 +1,7 @@
 import type { Account, FxRate, Snapshot } from '@/domain/entities';
 import { addMonths, lastDayOfMonth, monthOf } from '@/domain/dates';
 import { BASE_CURRENCY, rateFor } from '@/domain/fx';
+import { t } from '@/i18n';
 
 /**
  * The monthly update (product review, Next phase): one card per account, pre-filled with
@@ -69,7 +70,7 @@ export function planUpdate(
 export function durationText(ms: number): string {
   const s = Math.max(1, Math.round(ms / 1000));
   const m = Math.floor(s / 60);
-  return m > 0 ? `${m} min ${s % 60} s` : `${s} s`;
+  return m > 0 ? t('{m} min {v} s', { m, v: s % 60 }) : `${s} s`;
 }
 
 const TIMES_KEY = 'fi-tracker-update-times';

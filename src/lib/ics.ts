@@ -1,4 +1,5 @@
 import { downloadText } from './download';
+import { t } from '@/i18n';
 
 /**
  * A monthly calendar reminder as an .ics file (product review: reminders, zero-backend
@@ -30,12 +31,12 @@ export function monthlyReminderIcs({
     `DTSTAMP:${stamp}`,
     `DTSTART;VALUE=DATE:${d}`,
     `RRULE:FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`,
-    'SUMMARY:FI Tracker monthly update',
-    `DESCRIPTION:Update balances and last month's pay and spending (about 3 minutes): ${url}`,
+    `SUMMARY:${t('FI Tracker monthly update')}`,
+    `DESCRIPTION:${t("Update balances and last month's pay and spending (about 3 minutes): {url}", { url })}`,
     `URL:${url}`,
     'BEGIN:VALARM',
     'ACTION:DISPLAY',
-    'DESCRIPTION:FI Tracker monthly update',
+    `DESCRIPTION:${t('FI Tracker monthly update')}`,
     'TRIGGER:PT9H',
     'END:VALARM',
     'END:VEVENT',

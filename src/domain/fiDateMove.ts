@@ -6,6 +6,7 @@ import { fromMinor } from './money';
 import { netWorthAt, snapshotDates } from './networth';
 import { periodChanges } from './reconcile';
 import { runProjection, type Bucket, type ProjectionInput, type ProjectionLiability } from './projection';
+import { locale, t } from '@/i18n';
 
 /**
  * "Why did my FI date move?" (product review, Next phase): splits the change in the
@@ -23,12 +24,12 @@ import { runProjection, type Bucket, type ProjectionInput, type ProjectionLiabil
 export type MoveKey = 'time' | 'saving' | 'market' | 'fx' | 'cashflow' | 'goal';
 
 export const MOVE_LABELS: Record<MoveKey, string> = {
-  time: 'A month went by',
-  saving: 'What you saved',
-  market: 'Markets',
-  fx: 'Exchange rates',
-  cashflow: 'Pay and spending',
-  goal: 'FI goal',
+  time: t('A month went by'),
+  saving: t('What you saved'),
+  market: t('Markets'),
+  fx: t('Exchange rates'),
+  cashflow: t('Pay and spending'),
+  goal: t('FI goal'),
 };
 
 export interface FiDateMove {
@@ -56,7 +57,7 @@ export function fiMonth(input: ProjectionInput, asOfDate: string): number | unde
 /** "Nov 2037" from a month index. */
 export function monthIndexLabel(index: number): string {
   const i = Math.round(index);
-  return new Date(Date.UTC(Math.floor(i / 12), i % 12, 1)).toLocaleDateString('en-US', {
+  return new Date(Date.UTC(Math.floor(i / 12), i % 12, 1)).toLocaleDateString(locale(), {
     month: 'short',
     year: 'numeric',
     timeZone: 'UTC',

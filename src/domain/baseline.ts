@@ -24,6 +24,7 @@ import type { Bucket, LockedBucket, ProjectionInput, ProjectionLiability } from 
 import { laborPensionContribution } from './taiwan/laborPension';
 import { findEvent, scaleShock, SEVERITY_SCALE } from './playback/library';
 import { clampClaimAge } from './taiwan/laborInsurance';
+import { t } from '@/i18n';
 
 /** Everything the projection reads from the database. */
 export interface PlanData {
@@ -88,11 +89,12 @@ export function baselineContext(data: PlanData): BaselineContext {
   const tiers = fiSpendingByTier(data.categories, data.settings.destination);
   const fiSpendingFromT12 = tiers.full - tiers.postEmployment <= 0;
   const warnings: string[] = [];
-  if (dates.length === 0) warnings.push('No snapshot yet: the projection starts from zero.');
-  if (netWorth.missingFx.length) warnings.push(`Missing FX rate for ${netWorth.missingFx.join(', ')}.`);
+  if (dates.length === 0) warnings.push(t('No snapshot yet: the projection starts from zero.'));
+  if (netWorth.missingFx.length)
+    warnings.push(t('Missing FX rate for {join}.', { join: netWorth.missingFx.join(', ') }));
   if (t12.monthsWithData === 0)
-    warnings.push('No cash flow yet: income and spending are zero unless a scenario sets them.');
-  if (fiSpendingFromT12) warnings.push('No FI budget set: FI spending uses trailing-12-month spending.');
+    warnings.push(t('No cash flow yet: income and spending are zero unless a scenario sets them.'));
+  if (fiSpendingFromT12) warnings.push(t('No FI budget set: FI spending uses trailing-12-month spending.'));
   return { asOfDate, startAge, netWorth, t12, tiers, fiSpendingFromT12, warnings };
 }
 

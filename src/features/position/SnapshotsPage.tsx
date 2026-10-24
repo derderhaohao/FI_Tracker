@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/input';
 import { Badge, EmptyState, Notice, PageHeader, Table } from '@/components/ui/misc';
 import { twd, twdCompact } from '@/lib/format';
+import { t } from '@/i18n';
 
 const VISIBLE_DATES = 6;
 
@@ -53,11 +54,11 @@ function FxInput({ currency, date }: { currency: string; date: string }) {
   const [text, setText] = useState<string | null>(null);
   return (
     <input
-      aria-label={`${currency}/TWD on ${date}`}
+      aria-label={t('{currency}/TWD on {date}', { currency, date })}
       inputMode="decimal"
       className="h-8 w-full rounded-md border border-input bg-surface px-2 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring"
       value={text ?? (stored !== undefined ? String(stored) : '')}
-      placeholder={fallback !== undefined ? `${fallback} (carried)` : 'rate'}
+      placeholder={fallback !== undefined ? t('{fallback} (carried)', { fallback }) : t('rate')}
       onChange={(e) => setText(e.target.value)}
       onBlur={() => {
         if (text === null) return;
@@ -103,12 +104,14 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
   return (
     <Card className="mt-4">
       <CardHeader
-        title={`Holdings · ${account.nickname} · ${date}`}
-        description="Optional detail: ticker, units and price. The account balance stays the number of record."
+        title={t('Holdings · {nickname} · {date}', { nickname: account.nickname, date })}
+        description={t(
+          'Optional detail: ticker, units and price. The account balance stays the number of record.',
+        )}
         actions={
           rows.length === 0 ? (
             <Button size="sm" variant="outline" onClick={() => void copyPrevious()}>
-              <Copy aria-hidden /> Copy previous holdings
+              <Copy aria-hidden /> {t('Copy previous holdings')}
             </Button>
           ) : undefined
         }
@@ -117,10 +120,10 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
         <Table>
           <thead>
             <tr>
-              <th>Ticker</th>
-              <th className="text-right">Units</th>
-              <th className="text-right">Price ({account.currency})</th>
-              <th className="text-right">Value</th>
+              <th>{t('Ticker')}</th>
+              <th className="text-right">{t('Units')}</th>
+              <th className="text-right">{t('Price ({currency})', { currency: account.currency })}</th>
+              <th className="text-right">{t('Value')}</th>
               <th />
             </tr>
           </thead>
@@ -135,7 +138,7 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label={`Remove ${h.ticker}`}
+                    aria-label={t('Remove {ticker}', { ticker: h.ticker })}
                     onClick={() => void db.holdings.delete(h.id)}
                   >
                     <Trash2 />
@@ -146,16 +149,16 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
             <tr>
               <td>
                 <Input
-                  aria-label="Ticker"
+                  aria-label={t('Ticker')}
                   className="h-8"
                   value={draft.ticker}
                   onChange={(e) => setDraft({ ...draft, ticker: e.target.value.toUpperCase() })}
-                  placeholder="VT"
+                  placeholder={t('VT')}
                 />
               </td>
               <td>
                 <Input
-                  aria-label="Units"
+                  aria-label={t('Units')}
                   className="h-8 text-right"
                   inputMode="decimal"
                   value={draft.units}
@@ -164,7 +167,7 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
               </td>
               <td>
                 <Input
-                  aria-label="Price"
+                  aria-label={t('Price')}
                   className="h-8 text-right"
                   inputMode="decimal"
                   value={draft.price}
@@ -194,7 +197,7 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
                     setDraft({ ticker: '', units: '', price: '' });
                   }}
                 >
-                  <Plus aria-hidden /> Add
+                  <Plus aria-hidden /> {t('Add')}
                 </Button>
               </td>
             </tr>
@@ -203,7 +206,7 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
         {rows.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
             <span>
-              Holdings total <strong>{formatMoney(total, account.currency)}</strong>
+              {t('Holdings total')} <strong>{formatMoney(total, account.currency)}</strong>
               {account.currency !== 'TWD' && rateFor(fxRates, account.currency, date) !== undefined && (
                 <span className="text-subtle">
                   {' '}
@@ -217,7 +220,7 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
                 variant="outline"
                 onClick={() => void setBalance(account.id, date, toMinor(total))}
               >
-                Use as balance
+                {t('Use as balance')}
               </Button>
             )}
           </div>
@@ -248,9 +251,9 @@ export function SnapshotsPage() {
   if (active.length === 0) {
     return (
       <>
-        <PageHeader title="Snapshots" />
-        <EmptyState title="Add an account first" to="/accounts" action="Add an account">
-          Each snapshot holds one balance per account.
+        <PageHeader title={t('Snapshots')} />
+        <EmptyState title={t('Add an account first')} to="/accounts" action={t('Add an account')}>
+          {t('Each snapshot holds one balance per account.')}
         </EmptyState>
       </>
     );
@@ -276,7 +279,7 @@ export function SnapshotsPage() {
   };
 
   const deleteDate = async (date: string) => {
-    if (!confirm(`Delete every balance and FX rate on ${date}?`)) return;
+    if (!confirm(t('Delete every balance and FX rate on {date}?', { date }))) return;
     await db.transaction('rw', db.snapshots, db.fxRates, db.holdings, async () => {
       await db.snapshots.where('date').equals(date).delete();
       await db.fxRates.filter((r) => r.date === date).delete();
@@ -295,25 +298,33 @@ export function SnapshotsPage() {
     data.activeAssumptions.assets,
   );
   const missingFx = shown.flatMap((d) =>
-    currencies.filter((c) => rateFor(fxRates, c, d) === undefined).map((c) => `${c} on ${d}`),
+    currencies.filter((c) => rateFor(fxRates, c, d) === undefined).map((c) => t('{c} on {d}', { c, d })),
   );
   const holdingsAccount = holdingsFor && accounts.find((a) => a.id === holdingsFor.accountId);
 
   return (
     <>
       <PageHeader
-        title="Snapshots"
-        description={`One balance per account per ${settings.snapshotCadence === 'monthly' ? 'month' : 'quarter'}, in its native currency, with the FX rate for the date. Liabilities are entered as the amount owed.`}
+        title={t('Snapshots')}
+        description={
+          settings.snapshotCadence === 'monthly'
+            ? t(
+                'One balance per account per month, in its native currency, with the FX rate for the date. Liabilities are entered as the amount owed.',
+              )
+            : t(
+                'One balance per account per quarter, in its native currency, with the FX rate for the date. Liabilities are entered as the amount owed.',
+              )
+        }
         actions={
           <Button variant="outline" onClick={() => setImporting(true)}>
-            <Upload aria-hidden /> Import CSV
+            <Upload aria-hidden /> {t('Import CSV')}
           </Button>
         }
       />
       {importing && <BalanceImport onClose={() => setImporting(false)} />}
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-end gap-3">
-          <Field label="Snapshot date">
+          <Field label={t('Snapshot date')}>
             {(id) => (
               <Input
                 id={id}
@@ -325,33 +336,41 @@ export function SnapshotsPage() {
             )}
           </Field>
           <Button onClick={() => void copyLast()} disabled={!newDate}>
-            <Copy aria-hidden /> Copy last period
+            <Copy aria-hidden /> {t('Copy last period')}
           </Button>
           <p className="text-sm text-muted-foreground">
-            Copies every balance and FX rate to the new date; then edit what changed.
+            {t('Copies every balance and FX rate to the new date; then edit what changed.')}
           </p>
         </CardContent>
       </Card>
 
       {missingFx.length > 0 && (
         <Notice tone="warning" className="mb-4">
-          Missing FX rate: {missingFx.join(', ')}. Those balances count as zero until a rate is entered.
+          {t('Missing FX rate: {join}. Those balances count as zero until a rate is entered.', {
+            join: missingFx.join(', '),
+          })}
         </Notice>
       )}
 
       {dates.length === 0 ? (
-        <EmptyState title="No snapshot yet">
-          Pick a date above and press “Copy last period” to start an empty column, then fill in each balance.
+        <EmptyState title={t('No snapshot yet')}>
+          {t(
+            'Pick a date above and press “Copy last period” to start an empty column, then fill in each balance.',
+          )}
         </EmptyState>
       ) : (
         <Card>
           <CardHeader
-            title="Balances"
-            description="Native currency; TWD equivalent shown under foreign amounts. Click Holdings to add brokerage detail."
+            title={t('Balances')}
+            description={t(
+              'Native currency; TWD equivalent shown under foreign amounts. Click Holdings to add brokerage detail.',
+            )}
             actions={
               dates.length > VISIBLE_DATES && (
                 <Button size="sm" variant="outline" onClick={() => setShowAll(!showAll)}>
-                  {showAll ? `Show last ${VISIBLE_DATES}` : `Show all ${dates.length} dates`}
+                  {showAll
+                    ? t('Show last {VISIBLE_DATES}', { VISIBLE_DATES })
+                    : t('Show all {length} dates', { length: dates.length })}
                 </Button>
               )
             }
@@ -360,7 +379,7 @@ export function SnapshotsPage() {
             <Table className="w-auto">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 min-w-44 bg-surface">Account</th>
+                  <th className="sticky left-0 z-10 min-w-44 bg-surface">{t('Account')}</th>
                   {shown.map((d) => (
                     <th key={d} className="w-36 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -369,7 +388,7 @@ export function SnapshotsPage() {
                           size="icon"
                           variant="ghost"
                           className="size-6"
-                          aria-label={`Delete snapshot ${d}`}
+                          aria-label={t('Delete snapshot {d}', { d })}
                           onClick={() => void deleteDate(d)}
                         >
                           <Trash2 className="size-3.5" />
@@ -385,7 +404,7 @@ export function SnapshotsPage() {
                     <td className="sticky left-0 z-10 max-w-36 bg-surface sm:max-w-none">
                       <div className="font-medium">{a.nickname}</div>
                       <div className="text-xs text-subtle">
-                        {a.type === 'liability' ? 'Owed' : a.institution} · {a.currency}
+                        {a.type === 'liability' ? t('Owed') : a.institution} · {a.currency}
                         {a.type === 'brokerage' && shown.length > 0 && (
                           <>
                             {' · '}
@@ -393,7 +412,7 @@ export function SnapshotsPage() {
                               className="text-primary hover:underline"
                               onClick={() => setHoldingsFor({ accountId: a.id, date: shown.at(-1)! })}
                             >
-                              Holdings
+                              {t('Holdings')}
                             </button>
                           </>
                         )}
@@ -405,7 +424,7 @@ export function SnapshotsPage() {
                         <td key={d} className="w-36 min-w-28 align-top">
                           <MoneyInput
                             compact
-                            aria-label={`${a.nickname} on ${d}`}
+                            aria-label={t('{nickname} on {d}', { nickname: a.nickname, d })}
                             value={s?.balanceMinor}
                             currency={a.currency}
                             twdRate={rateFor(fxRates, a.currency, d)}
@@ -419,7 +438,9 @@ export function SnapshotsPage() {
                 ))}
                 {currencies.map((c) => (
                   <tr key={c}>
-                    <td className="sticky left-0 bg-surface text-muted-foreground">FX · TWD per {c}</td>
+                    <td className="sticky left-0 bg-surface text-muted-foreground">
+                      {t('FX · TWD per {c}', { c })}
+                    </td>
                     {shown.map((d) => (
                       <td key={d}>
                         <FxInput currency={c} date={d} />
@@ -428,7 +449,7 @@ export function SnapshotsPage() {
                   </tr>
                 ))}
                 <tr className="font-medium">
-                  <td className="sticky left-0 bg-surface">Total net worth</td>
+                  <td className="sticky left-0 bg-surface">{t('Total net worth')}</td>
                   {shown.map((d) => (
                     <td key={d} className="text-right">
                       {twd(nwByDate.get(d)!.total)}
@@ -436,7 +457,7 @@ export function SnapshotsPage() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="sticky left-0 bg-surface text-muted-foreground">Investable</td>
+                  <td className="sticky left-0 bg-surface text-muted-foreground">{t('Investable')}</td>
                   {shown.map((d) => (
                     <td key={d} className="text-right text-muted-foreground">
                       {twd(nwByDate.get(d)!.investable)}
@@ -452,7 +473,7 @@ export function SnapshotsPage() {
       {holdingsAccount && holdingsFor && (
         <div>
           <div className="mt-4 flex flex-wrap items-end gap-2">
-            <Field label="Holdings date">
+            <Field label={t('Holdings date')}>
               {(id) => (
                 <Select
                   id={id}
@@ -467,7 +488,7 @@ export function SnapshotsPage() {
               )}
             </Field>
             <Button variant="ghost" onClick={() => setHoldingsFor(undefined)}>
-              Close holdings
+              {t('Close holdings')}
             </Button>
           </div>
           <HoldingsPanel account={holdingsAccount} date={holdingsFor.date} />
@@ -477,19 +498,21 @@ export function SnapshotsPage() {
       {attributions.length > 0 && (
         <Card className="mt-4">
           <CardHeader
-            title="What changed"
-            description="Each period's change in total net worth = savings from cash flow + market return + FX effect (prior foreign balances × rate change). Market return is the remainder; “Check” marks a remainder too large for the assets to have earned."
+            title={t('What changed')}
+            description={t(
+              "Each period's change in total net worth = savings from cash flow + market return + FX effect (prior foreign balances × rate change). Market return is the remainder; “Check” marks a remainder too large for the assets to have earned.",
+            )}
           />
           <CardContent>
             <Table>
               <thead>
                 <tr>
-                  <th>Period</th>
-                  <th className="text-right">Change</th>
-                  <th className="text-right">Contributions</th>
-                  <th className="text-right">Market return</th>
-                  <th className="text-right">FX effect</th>
-                  <th>Check</th>
+                  <th>{t('Period')}</th>
+                  <th className="text-right">{t('Change')}</th>
+                  <th className="text-right">{t('Contributions')}</th>
+                  <th className="text-right">{t('Market return')}</th>
+                  <th className="text-right">{t('FX effect')}</th>
+                  <th>{t('Check')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -507,18 +530,28 @@ export function SnapshotsPage() {
                       <td className="text-right">{twdCompact(a.fxEffect)}</td>
                       <td>
                         {a.check === undefined ? (
-                          <span className="text-xs text-subtle" title="No cash flow entered for this period">
-                            no cash flow
+                          <span
+                            className="text-xs text-subtle"
+                            title={t('No cash flow entered for this period')}
+                          >
+                            {t('no cash flow')}
                           </span>
                         ) : a.check.flagged ? (
                           <Badge
                             tone="warning"
-                            title={`Market return ${twdCompact(a.marketReturn)} is outside the plausible range ${twdCompact(a.check.expectedLow)} to ${twdCompact(a.check.expectedHigh)}. Check for a missing cash-flow entry, a mistyped balance, or a transfer between tracked and untracked accounts.`}
+                            title={t(
+                              'Market return {marketReturn} is outside the plausible range {expectedLow} to {expectedHigh}. Check for a missing cash-flow entry, a mistyped balance, or a transfer between tracked and untracked accounts.',
+                              {
+                                marketReturn: twdCompact(a.marketReturn),
+                                expectedLow: twdCompact(a.check.expectedLow),
+                                expectedHigh: twdCompact(a.check.expectedHigh),
+                              },
+                            )}
                           >
-                            Check
+                            {t('Check')}
                           </Badge>
                         ) : (
-                          <span className="text-xs text-good">OK</span>
+                          <span className="text-xs text-good">{t('OK')}</span>
                         )}
                       </td>
                     </tr>

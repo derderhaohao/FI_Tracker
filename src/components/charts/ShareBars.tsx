@@ -1,5 +1,6 @@
 import { pct, twdCompact } from '@/lib/format';
 import { useChartTheme } from './theme';
+import { t } from '@/i18n';
 
 export interface ShareRow {
   label: string;
@@ -12,7 +13,7 @@ export interface ShareRow {
 export function ShareBars({ rows, ariaLabel }: { rows: ShareRow[]; ariaLabel: string }) {
   const theme = useChartTheme();
   const total = rows.reduce((s, r) => s + Math.max(0, r.value), 0);
-  if (total <= 0) return <p className="text-sm text-muted-foreground">No balances yet.</p>;
+  if (total <= 0) return <p className="text-sm text-muted-foreground">{t('No balances yet.')}</p>;
   return (
     <ul aria-label={ariaLabel} className="flex flex-col gap-2.5">
       {rows.map((r) => {
@@ -33,7 +34,7 @@ export function ShareBars({ rows, ariaLabel }: { rows: ShareRow[]; ariaLabel: st
                 <span
                   className="absolute -inset-y-1 w-0.5 bg-foreground"
                   style={{ left: `calc(${Math.min(1, r.target) * 100}% - 1px)` }}
-                  aria-label={`Target ${pct(r.target, 0)}`}
+                  aria-label={t('Target {target}', { target: pct(r.target, 0) })}
                 />
               )}
             </span>

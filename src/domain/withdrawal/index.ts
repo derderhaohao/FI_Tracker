@@ -1,4 +1,5 @@
 import type { WithdrawalRule } from '../entities';
+import { t } from '@/i18n';
 
 export interface WithdrawalContext {
   /** Liquid investable portfolio at the start of the year. */
@@ -57,10 +58,10 @@ export function applyWithdrawalRule(rule: WithdrawalRule, ctx: WithdrawalContext
 }
 
 export const WITHDRAWAL_RULE_LABELS: Record<WithdrawalRule['kind'], string> = {
-  fixed_swr: 'Fixed real SWR',
-  guardrails: 'Guardrails',
-  fixed_percentage: 'Fixed % of portfolio',
-  dividend: 'Dividends only',
+  fixed_swr: t('Fixed real SWR'),
+  guardrails: t('Guardrails'),
+  fixed_percentage: t('Fixed % of portfolio'),
+  dividend: t('Dividends only'),
 };
 
 export function defaultWithdrawalRule(kind: WithdrawalRule['kind']): WithdrawalRule {

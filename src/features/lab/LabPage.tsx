@@ -42,18 +42,19 @@ import { StarterCard, TemplatePicker } from './StarterCard';
 import type { TemplateResult } from './templates';
 import { signature, useMonteCarlo } from './useMonteCarlo';
 import { VerdictCard } from './VerdictCard';
+import { t } from '@/i18n';
 
 type LabTab = 'scenarios' | 'buyrent';
 
 function LabTabs({ tab, onChange }: { tab: LabTab; onChange: (t: LabTab) => void }) {
   return (
     <Segmented
-      label="Lab section"
+      label={t('Lab section')}
       value={tab}
       onChange={onChange}
       options={[
-        { value: 'scenarios', label: 'Scenarios' },
-        { value: 'buyrent', label: 'Buy vs. rent' },
+        { value: 'scenarios', label: t('Scenarios') },
+        { value: 'buyrent', label: t('Buy vs. rent') },
       ]}
     />
   );
@@ -65,8 +66,8 @@ export function LabPage() {
     return (
       <>
         <PageHeader
-          title="Strategy Lab"
-          description="Is buying a home better than renting and investing the difference?"
+          title={t('Strategy Lab')}
+          description={t('Is buying a home better than renting and investing the difference?')}
           actions={<LabTabs tab={tab} onChange={setTab} />}
         />
         <BuyVsRentPanel />
@@ -166,7 +167,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
   const fromTemplate = (t: TemplateResult) => addScenario(t.name, t.overrides, t.events);
 
   const duplicate = async (from?: Scenario) => {
-    let draft = newScenarioDraft(data, 'My plan (copy)');
+    let draft = newScenarioDraft(data, t('My plan (copy)'));
     if (from) {
       const {
         createdAt: _c,
@@ -175,7 +176,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
         lockedProjection: _p,
         ...rest
       } = structuredClone(from);
-      draft = { ...rest, id: newId(), name: `${from.name} (copy)`, isPlanOfRecord: false };
+      draft = { ...rest, id: newId(), name: t('{name} (copy)', { name: from.name }), isPlanOfRecord: false };
     }
     await save(db.scenarios, draft);
     selectScenario(draft.id);
@@ -183,7 +184,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
   };
 
   const remove = async (s: Scenario) => {
-    if (!confirm(`Delete scenario “${s.name}”?`)) return;
+    if (!confirm(t('Delete scenario “{name}”?', { name: s.name }))) return;
     await db.scenarios.delete(s.id);
     if (s.id in compare) toggleCompare(s.id);
     if (selectedScenarioId === s.id) selectScenario(undefined);
@@ -221,11 +222,11 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
     : [];
   const markers: { age: number; label: string }[] = [];
   const selStop = stopAge(selected.result);
-  if (selStop !== undefined) markers.push({ age: selStop, label: 'Stop work' });
+  if (selStop !== undefined) markers.push({ age: selStop, label: t('Stop work') });
   if (selected.input.locked.some((b) => b.pension) || selected.input.pension.employer > 0)
-    markers.push({ age: selected.input.pension.accessAge, label: '勞退 unlocks' });
+    markers.push({ age: selected.input.pension.accessAge, label: t('勞退 unlocks') });
   if (selected.input.laborInsurance)
-    markers.push({ age: selected.input.laborInsurance.claimAge, label: '勞保 starts' });
+    markers.push({ age: selected.input.laborInsurance.claimAge, label: t('勞保 starts') });
 
   const todayVerdict = verdict(today, ctx.asOfDate, fresh(today) ? resultFor(today)?.summary : undefined);
   /** Unticked scenarios only need a name in the table. */
@@ -241,24 +242,26 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
   return (
     <>
       <PageHeader
-        title="Strategy Lab"
-        description="Will your plan work, and what would make it safer? Try a what-if and compare it with your plan today."
+        title={t('Strategy Lab')}
+        description={t(
+          'Will your plan work, and what would make it safer? Try a what-if and compare it with your plan today.',
+        )}
         actions={
           <>
             {tabs}
             <Segmented
-              label="Simple or advanced view"
+              label={t('Simple or advanced view')}
               value={labView}
               onChange={setLabView}
               options={[
-                { value: 'simple', label: 'Simple' },
-                { value: 'advanced', label: 'Advanced' },
+                { value: 'simple', label: t('Simple') },
+                { value: 'advanced', label: t('Advanced') },
               ]}
             />
             <ValueModeToggle />
             {!showStarter && (
               <Button size="sm" variant="ghost" onClick={() => setLabStarter('shown')}>
-                <HelpCircle aria-hidden /> How this works
+                <HelpCircle aria-hidden /> {t('How this works')}
               </Button>
             )}
             {advanced && (
@@ -271,13 +274,15 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
       />
       <p className="-mt-2 mb-4 text-xs text-muted-foreground">
         {valueMode === 'real'
-          ? "All amounts in today's money (inflation removed)."
-          : `All amounts in future money, with ${pct(selected.input.inflation, 1)} inflation a year.`}
+          ? t("All amounts in today's money (inflation removed).")
+          : t('All amounts in future money, with {inflation} inflation a year.', {
+              inflation: pct(selected.input.inflation, 1),
+            })}
       </p>
 
       {mc.error && (
         <Notice tone="critical" className="mb-3">
-          Simulations failed: {mc.error}
+          {t('Simulations failed: {error}', { error: mc.error })}
         </Notice>
       )}
 
@@ -301,27 +306,30 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
 
       <Card className="mb-4">
         <CardHeader
-          title="Compare what-ifs"
-          description={`Tick up to ${MAX_COMPARE} scenarios. Every one replays the same simulated futures, so differences come from the plan, not from luck.`}
+          title={t('Compare what-ifs')}
+          description={t(
+            'Tick up to {MAX_COMPARE} scenarios. Every one replays the same simulated futures, so differences come from the plan, not from luck.',
+            { MAX_COMPARE },
+          )}
           actions={
             advanced ? (
               <>
                 <Select
-                  aria-label="Monte Carlo runs"
+                  aria-label={t('Monte Carlo runs')}
                   className="h-8 w-32"
                   value={mcRuns}
                   onChange={(e) => setMcRuns(Number(e.target.value))}
                 >
                   {[1000, 2000, 5000, MAX_RUNS].map((n) => (
                     <option key={n} value={n}>
-                      {n.toLocaleString()} runs
+                      {t('{toLocaleString} runs', { toLocaleString: n.toLocaleString() })}
                     </option>
                   ))}
                 </Select>
                 <label className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Term k="simulationId" params={params} advanced />
                   <input
-                    aria-label="Comparison seed"
+                    aria-label={t('Comparison seed')}
                     type="number"
                     className="h-8 w-20 rounded-md border border-input bg-surface px-2 text-right text-sm"
                     value={mcSeed}
@@ -336,7 +344,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                   disabled={mc.running}
                   onClick={() => void mc.run(jobs, mcRuns, mcSeed)}
                 >
-                  <Play aria-hidden /> {mc.running ? 'Running…' : 'Rerun'}
+                  <Play aria-hidden /> {mc.running ? t('Running…') : t('Rerun')}
                 </Button>
               </>
             ) : undefined
@@ -347,7 +355,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
             <thead>
               <tr>
                 <th className="w-8" />
-                <th className="min-w-48">Scenario</th>
+                <th className="min-w-48">{t('Scenario')}</th>
                 <th className="text-right">
                   <Term k="stopAge" params={params} advanced={advanced} />
                 </th>
@@ -357,7 +365,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                 <th className="text-right">
                   <Term k="pastMarkets" params={params} advanced={advanced} />
                 </th>
-                <th className="text-right">vs your plan</th>
+                <th className="text-right">{t('vs your plan')}</th>
                 {advanced && (
                   <>
                     <th className="text-right">
@@ -391,7 +399,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                       {s && (
                         <input
                           type="checkbox"
-                          aria-label={`Compare ${s.name}`}
+                          aria-label={t('Compare {name}', { name: s.name })}
                           checked={s.id in compare}
                           disabled={!(s.id in compare) && Object.keys(compare).length >= MAX_COMPARE}
                           onChange={() => toggleCompare(s.id)}
@@ -416,10 +424,12 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                         />
                         {r.name}
                       </button>
-                      {isToday && <div className="text-xs text-subtle">Always uses your latest data</div>}
+                      {isToday && (
+                        <div className="text-xs text-subtle">{t('Always uses your latest data')}</div>
+                      )}
                       {s?.isPlanOfRecord && (
                         <Badge tone="primary" className="mt-0.5">
-                          <Lock className="size-3" aria-hidden /> My plan
+                          <Lock className="size-3" aria-hidden /> {t('My plan')}
                         </Badge>
                       )}
                       {diff?.cause && (
@@ -438,7 +448,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                               </div>
                             </>
                           ) : (
-                            'Not reached'
+                            t('Not reached')
                           )}
                         </td>
                         <td className="text-right">
@@ -475,7 +485,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                       </>
                     ) : (
                       <td colSpan={advanced ? 7 : 4} className="text-right text-subtle">
-                        Tick to compare
+                        {t('Tick to compare')}
                       </td>
                     )}
                     <td>
@@ -483,7 +493,11 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          aria-label={isToday ? 'Copy your plan today to edit' : `Duplicate ${r.name}`}
+                          aria-label={
+                            isToday
+                              ? t('Copy your plan today to edit')
+                              : t('Duplicate {name}', { name: r.name })
+                          }
                           onClick={() => void duplicate(s)}
                         >
                           <Copy />
@@ -492,7 +506,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                           <Button
                             size="icon"
                             variant="ghost"
-                            aria-label={`Delete ${s.name}`}
+                            aria-label={t('Delete {name}', { name: s.name })}
                             onClick={() => void remove(s)}
                           >
                             <Trash2 />
@@ -507,22 +521,22 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
           </Table>
           {!showStarter && (
             <div className="mt-4">
-              <div className="mb-2 text-sm font-medium">Try a what-if</div>
+              <div className="mb-2 text-sm font-medium">{t('Try a what-if')}</div>
               <TemplatePicker today={today} onCreate={fromTemplate} />
               <Button size="sm" variant="ghost" className="mt-2" onClick={() => void duplicate()}>
-                <Plus aria-hidden /> Blank copy of your plan
+                <Plus aria-hidden /> {t('Blank copy of your plan')}
               </Button>
             </div>
           )}
           <div className="mt-4">
             <div className="mb-1 text-sm font-medium">
-              Investments by age, <Term k="typicalPath" params={params} advanced={advanced} />
+              {t('Investments by age,')} <Term k="typicalPath" params={params} advanced={advanced} />
             </div>
             <LineChart
-              ariaLabel="Investments by scenario"
+              ariaLabel={t('Investments by scenario')}
               data={chartRows}
               xKey="age"
-              tooltipTitle={(r) => `Age ${r.age}`}
+              tooltipTitle={(r) => t('Age {age}', { age: r.age })}
               series={[
                 { key: TODAY_ID, label: today.name, slot: 0, color: theme.axis, dashed: true },
                 ...compared.map((c) => ({ key: c.id, label: c.name, slot: c.slot })),
@@ -538,7 +552,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
           {selected.scenario ? (
             <>
               <CardHeader
-                title={`Edit: ${selected.scenario.name}`}
+                title={t('Edit: {name}', { name: selected.scenario.name })}
                 actions={
                   !selected.scenario.isPlanOfRecord ? (
                     <Button
@@ -546,17 +560,20 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                       variant="outline"
                       onClick={() => void lockPlanOfRecord(data, selected.scenario!)}
                     >
-                      <Lock aria-hidden /> Set as my plan
+                      <Lock aria-hidden /> {t('Set as my plan')}
                     </Button>
                   ) : (
-                    <Badge tone="primary">My plan since {selected.scenario.lockedAt}</Badge>
+                    <Badge tone="primary">
+                      {t('My plan since {lockedAt}', { lockedAt: selected.scenario.lockedAt })}
+                    </Badge>
                   )
                 }
               />
               <CardContent>
                 <p className="-mt-2 mb-3 text-xs text-muted-foreground">
-                  “Set as my plan” saves this scenario's projection; the Dashboard then tracks your real
-                  progress against it.
+                  {t(
+                    "“Set as my plan” saves this scenario's projection; the Dashboard then tracks your real progress against it.",
+                  )}
                 </p>
                 <ScenarioEditor
                   key={selected.scenario.id}
@@ -570,14 +587,15 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
             </>
           ) : (
             <>
-              <CardHeader title="Your plan today" />
+              <CardHeader title={t('Your plan today')} />
               <CardContent className="text-sm">
                 <p className="text-muted-foreground">
-                  This row always follows your latest balances, cash flow and FI budget, so it can't be edited
-                  here. To try changes, start a what-if or make a copy.
+                  {t(
+                    "This row always follows your latest balances, cash flow and FI budget, so it can't be edited here. To try changes, start a what-if or make a copy.",
+                  )}
                 </p>
                 <Button size="sm" className="mt-3" onClick={() => void duplicate()}>
-                  <Copy aria-hidden /> Make a copy to edit
+                  <Copy aria-hidden /> {t('Make a copy to edit')}
                 </Button>
               </CardContent>
             </>
@@ -585,11 +603,16 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
         </Card>
         <Card className="xl:col-span-2">
           <CardHeader
-            title={`Range of futures: ${selected.name}`}
+            title={t('Range of futures: {name}', { name: selected.name })}
             description={
               advanced && selectedMc
-                ? `${selectedMc.summary.runs.toLocaleString()} runs · seed ${selectedMc.summary.seed} · ${Math.round(selectedMc.summary.elapsedMs)} ms${fresh(selected) ? '' : ' · updating'}`
-                : 'Investments by age across the simulated futures.'
+                ? t('{toLocaleString} runs · seed {seed} · {elapsedMs} ms{v}', {
+                    toLocaleString: selectedMc.summary.runs.toLocaleString(),
+                    seed: selectedMc.summary.seed,
+                    elapsedMs: Math.round(selectedMc.summary.elapsedMs),
+                    v: fresh(selected) ? '' : t(' · updating'),
+                  })
+                : t('Investments by age across the simulated futures.')
             }
           />
           <CardContent>
@@ -604,26 +627,28 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                   shadeRunsOut
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  The band holds 8 in 10 futures: 1 in 10 does worse than its lower edge and 1 in 10 better
-                  than its upper edge. The dashed “Money needed” line falls with age because fewer years are
-                  left to pay for and pensions start; while your investments stay above it, the rest of the
-                  plan is funded.
+                  {t(
+                    'The band holds 8 in 10 futures: 1 in 10 does worse than its lower edge and 1 in 10 better than its upper edge. The dashed “Money needed” line falls with age because fewer years are left to pay for and pensions start; while your investments stay above it, the rest of the plan is funded.',
+                  )}
                 </p>
                 {selectedMc.summary.minSpendingRatioP50 < 0.999 && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    In a typical future your spending is cut to{' '}
-                    {pct(selectedMc.summary.minSpendingRatioP50, 0)} of your FI budget at its lowest
-                    (withdrawal rule cuts).
+                    {t(
+                      'In a typical future your spending is cut to {minSpendingRatioP50} of your FI budget at its lowest (withdrawal rule cuts).',
+                      { minSpendingRatioP50: pct(selectedMc.summary.minSpendingRatioP50, 0) },
+                    )}
                   </p>
                 )}
                 {advanced && selectedMc.summary.fiAgeDistribution.length > 0 && (
                   <details className="mt-3 text-sm">
-                    <summary className="cursor-pointer text-muted-foreground">FI age distribution</summary>
+                    <summary className="cursor-pointer text-muted-foreground">
+                      {t('FI age distribution')}
+                    </summary>
                     <Table className="mt-2">
                       <tbody>
                         {selectedMc.summary.fiAgeDistribution.map((d) => (
                           <tr key={d.age}>
-                            <td>Age {d.age}</td>
+                            <td>{t('Age {age}', { age: d.age })}</td>
                             <td className="text-right">{pct(d.share, 1)}</td>
                           </tr>
                         ))}
@@ -633,7 +658,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                 )}
               </>
             ) : (
-              <p className="py-10 text-center text-sm text-subtle">Simulating…</p>
+              <p className="py-10 text-center text-sm text-subtle">{t('Simulating…')}</p>
             )}
           </CardContent>
         </Card>
@@ -653,8 +678,10 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
         setName={assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id).name}
       />
       <p className="mt-4 text-xs text-subtle">
-        Defaults: {settings.horizonAge} is the age your money must last to (Settings). Results are what-ifs,
-        not advice.
+        {t(
+          'Defaults: {horizonAge} is the age your money must last to (Settings). Results are what-ifs, not advice.',
+          { horizonAge: settings.horizonAge },
+        )}
       </p>
     </>
   );

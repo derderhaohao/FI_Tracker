@@ -16,6 +16,9 @@ import { PlaybackView } from './playback/PlaybackView';
 import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { toMode } from '@/lib/valueMode';
 import { dateAfterYears, twd, twdCompact } from '@/lib/format';
+import { t } from '@/i18n';
+
+const TIER_LABELS: Record<string, string> = { lean: t('Lean'), full: t('Full'), fat: t('Fat') };
 
 export function ProjectionPage() {
   const data = useAppData();
@@ -38,22 +41,24 @@ export function ProjectionPage() {
   return (
     <>
       <PageHeader
-        title="Projection"
-        description="When you arrive if nothing changes: year by year from the latest snapshot to the horizon age, retiring as soon as FI is reached."
+        title={t('Projection')}
+        description={t(
+          'When you arrive if nothing changes: year by year from the latest snapshot to the horizon age, retiring as soon as FI is reached.',
+        )}
         actions={
           <>
             <Segmented
-              label="Projection mode"
+              label={t('Projection mode')}
               value={mode}
               onChange={setMode}
               options={[
-                { value: 'static', label: 'Year by year' },
-                { value: 'play', label: 'Play' },
+                { value: 'static', label: t('Year by year') },
+                { value: 'play', label: t('Play') },
               ]}
             />
             <ValueModeToggle />
             <Select
-              aria-label="Assumption set"
+              aria-label={t('Assumption set')}
               value={setId}
               onChange={(e) => setSetId(e.target.value)}
               className="h-8 w-40"
@@ -72,8 +77,13 @@ export function ProjectionPage() {
         compact
         note={
           setId !== data.activeAssumptions.id
-            ? `The status uses your active assumption set (${data.activeAssumptions.name}); the chart below uses ${assumptions.name}.`
-            : 'The chart is the typical path: one future where markets return their typical amount every year. The status counts how often the money lasts across 1,000 simulated futures, so it can be lower even when this line never reaches zero.'
+            ? t('The status uses your active assumption set ({name}); the chart below uses {name2}.', {
+                name: data.activeAssumptions.name,
+                name2: assumptions.name,
+              })
+            : t(
+                'The chart is the typical path: one future where markets return their typical amount every year. The status counts how often the money lasts across 1,000 simulated futures, so it can be lower even when this line never reaches zero.',
+              )
         }
       />
       {mode === 'play' ? (
@@ -88,25 +98,38 @@ export function ProjectionPage() {
 
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Stat
-              label="Most likely FI date"
+              label={t('Most likely FI date')}
               value={
                 result.yearsToFi !== undefined
                   ? dateAfterYears(ctx.asOfDate, result.yearsToFi)
-                  : 'Not reached'
+                  : t('Not reached')
               }
-              sub={result.fiAge !== undefined ? `Age ${result.fiAge}` : `By age ${settings.horizonAge}`}
+              sub={
+                result.fiAge !== undefined
+                  ? t('Age {fiAge}', { fiAge: result.fiAge })
+                  : t('By age {horizonAge}', { horizonAge: settings.horizonAge })
+              }
             />
             <Stat
-              label="Usable investments at FI"
+              label={t('Usable investments at FI')}
               value={fiRow ? twdCompact(fiRow.liquid) : '—'}
               sub={
                 fiRow
-                  ? `Money needed at ${result.fiAge}: ${twdCompact(fiRow.fiTarget)}. Plus ${twdCompact(fiRow.locked)} locked pension, which unlocks later.`
-                  : `Money needed today: ${twdCompact(result.rows[0]?.fiTarget ?? 0)}`
+                  ? t(
+                      'Money needed at {fiAge}: {fiTarget}. Plus {locked} locked pension, which unlocks later.',
+                      {
+                        fiAge: result.fiAge,
+                        fiTarget: twdCompact(fiRow.fiTarget),
+                        locked: twdCompact(fiRow.locked),
+                      },
+                    )
+                  : t('Money needed today: {twdCompact}', {
+                      twdCompact: twdCompact(result.rows[0]?.fiTarget ?? 0),
+                    })
               }
             />
             <Stat
-              label={`Left at age ${settings.horizonAge}`}
+              label={t('Left at age {horizonAge}', { horizonAge: settings.horizonAge })}
               value={twdCompact(
                 valueMode === 'nominal'
                   ? result.balanceAtHorizon * (result.rows.at(-1)?.inflationIndex ?? 1)
@@ -114,41 +137,52 @@ export function ProjectionPage() {
               )}
               sub={
                 result.success
-                  ? 'Left on the typical path; see the status above for the risk'
-                  : `Runs out at age ${result.depletionAge} on the typical path`
+                  ? t('Left on the typical path; see the status above for the risk')
+                  : t('Runs out at age {depletionAge} on the typical path', {
+                      depletionAge: result.depletionAge,
+                    })
               }
             />
             <Stat
-              label="Overseas income (AMT)"
-              value={result.amtAges.length ? `From age ${result.amtAges[0]}` : 'Below threshold'}
-              sub="Flags years when overseas dividends may count toward the basic income tax"
+              label={t('Overseas income (AMT)')}
+              value={
+                result.amtAges.length ? t('From age {age}', { age: result.amtAges[0] }) : t('Below threshold')
+              }
+              sub={t('Flags years when overseas dividends may count toward the basic income tax')}
             />
           </div>
 
           <Card className="mb-4">
             <CardHeader
-              title="Investable net worth against the FI target"
+              title={t('Investable net worth against the FI target')}
               description={
                 <>
-                  The <Term k="typicalPath" />. Investable includes locked pension. <Term k="moneyNeeded" />{' '}
-                  is what usable investments must cover to stop work that year: the FI number plus a{' '}
-                  <Term k="bridgeFund">bridge fund</Term> until pensions start.
+                  {t('The')} <Term k="typicalPath" />
+                  {t('. Investable includes locked pension.')} <Term k="moneyNeeded" />{' '}
+                  {t('is what usable investments must cover to stop work that year: the FI number plus a')}{' '}
+                  <Term k="bridgeFund">{t('bridge fund')}</Term> {t('until pensions start.')}
                 </>
               }
             />
             <CardContent>
               <LineChart
-                ariaLabel="Projected investable net worth and FI target by age"
+                ariaLabel={t('Projected investable net worth and FI target by age')}
                 data={rows}
                 xKey="age"
-                tooltipTitle={(r) => `Age ${r.age} · ${r.year}${r.retired ? ' · retired' : ''}`}
+                tooltipTitle={(r) =>
+                  r.retired
+                    ? t('Age {age} · {year} · retired', { age: r.age, year: r.year })
+                    : t('Age {age} · {year}', { age: r.age, year: r.year })
+                }
                 referenceX={
-                  result.fiAge !== undefined ? { x: result.fiAge, label: `FI at ${result.fiAge}` } : undefined
+                  result.fiAge !== undefined
+                    ? { x: result.fiAge, label: t('FI at {fiAge}', { fiAge: result.fiAge }) }
+                    : undefined
                 }
                 series={[
-                  { key: 'investable', label: 'Investable', slot: 0, area: true },
-                  { key: 'fiTarget', label: 'Money needed', slot: 1, dashed: true },
-                  { key: 'totalNetWorth', label: 'Total net worth', slot: 2 },
+                  { key: 'investable', label: t('Investable'), slot: 0, area: true },
+                  { key: 'fiTarget', label: t('Money needed'), slot: 1, dashed: true },
+                  { key: 'totalNetWorth', label: t('Total net worth'), slot: 2 },
                 ]}
                 height={320}
               />
@@ -157,28 +191,33 @@ export function ProjectionPage() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card>
-              <CardHeader title="Sensitivity" description="FI date shift under one change at a time." />
+              <CardHeader
+                title={t('Sensitivity')}
+                description={t('FI date shift under one change at a time.')}
+              />
               <CardContent>
                 <Table>
                   <thead>
                     <tr>
-                      <th>Change</th>
-                      <th className="text-right">FI age</th>
-                      <th className="text-right">Shift</th>
+                      <th>{t('Change')}</th>
+                      <th className="text-right">{t('FI age')}</th>
+                      <th className="text-right">{t('Shift')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr className="font-medium">
-                      <td>Base</td>
+                      <td>{t('Base')}</td>
                       <td className="text-right">{sens.base.fiAge ?? '—'}</td>
                       <td />
                     </tr>
                     {sens.rows.map((r) => (
                       <tr key={r.label}>
                         <td>{r.label}</td>
-                        <td className="text-right">{r.fiAge ?? 'never'}</td>
+                        <td className="text-right">{r.fiAge ?? t('never')}</td>
                         <td className="text-right">
-                          {r.shift === undefined ? '—' : `${r.shift > 0 ? '+' : ''}${r.shift.toFixed(1)} yr`}
+                          {r.shift === undefined
+                            ? '—'
+                            : t('{v} yr', { v: `${r.shift > 0 ? '+' : ''}${r.shift.toFixed(1)}` })}
                         </td>
                       </tr>
                     ))}
@@ -187,27 +226,49 @@ export function ProjectionPage() {
               </CardContent>
             </Card>
             <Card className="lg:col-span-2">
-              <CardHeader title="Inputs used" description="Every output traces back to these." />
+              <CardHeader title={t('Inputs used')} description={t('Every output traces back to these.')} />
               <CardContent>
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
                   {(
                     [
-                      ['Start', `${ctx.asOfDate} · age ${ctx.startAge}`],
-                      ['Net income now', `${twd(data.baselineInput.annualIncome)}/yr (trailing 12 months)`],
-                      ['Spending while working', `${twd(data.baselineInput.currentSpending)}/yr`],
                       [
-                        'FI spending',
-                        `${twd(data.baselineInput.fiSpending)}/yr (${settings.destination.fiTier} tier)`,
+                        t('Start'),
+                        t('{asOfDate} · age {startAge}', { asOfDate: ctx.asOfDate, startAge: ctx.startAge }),
                       ],
-                      ['Safe withdrawal rate', `${(data.baselineInput.swr * 100).toFixed(2)}%`],
                       [
-                        'Inflation · salary growth',
+                        t('Net income now'),
+                        t('{annualIncome}/yr (trailing 12 months)', {
+                          annualIncome: twd(data.baselineInput.annualIncome),
+                        }),
+                      ],
+                      [
+                        t('Spending while working'),
+                        t('{amount}/yr', { amount: twd(data.baselineInput.currentSpending) }),
+                      ],
+                      [
+                        t('FI spending'),
+                        t('{fiSpending}/yr ({fiTier} tier)', {
+                          fiSpending: twd(data.baselineInput.fiSpending),
+                          fiTier: TIER_LABELS[settings.destination.fiTier],
+                        }),
+                      ],
+                      [t('Safe withdrawal rate'), `${(data.baselineInput.swr * 100).toFixed(2)}%`],
+                      [
+                        t('Inflation · salary growth'),
                         `${(assumptions.inflation * 100).toFixed(1)}% · ${(assumptions.salaryGrowth * 100).toFixed(1)}%`,
                       ],
-                      ['FX drift (TWD per USD)', `${(assumptions.fxDrift * 100).toFixed(1)}% a year`],
                       [
-                        '勞退 per year',
-                        `${twd(data.baselineInput.pension.employer + data.baselineInput.pension.voluntary)} until FI, unlocks at ${data.baselineInput.pension.accessAge}`,
+                        t('FX drift (TWD per USD)'),
+                        t('{toFixed}% a year', { toFixed: (assumptions.fxDrift * 100).toFixed(1) }),
+                      ],
+                      [
+                        t('勞退 per year'),
+                        t('{twd} until FI, unlocks at {accessAge}', {
+                          twd: twd(
+                            data.baselineInput.pension.employer + data.baselineInput.pension.voluntary,
+                          ),
+                          accessAge: data.baselineInput.pension.accessAge,
+                        }),
                       ],
                     ] as const
                   ).map(([k, v]) => (
@@ -223,13 +284,15 @@ export function ProjectionPage() {
 
           <Card className="mt-4">
             <CardHeader
-              title="Year by year"
+              title={t('Year by year')}
               description={
-                valueMode === 'real' ? "Today's money (inflation removed)" : 'Future money (with inflation)'
+                valueMode === 'real'
+                  ? t("Today's money (inflation removed)")
+                  : t('Future money (with inflation)')
               }
               actions={
                 <Button size="sm" variant="outline" onClick={() => setShowTable(!showTable)}>
-                  {showTable ? 'Hide table' : 'Show table'}
+                  {showTable ? t('Hide table') : t('Show table')}
                 </Button>
               }
             />
@@ -238,17 +301,17 @@ export function ProjectionPage() {
                 <Table className="min-w-max">
                   <thead>
                     <tr>
-                      <th>Age</th>
-                      <th>Year</th>
-                      <th className="text-right">Liquid</th>
-                      <th className="text-right">Locked</th>
-                      <th className="text-right">FI target</th>
-                      <th className="text-right">Income</th>
-                      <th className="text-right">Spending</th>
-                      <th className="text-right">Saved</th>
-                      <th className="text-right">Withdrawn</th>
-                      <th className="text-right">Streams</th>
-                      <th className="text-right">Total NW</th>
+                      <th>{t('Age')}</th>
+                      <th>{t('Year')}</th>
+                      <th className="text-right">{t('Liquid')}</th>
+                      <th className="text-right">{t('Locked')}</th>
+                      <th className="text-right">{t('FI target')}</th>
+                      <th className="text-right">{t('Income')}</th>
+                      <th className="text-right">{t('Spending')}</th>
+                      <th className="text-right">{t('Saved')}</th>
+                      <th className="text-right">{t('Withdrawn')}</th>
+                      <th className="text-right">{t('Streams')}</th>
+                      <th className="text-right">{t('Total NW')}</th>
                     </tr>
                   </thead>
                   <tbody>

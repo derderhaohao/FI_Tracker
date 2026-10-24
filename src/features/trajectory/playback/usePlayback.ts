@@ -14,6 +14,7 @@ import { activeEvents, impactOf, type Impact } from '@/domain/playback/analysis'
 import { eventLength, findEvent } from '@/domain/playback/library';
 import { newId } from '@/db/repo';
 import { useAppData } from '@/app/data';
+import { t } from '@/i18n';
 
 export interface LogEntry {
   uid: string;
@@ -82,12 +83,12 @@ export function usePlayback() {
   const fire = useCallback(
     (eventId: string, month: number, severity: Severity = 'typical', amount?: number): string | undefined => {
       const def = findEvent(eventId, custom);
-      if (!def) return 'Unknown event.';
+      if (!def) return t('Unknown event.');
       const m = Math.max(0, Math.min(pathRef.current.months - 1, Math.floor(month)));
       const running = activeEvents(pathRef.current, m);
       if (running.some((e) => e.def.id === eventId && eventId !== 'lump'))
-        return `${def.name} is still running; it can be fired again when it ends.`;
-      if (running.length >= 5) return 'At most 5 events can run at the same time.';
+        return t('{name} is still running; it can be fired again when it ends.', { name: def.name });
+      if (running.length >= 5) return t('At most 5 events can run at the same time.');
       const ev: StoryEvent = { uid: newId(), eventId, start: m, severity, source: 'live', amount };
       const nextLive = [...live, ev];
       const before = pathRef.current;
@@ -103,7 +104,7 @@ export function usePlayback() {
           Math.min(...after.factorLevels[f as 'tw_equity'].subarray(m)),
         ),
       );
-      setWarning(worst < 0.2 ? 'Combined share losses now exceed 80%: an extreme story.' : undefined);
+      setWarning(worst < 0.2 ? t('Combined share losses now exceed 80%: an extreme story.') : undefined);
       return undefined;
     },
     [custom, live, log, recompute, base],

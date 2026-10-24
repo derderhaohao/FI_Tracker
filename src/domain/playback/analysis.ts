@@ -2,6 +2,7 @@ import { ASSET_CLASS_LABELS, type AssetClass } from '../entities';
 import { BASE_CURRENCY } from '../fx';
 import { EQUITY_FACTORS } from './library';
 import { REGION_KEY_LABELS, type PlaybackPath, type RegionKey, type ResolvedEvent } from './engine';
+import { t, tn } from '@/i18n';
 
 /** Pure helpers for the playback screen: pacing, stats, groups, impact, milestones. */
 
@@ -16,10 +17,15 @@ export function milestones(path: PlaybackPath): Milestone[] {
   const { input } = path.setup;
   const out: Milestone[] = [];
   const atAge = (age: number) => (age - path.startAge) * 12;
-  if (path.retireMonth !== undefined) out.push({ month: path.retireMonth, label: 'Stop work', kind: 'stop' });
+  if (path.retireMonth !== undefined)
+    out.push({ month: path.retireMonth, label: t('Stop work'), kind: 'stop' });
   const pensionAge = input.pension.accessAge;
   if (path.setup.accounts.some((a) => a.pension) && atAge(pensionAge) > 0 && atAge(pensionAge) < path.months)
-    out.push({ month: atAge(pensionAge), label: `勞退 unlocks (${pensionAge})`, kind: 'pension' });
+    out.push({
+      month: atAge(pensionAge),
+      label: t('勞退 unlocks ({pensionAge})', { pensionAge }),
+      kind: 'pension',
+    });
   if (
     input.laborInsurance &&
     atAge(input.laborInsurance.claimAge) > 0 &&
@@ -27,7 +33,7 @@ export function milestones(path: PlaybackPath): Milestone[] {
   )
     out.push({
       month: atAge(input.laborInsurance.claimAge),
-      label: `勞保 starts (${input.laborInsurance.claimAge})`,
+      label: t('勞保 starts ({claimAge})', { claimAge: input.laborInsurance.claimAge }),
       kind: 'insurance',
     });
   for (const e of path.events) {
@@ -35,10 +41,10 @@ export function milestones(path: PlaybackPath): Milestone[] {
     out.push({ month: e.start, label: e.def.name, kind: 'eventStart', uid: e.uid });
     const end = e.start + e.length;
     if (e.shocks.length && end < path.months)
-      out.push({ month: end, label: `${e.def.name} ends`, kind: 'eventEnd', uid: e.uid });
+      out.push({ month: end, label: t('{name} ends', { name: e.def.name }), kind: 'eventEnd', uid: e.uid });
   }
   if (path.depletionMonth !== undefined)
-    out.push({ month: path.depletionMonth, label: 'Money runs out', kind: 'runOut' });
+    out.push({ month: path.depletionMonth, label: t('Money runs out'), kind: 'runOut' });
   return out.sort((a, b) => a.month - b.month);
 }
 
@@ -203,13 +209,21 @@ export function ageAtMonth(path: PlaybackPath, m: number): number {
 /** "−NT$4.1M at 95 · money now runs out at 88" */
 export function impactText(path: PlaybackPath, i: Impact, money: (v: number) => string): string {
   const parts = [
-    `${i.horizon >= 0 ? '+' : '−'}${money(Math.abs(i.horizon))} at ${path.setup.input.horizonAge}`,
+    t('{sign}{amount} at {age}', {
+      sign: i.horizon >= 0 ? '+' : '−',
+      amount: money(Math.abs(i.horizon)),
+      age: path.setup.input.horizonAge,
+    }),
   ];
   if (i.fiMonths !== undefined && Math.abs(i.fiMonths) >= 1)
-    parts.push(`FI ${Math.round(Math.abs(i.fiMonths))} months ${i.fiMonths > 0 ? 'later' : 'earlier'}`);
+    parts.push(
+      i.fiMonths > 0
+        ? t('FI {n} months later', { n: Math.round(Math.abs(i.fiMonths)) })
+        : t('FI {n} months earlier', { n: Math.round(Math.abs(i.fiMonths)) }),
+    );
   if (i.runOutAfter !== undefined && i.runOutAfter !== i.runOutBefore)
-    parts.push(`money now runs out at ${Math.floor(ageAtMonth(path, i.runOutAfter))}`);
-  else if (i.runOutAfter === undefined && i.runOutBefore !== undefined) parts.push('money now lasts');
+    parts.push(t('money now runs out at {path}', { path: Math.floor(ageAtMonth(path, i.runOutAfter)) }));
+  else if (i.runOutAfter === undefined && i.runOutBefore !== undefined) parts.push(t('money now lasts'));
   return parts.join(' · ');
 }
 
@@ -255,9 +269,9 @@ function classKey(a: PlaybackPath['setup']['accounts'][number]): (typeof CLASS_O
 
 const CLASS_GROUP_LABELS: Record<string, string> = {
   ...ASSET_CLASS_LABELS,
-  pension: '勞退 pension',
-  insurance: 'Savings insurance',
-  loans: 'Loans',
+  pension: t('勞退 pension'),
+  insurance: t('Savings insurance'),
+  loans: t('Loans'),
 };
 
 /**
@@ -322,7 +336,7 @@ export function spanText(months: number): string {
   const y = Math.floor(months / 12);
   const mo = Math.round(months % 12);
   const parts: string[] = [];
-  if (y) parts.push(`${y} year${y === 1 ? '' : 's'}`);
-  if (mo || !y) parts.push(`${mo} month${mo === 1 ? '' : 's'}`);
+  if (y) parts.push(tn(y, '1 year', '{n} years'));
+  if (mo || !y) parts.push(tn(mo, '1 month', '{n} months'));
   return parts.join(' ');
 }

@@ -41,6 +41,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input, Select } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Table } from '@/components/ui/misc';
+import { t } from '@/i18n';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
 
 function Section({
   id,
@@ -72,7 +74,7 @@ function GeneralSettings({ s }: { s: Settings }) {
   return (
     <>
       <div className={grid}>
-        <Field label="Birth year">
+        <Field label={t('Birth year')}>
           {(id) => (
             <NumberInput
               id={id}
@@ -83,7 +85,7 @@ function GeneralSettings({ s }: { s: Settings }) {
             />
           )}
         </Field>
-        <Field label="Horizon age" hint="Projections run to this age">
+        <Field label={t('Horizon age')} hint={t('Projections run to this age')}>
           {(id) => (
             <NumberInput
               id={id}
@@ -94,7 +96,7 @@ function GeneralSettings({ s }: { s: Settings }) {
             />
           )}
         </Field>
-        <Field label="Default SWR" hint="2.5–5%">
+        <Field label={t('Default SWR')} hint="2.5–5%">
           {(id) => (
             <PercentInput
               id={id}
@@ -106,19 +108,19 @@ function GeneralSettings({ s }: { s: Settings }) {
             />
           )}
         </Field>
-        <Field label="Snapshot cadence">
+        <Field label={t('Snapshot cadence')}>
           {(id) => (
             <Select
               id={id}
               value={s.snapshotCadence}
               onChange={(e) => set({ snapshotCadence: e.target.value as Settings['snapshotCadence'] })}
             >
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
+              <option value="monthly">{t('Monthly')}</option>
+              <option value="quarterly">{t('Quarterly')}</option>
             </Select>
           )}
         </Field>
-        <Field label="Assumption set in use">
+        <Field label={t('Assumption set in use')}>
           {(id) => (
             <Select
               id={id}
@@ -133,7 +135,7 @@ function GeneralSettings({ s }: { s: Settings }) {
             </Select>
           )}
         </Field>
-        <Field label="Savings-rate alert below">
+        <Field label={t('Savings-rate alert below')}>
           {(id) => (
             <PercentInput
               id={id}
@@ -145,7 +147,7 @@ function GeneralSettings({ s }: { s: Settings }) {
             />
           )}
         </Field>
-        <Field label="Allocation drift alert beyond" hint="Percentage points">
+        <Field label={t('Allocation drift alert beyond')} hint={t('Percentage points')}>
           {(id) => (
             <PercentInput
               id={id}
@@ -159,7 +161,7 @@ function GeneralSettings({ s }: { s: Settings }) {
             />
           )}
         </Field>
-        <Field label="Emergency fund (months)">
+        <Field label={t('Emergency fund (months)')}>
           {(id) => (
             <NumberInput
               id={id}
@@ -171,7 +173,7 @@ function GeneralSettings({ s }: { s: Settings }) {
           )}
         </Field>
       </div>
-      <h3 className="mt-5 mb-2 text-sm font-semibold">Target allocation for investable assets</h3>
+      <h3 className="mt-5 mb-2 text-sm font-semibold">{t('Target allocation for investable assets')}</h3>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         {ASSET_CLASSES.map((c) => (
           <Field key={c} label={ASSET_CLASS_LABELS[c]}>
@@ -189,8 +191,8 @@ function GeneralSettings({ s }: { s: Settings }) {
         ))}
       </div>
       <p className={`mt-2 text-xs ${Math.abs(allocSum - 1) > 0.001 ? 'text-warning' : 'text-subtle'}`}>
-        Adds up to {(allocSum * 100).toFixed(0)}%
-        {Math.abs(allocSum - 1) > 0.001 ? '; it is scaled to 100% in projections.' : '.'}
+        {t('Adds up to {toFixed}%', { toFixed: (allocSum * 100).toFixed(0) })}
+        {Math.abs(allocSum - 1) > 0.001 ? t('; it is scaled to 100% in projections.') : '.'}
       </p>
     </>
   );
@@ -229,7 +231,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
   return (
     <div className="flex flex-col gap-4">
       <div className={grid}>
-        <Field label="Name">
+        <Field label={t('Name')}>
           {(id) => (
             <Input
               id={id}
@@ -239,7 +241,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
             />
           )}
         </Field>
-        <Field label="Inflation">
+        <Field label={t('Inflation')}>
           {(id) => (
             <PercentInput
               id={id}
@@ -249,7 +251,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
             />
           )}
         </Field>
-        <Field label="Inflation volatility">
+        <Field label={t('Inflation volatility')}>
           {(id) => (
             <PercentInput
               id={id}
@@ -260,7 +262,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
             />
           )}
         </Field>
-        <Field label="Salary growth (nominal)">
+        <Field label={t('Salary growth (nominal)')}>
           {(id) => (
             <PercentInput
               id={id}
@@ -270,7 +272,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
             />
           )}
         </Field>
-        <Field label="FX drift" hint="Yearly change in TWD per USD">
+        <Field label={t('FX drift')} hint={t('Yearly change in TWD per USD')}>
           {(id) => (
             <PercentInput
               id={id}
@@ -280,7 +282,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
             />
           )}
         </Field>
-        <Field label="FX volatility">
+        <Field label={t('FX volatility')}>
           {(id) => (
             <PercentInput
               id={id}
@@ -295,11 +297,11 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
       <Table>
         <thead>
           <tr>
-            <th>Asset class</th>
-            <th>Expected return (nominal)</th>
-            <th>Volatility</th>
-            <th>Fees</th>
-            <th>Dividend yield</th>
+            <th>{t('Asset class')}</th>
+            <th>{t('Expected return (nominal)')}</th>
+            <th>{t('Volatility')}</th>
+            <th>{t('Fees')}</th>
+            <th>{t('Dividend yield')}</th>
           </tr>
         </thead>
         <tbody>
@@ -309,7 +311,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
               {(['expectedReturn', 'volatility', 'fee', 'dividendYield'] as const).map((k) => (
                 <td key={k} className="w-36">
                   <PercentInput
-                    aria-label={`${ASSET_CLASS_LABELS[c]} ${k}`}
+                    aria-label={`${ASSET_CLASS_LABELS[c]} ${COLUMN_LABELS[k]}`}
                     value={asset(c)?.[k] ?? 0}
                     step={0.1}
                     min={k === 'expectedReturn' ? -1 : 0}
@@ -322,7 +324,9 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
         </tbody>
       </Table>
       <details>
-        <summary className="cursor-pointer text-sm font-medium">Correlations between asset classes</summary>
+        <summary className="cursor-pointer text-sm font-medium">
+          {t('Correlations between asset classes')}
+        </summary>
         <Table className="mt-2 min-w-max">
           <thead>
             <tr>
@@ -346,7 +350,10 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
                       </span>
                     ) : (
                       <input
-                        aria-label={`Correlation ${a} ${b}`}
+                        aria-label={t('Correlation {a} {b}', {
+                          a: ASSET_CLASS_LABELS[a],
+                          b: ASSET_CLASS_LABELS[b],
+                        })}
                         type="number"
                         step={0.05}
                         min={-1}
@@ -367,7 +374,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
           </tbody>
         </Table>
         <p className="mt-1 text-xs text-subtle">
-          A matrix that is not positive definite is shrunk toward zero correlation for the simulation.
+          {t('A matrix that is not positive definite is shrunk toward zero correlation for the simulation.')}
         </p>
       </details>
     </div>
@@ -376,7 +383,7 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
 
 function TaiwanEditor({ set }: { set: AssumptionSet }) {
   const update = useSetUpdater(set);
-  const t = set.taiwan;
+  const tx = set.taiwan;
   const tw = (mutate: (t: TaiwanSettings) => void) => update((d) => mutate(d.taiwan));
   const pctField = (
     label: string,
@@ -411,94 +418,98 @@ function TaiwanEditor({ set }: { set: AssumptionSet }) {
   return (
     <div className="flex flex-col gap-5">
       <Notice tone="warning">
-        Rules change: check these values against 勞動部, 勞保局, 健保署 and 財政部 before relying on them.
-        Last checked: <strong>{t.asOf}</strong>. Pending changes to watch: NHI supplementary premium on yearly
-        totals instead of single payments, and US–Taiwan double-tax relief (would cut US withholding to 15%).
+        {t(
+          'Rules change: check these values against 勞動部, 勞保局, 健保署 and 財政部 before relying on them. Last checked:',
+        )}{' '}
+        <strong>{tx.asOf}</strong>
+        {t(
+          '. Pending changes to watch: NHI supplementary premium on yearly totals instead of single payments, and US–Taiwan double-tax relief (would cut US withholding to 15%).',
+        )}
       </Notice>
       <div className={grid}>
-        <Field label="Checked as of">
+        <Field label={t('Checked as of')}>
           {(id) => (
             <Input
               id={id}
               type="date"
-              value={t.asOf}
+              value={tx.asOf}
               onChange={(e) => e.target.value && tw((x) => void (x.asOf = e.target.value))}
             />
           )}
         </Field>
         {pctField(
-          'Marginal income tax rate',
-          t.marginalTaxRate,
+          t('Marginal income tax rate'),
+          tx.marginalTaxRate,
           (v) => tw((x) => void (x.marginalTaxRate = v)),
-          'Voluntary 勞退 deduction; combined dividend tax',
+          t('Voluntary 勞退 deduction; combined dividend tax'),
           0.6,
         )}
       </div>
-      <h3 className="text-sm font-semibold">勞退 · Labor Pension (new system)</h3>
+      <h3 className="text-sm font-semibold">{t('勞退 · Labor Pension (new system)')}</h3>
       <div className={grid}>
-        {moneyField('Monthly insured wage', t.laborPension.monthlyInsuredWageMinor, (v) =>
+        {moneyField(t('Monthly insured wage'), tx.laborPension.monthlyInsuredWageMinor, (v) =>
           tw((x) => void (x.laborPension.monthlyInsuredWageMinor = v)),
         )}
-        {moneyField('Wage cap', t.laborPension.wageCapMinor, (v) =>
+        {moneyField(t('Wage cap'), tx.laborPension.wageCapMinor, (v) =>
           tw((x) => void (x.laborPension.wageCapMinor = v)),
         )}
         {pctField(
-          'Employer contribution',
-          t.laborPension.employerRate,
+          t('Employer contribution'),
+          tx.laborPension.employerRate,
           (v) => tw((x) => void (x.laborPension.employerRate = v)),
           undefined,
           0.2,
         )}
         {pctField(
-          'Voluntary contribution now',
-          t.laborPension.voluntaryRate,
+          t('Voluntary contribution now'),
+          tx.laborPension.voluntaryRate,
           (v) => tw((x) => void (x.laborPension.voluntaryRate = v)),
-          'Already reflected in your net pay',
-          t.laborPension.maxVoluntaryRate,
+          t('Already reflected in your net pay'),
+          tx.laborPension.maxVoluntaryRate,
         )}
         {pctField(
-          'Voluntary maximum',
-          t.laborPension.maxVoluntaryRate,
+          t('Voluntary maximum'),
+          tx.laborPension.maxVoluntaryRate,
           (v) => tw((x) => void (x.laborPension.maxVoluntaryRate = v)),
           undefined,
           0.2,
         )}
-        {intField('Access age', t.laborPension.accessAge, (v) =>
+        {intField(t('Access age'), tx.laborPension.accessAge, (v) =>
           tw((x) => void (x.laborPension.accessAge = v)),
         )}
         {intField(
-          'Years for monthly payout',
-          t.laborPension.minYearsForMonthly,
+          t('Years for monthly payout'),
+          tx.laborPension.minYearsForMonthly,
           (v) => tw((x) => void (x.laborPension.minYearsForMonthly = v)),
-          'Fewer years: lump sum',
+          t('Fewer years: lump sum'),
         )}
       </div>
       <h3 className="flex items-center gap-3 text-sm font-semibold">
-        勞保 · Labor Insurance old-age annuity
+        {t('勞保 · Labor Insurance old-age annuity')}
         <Checkbox
-          label="Include"
-          checked={t.laborInsurance.enabled}
+          label={t('Include')}
+          checked={tx.laborInsurance.enabled}
           onChange={(e) => tw((x) => void (x.laborInsurance.enabled = e.target.checked))}
         />
       </h3>
       <div className={grid}>
         {moneyField(
-          'Average monthly insured salary',
-          t.laborInsurance.avgMonthlyInsuredSalaryMinor,
+          t('Average monthly insured salary'),
+          tx.laborInsurance.avgMonthlyInsuredSalaryMinor,
           (v) => tw((x) => void (x.laborInsurance.avgMonthlyInsuredSalaryMinor = v)),
-          'Average of your highest 60 months',
+          t('Average of your highest 60 months'),
         )}
-        {moneyField('Insured salary cap', t.laborInsurance.salaryCapMinor, (v) =>
+        {moneyField(t('Insured salary cap'), tx.laborInsurance.salaryCapMinor, (v) =>
           tw((x) => void (x.laborInsurance.salaryCapMinor = v)),
         )}
-        <Field label="Insured years to date">
+        <Field label={t('Insured years to date')}>
           {(id) => (
             <Input
               id={id}
               type="number"
               step={0.5}
               min={0}
-              defaultValue={t.laborInsurance.insuredYearsToDate}
+              defaultValue={tx.laborInsurance.insuredYearsToDate}
               onBlur={(e) =>
                 Number(e.target.value) >= 0 &&
                 tw((x) => void (x.laborInsurance.insuredYearsToDate = Number(e.target.value)))
@@ -506,111 +517,118 @@ function TaiwanEditor({ set }: { set: AssumptionSet }) {
             />
           )}
         </Field>
-        {intField('Years needed for annuity', t.laborInsurance.minYearsForAnnuity, (v) =>
+        {intField(t('Years needed for annuity'), tx.laborInsurance.minYearsForAnnuity, (v) =>
           tw((x) => void (x.laborInsurance.minYearsForAnnuity = v)),
         )}
-        {intField('Normal claim age', t.laborInsurance.claimAge, (v) =>
+        {intField(t('Normal claim age'), tx.laborInsurance.claimAge, (v) =>
           tw((x) => void (x.laborInsurance.claimAge = v)),
         )}
-        {intField('Max years early', t.laborInsurance.maxYearsEarly, (v) =>
+        {intField(t('Max years early'), tx.laborInsurance.maxYearsEarly, (v) =>
           tw((x) => void (x.laborInsurance.maxYearsEarly = v)),
         )}
-        {intField('Max years delayed', t.laborInsurance.maxYearsDelay, (v) =>
+        {intField(t('Max years delayed'), tx.laborInsurance.maxYearsDelay, (v) =>
           tw((x) => void (x.laborInsurance.maxYearsDelay = v)),
         )}
         {pctField(
-          'Adjustment per year early / late',
-          t.laborInsurance.adjustmentPerYear,
+          t('Adjustment per year early / late'),
+          tx.laborInsurance.adjustmentPerYear,
           (v) => tw((x) => void (x.laborInsurance.adjustmentPerYear = v)),
           undefined,
           0.2,
         )}
         {pctField(
-          'Formula A rate',
-          t.laborInsurance.rateA,
+          t('Formula A rate'),
+          tx.laborInsurance.rateA,
           (v) => tw((x) => void (x.laborInsurance.rateA = v)),
-          'salary × years × rate + flat',
+          t('salary × years × rate + flat'),
           0.1,
         )}
-        {moneyField('Formula A flat amount / month', t.laborInsurance.flatAMinor, (v) =>
+        {moneyField(t('Formula A flat amount / month'), tx.laborInsurance.flatAMinor, (v) =>
           tw((x) => void (x.laborInsurance.flatAMinor = v)),
         )}
         {pctField(
-          'Formula B rate',
-          t.laborInsurance.rateB,
+          t('Formula B rate'),
+          tx.laborInsurance.rateB,
           (v) => tw((x) => void (x.laborInsurance.rateB = v)),
-          'salary × years × rate',
+          t('salary × years × rate'),
           0.1,
         )}
         {pctField(
-          'Solvency haircut',
-          t.laborInsurance.haircut,
+          t('Solvency haircut'),
+          tx.laborInsurance.haircut,
           (v) => tw((x) => void (x.laborInsurance.haircut = v)),
           undefined,
           1,
         )}
       </div>
-      <h3 className="text-sm font-semibold">NHI, dividends and overseas income</h3>
+      <h3 className="text-sm font-semibold">{t('NHI, dividends and overseas income')}</h3>
       <div className={grid}>
         {pctField(
-          'NHI supplementary premium',
-          t.nhi.supplementaryRate,
+          t('NHI supplementary premium'),
+          tx.nhi.supplementaryRate,
           (v) => tw((x) => void (x.nhi.supplementaryRate = v)),
           undefined,
           0.2,
         )}
-        {moneyField('Supplementary threshold (single payment)', t.nhi.supplementaryThresholdMinor, (v) =>
+        {moneyField(t('Supplementary threshold (single payment)'), tx.nhi.supplementaryThresholdMinor, (v) =>
           tw((x) => void (x.nhi.supplementaryThresholdMinor = v)),
         )}
-        {intField('Dividend payments per year', t.nhi.dividendPaymentsPerYear, (v) =>
+        {intField(t('Dividend payments per year'), tx.nhi.dividendPaymentsPerYear, (v) =>
           tw((x) => void (x.nhi.dividendPaymentsPerYear = Math.max(1, Math.min(12, v)))),
         )}
-        <Field label="Domestic dividend taxation">
+        <Field label={t('Domestic dividend taxation')}>
           {(id) => (
             <Select
               id={id}
-              value={t.dividendTax.mode}
+              value={tx.dividendTax.mode}
               onChange={(e) =>
                 tw((x) => void (x.dividendTax.mode = e.target.value as TaiwanSettings['dividendTax']['mode']))
               }
             >
-              <option value="best">Lower of the two</option>
-              <option value="combined">Combined, with credit</option>
-              <option value="separate">Separate rate</option>
+              <option value="best">{t('Lower of the two')}</option>
+              <option value="combined">{t('Combined, with credit')}</option>
+              <option value="separate">{t('Separate rate')}</option>
             </Select>
           )}
         </Field>
         {pctField(
-          'Dividend credit rate',
-          t.dividendTax.creditRate,
+          t('Dividend credit rate'),
+          tx.dividendTax.creditRate,
           (v) => tw((x) => void (x.dividendTax.creditRate = v)),
           undefined,
           1,
         )}
-        {moneyField('Dividend credit cap / year', t.dividendTax.creditCapMinor, (v) =>
+        {moneyField(t('Dividend credit cap / year'), tx.dividendTax.creditCapMinor, (v) =>
           tw((x) => void (x.dividendTax.creditCapMinor = v)),
         )}
         {pctField(
-          'Separate dividend tax rate',
-          t.dividendTax.separateRate,
+          t('Separate dividend tax rate'),
+          tx.dividendTax.separateRate,
           (v) => tw((x) => void (x.dividendTax.separateRate = v)),
           undefined,
           1,
         )}
         {pctField(
-          'US dividend withholding',
-          t.usWithholdingRate,
+          t('US dividend withholding'),
+          tx.usWithholdingRate,
           (v) => tw((x) => void (x.usWithholdingRate = v)),
-          'Taiwan residents',
+          t('Taiwan residents'),
           1,
         )}
-        {moneyField('AMT overseas income threshold', t.amtOverseasThresholdMinor, (v) =>
+        {moneyField(t('AMT overseas income threshold'), tx.amtOverseasThresholdMinor, (v) =>
           tw((x) => void (x.amtOverseasThresholdMinor = v)),
         )}
       </div>
     </div>
   );
 }
+
+const COLUMN_LABELS = {
+  expectedReturn: t('Expected return (nominal)'),
+  volatility: t('Volatility'),
+  fee: t('Fees'),
+  dividendYield: t('Dividend yield'),
+};
 
 function AssumptionSets() {
   const { assumptionSets, settings, scenarios } = useAppData();
@@ -619,14 +637,14 @@ function AssumptionSets() {
   const duplicate = async () => {
     const { createdAt: _c, updatedAt: _u, ...rest } = structuredClone(selected);
     const id = newId();
-    await save(db.assumptionSets, { ...rest, id, name: `${selected.name} (copy)` });
+    await save(db.assumptionSets, { ...rest, id, name: t('{name} (copy)', { name: selected.name }) });
     setSelectedId(id);
   };
   const remove = async () => {
     if (assumptionSets.length <= 1) return;
     if (
       scenarios.some((s) => s.assumptionSetId === selected.id) &&
-      !confirm('Scenarios use this set; they will switch to the set in use. Delete?')
+      !confirm(t('Scenarios use this set; they will switch to the set in use. Delete?'))
     )
       return;
     const fallback = assumptionSets.find((a) => a.id !== selected.id)!;
@@ -643,12 +661,14 @@ function AssumptionSets() {
     <>
       <Section
         id="assumptions"
-        title="Assumption sets"
-        description="Expected return, volatility, fees and dividend yield per asset class, plus inflation, salary growth and FX. Shown on every projection."
+        title={t('Assumption sets')}
+        description={t(
+          'Expected return, volatility, fees and dividend yield per asset class, plus inflation, salary growth and FX. Shown on every projection.',
+        )}
         actions={
           <>
             <Select
-              aria-label="Assumption set to edit"
+              aria-label={t('Assumption set to edit')}
               className="h-8 w-44"
               value={selected.id}
               onChange={(e) => setSelectedId(e.target.value)}
@@ -656,12 +676,12 @@ function AssumptionSets() {
               {assumptionSets.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
-                  {a.id === settings.activeAssumptionSetId ? ' (in use)' : ''}
+                  {a.id === settings.activeAssumptionSetId ? t(' (in use)') : ''}
                 </option>
               ))}
             </Select>
             <Button size="sm" variant="outline" onClick={() => void duplicate()}>
-              <Copy aria-hidden /> Duplicate
+              <Copy aria-hidden /> {t('Duplicate')}
             </Button>
             <Button
               size="sm"
@@ -670,12 +690,12 @@ function AssumptionSets() {
                 void save(db.assumptionSets, defaultAssumptionSet(newId())).then((s) => setSelectedId(s.id))
               }
             >
-              <Plus aria-hidden /> New from defaults
+              <Plus aria-hidden /> {t('New from defaults')}
             </Button>
             <Button
               size="sm"
               variant="ghost"
-              aria-label="Delete assumption set"
+              aria-label={t('Delete assumption set')}
               disabled={assumptionSets.length <= 1}
               onClick={() => void remove()}
             >
@@ -688,8 +708,10 @@ function AssumptionSets() {
       </Section>
       <Section
         id="taiwan"
-        title={`Taiwan settings · ${selected.name}`}
-        description="Every rate, threshold and age is a setting, never hard-coded. Part of the assumption set."
+        title={t('Taiwan settings · {name}', { name: selected.name })}
+        description={t(
+          'Every rate, threshold and age is a setting, never hard-coded. Part of the assumption set.',
+        )}
       >
         <TaiwanEditor key={selected.id} set={selected} />
       </Section>
@@ -705,15 +727,17 @@ function Categories() {
   return (
     <Section
       id="categories"
-      title="Categories"
-      description="Income lines and expense categories for cash flow; expense categories also hold the FI budget."
+      title={t('Categories')}
+      description={t(
+        'Income lines and expense categories for cash flow; expense categories also hold the FI budget.',
+      )}
     >
       <Table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Kind</th>
-            <th>Essential</th>
+            <th>{t('Name')}</th>
+            <th>{t('Kind')}</th>
+            <th>{t('Essential')}</th>
             <th />
           </tr>
         </thead>
@@ -724,7 +748,7 @@ function Categories() {
               <tr key={c.id}>
                 <td>
                   <Input
-                    aria-label="Category name"
+                    aria-label={t('Category name')}
                     className="h-8"
                     defaultValue={c.name}
                     onBlur={(e) =>
@@ -734,12 +758,12 @@ function Categories() {
                     }
                   />
                 </td>
-                <td>{c.kind}</td>
+                <td>{c.kind === 'income' ? t('income') : t('expense')}</td>
                 <td>
                   {c.kind === 'expense' && (
                     <input
                       type="checkbox"
-                      aria-label="Essential"
+                      aria-label={t('Essential')}
                       checked={c.essential}
                       onChange={(e) => void patch(db.categories, c.id, { essential: e.target.checked })}
                     />
@@ -749,9 +773,9 @@ function Categories() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label={`Delete ${c.name}`}
+                    aria-label={t('Delete {name}', { name: c.name })}
                     disabled={used(c.id)}
-                    title={used(c.id) ? 'Used by cash flow entries' : undefined}
+                    title={used(c.id) ? t('Used by cash flow entries') : undefined}
                     onClick={() => void db.categories.delete(c.id)}
                   >
                     <Trash2 />
@@ -762,22 +786,22 @@ function Categories() {
           <tr>
             <td>
               <Input
-                aria-label="New category name"
+                aria-label={t('New category name')}
                 className="h-8"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="New category"
+                placeholder={t('New category')}
               />
             </td>
             <td>
               <Select
-                aria-label="New category kind"
+                aria-label={t('New category kind')}
                 className="h-8"
                 value={kind}
                 onChange={(e) => setKind(e.target.value as 'income' | 'expense')}
               >
-                <option value="expense">expense</option>
-                <option value="income">income</option>
+                <option value="expense">{t('expense')}</option>
+                <option value="income">{t('income')}</option>
               </Select>
             </td>
             <td />
@@ -790,7 +814,7 @@ function Categories() {
                   setName('');
                 }}
               >
-                <Plus aria-hidden /> Add
+                <Plus aria-hidden /> {t('Add')}
               </Button>
             </td>
           </tr>
@@ -807,19 +831,20 @@ function EncryptedExport({ onDone }: { onDone: (message: string) => void }) {
   const [busy, setBusy] = useState(false);
   const error =
     a.length > 0 && a.length < 10
-      ? 'Use at least 10 characters.'
+      ? t('Use at least 10 characters.')
       : b && a !== b
-        ? 'The passphrases do not match.'
+        ? t('The passphrases do not match.')
         : undefined;
   if (!open) {
     return (
       <div className="mt-4">
         <Button variant="outline" onClick={() => setOpen(true)}>
-          <Lock aria-hidden /> Export encrypted backup
+          <Lock aria-hidden /> {t('Export encrypted backup')}
         </Button>
         <p className="mt-1 text-xs text-subtle">
-          For backups kept in cloud drives or email. Without the passphrase the file cannot be opened, by
-          anyone.
+          {t(
+            'For backups kept in cloud drives or email. Without the passphrase the file cannot be opened, by anyone.',
+          )}
         </p>
       </div>
     );
@@ -838,10 +863,10 @@ function EncryptedExport({ onDone }: { onDone: (message: string) => void }) {
         setOpen(false);
         setA('');
         setB('');
-        onDone('Encrypted backup downloaded. Keep the passphrase somewhere safe: it cannot be recovered.');
+        onDone(t('Encrypted backup downloaded. Keep the passphrase somewhere safe: it cannot be recovered.'));
       }}
     >
-      <Field label="Passphrase" error={error}>
+      <Field label={t('Passphrase')} error={error}>
         {(id) => (
           <Input
             id={id}
@@ -854,7 +879,7 @@ function EncryptedExport({ onDone }: { onDone: (message: string) => void }) {
           />
         )}
       </Field>
-      <Field label="Repeat passphrase">
+      <Field label={t('Repeat passphrase')}>
         {(id) => (
           <Input
             id={id}
@@ -867,10 +892,10 @@ function EncryptedExport({ onDone }: { onDone: (message: string) => void }) {
         )}
       </Field>
       <Button type="submit" disabled={busy || !!error || !a || a !== b}>
-        {busy ? 'Encrypting…' : 'Download encrypted backup'}
+        {busy ? t('Encrypting…') : t('Download encrypted backup')}
       </Button>
       <Button variant="ghost" onClick={() => setOpen(false)}>
-        Cancel
+        {t('Cancel')}
       </Button>
     </form>
   );
@@ -878,41 +903,43 @@ function EncryptedExport({ onDone }: { onDone: (message: string) => void }) {
 
 function AutosaveControls() {
   const autosave = useAutosave();
-  const when = autosave.lastSavedAt ? new Date(autosave.lastSavedAt).toLocaleString() : 'not yet';
+  const when = autosave.lastSavedAt ? new Date(autosave.lastSavedAt).toLocaleString() : t('not yet');
   return (
     <div className="mt-4 rounded-md border p-3 text-sm">
-      <div className="font-medium">Auto-save to a file</div>
+      <div className="font-medium">{t('Auto-save to a file')}</div>
       {autosave.status === 'unsupported' ? (
         <p className="mt-1 text-muted-foreground">
-          Needs Chrome or Edge on a computer. In this browser, export backups by hand.
+          {t('Needs Chrome or Edge on a computer. In this browser, export backups by hand.')}
         </p>
       ) : autosave.status === 'off' ? (
         <>
           <p className="mt-1 text-muted-foreground">
-            Pick a file once, for example in a synced folder; the app rewrites it after every change. The file
-            is a plain (unencrypted) backup.
+            {t(
+              'Pick a file once, for example in a synced folder; the app rewrites it after every change. The file is a plain (unencrypted) backup.',
+            )}
           </p>
           <Button className="mt-2" variant="outline" onClick={() => void enableAutosave()}>
-            Choose auto-save file
+            {t('Choose auto-save file')}
           </Button>
         </>
       ) : (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground">
             {autosave.status === 'needs-permission'
-              ? 'Paused'
+              ? t('Paused')
               : autosave.status === 'error'
-                ? 'Failed'
-                : 'Saving'}{' '}
-            to <strong className="text-foreground">{autosave.fileName}</strong> · last saved {when}
+                ? t('Failed')
+                : t('Saving')}{' '}
+            {t('to')} <strong className="text-foreground">{autosave.fileName}</strong>{' '}
+            {t('· last saved {when}', { when })}
           </span>
           {autosave.status === 'needs-permission' && (
             <Button size="sm" variant="outline" onClick={() => void resumeAutosave()}>
-              Resume
+              {t('Resume')}
             </Button>
           )}
           <Button size="sm" variant="ghost" onClick={() => void disableAutosave()}>
-            Turn off
+            {t('Turn off')}
           </Button>
         </div>
       )}
@@ -941,7 +968,10 @@ function Backup() {
     await ensureDefaults();
     setMessage({
       tone: 'info',
-      text: `${label} loaded.${accounts.length > 0 ? ' Your previous data was downloaded first as a backup.' : ''}`,
+      text: t('{label} loaded.{v}', {
+        label,
+        v: accounts.length > 0 ? t(' Your previous data was downloaded first as a backup.') : '',
+      }),
     });
   };
 
@@ -949,11 +979,11 @@ function Backup() {
     if (
       accounts.length > 0 &&
       !confirm(
-        'Replace all current data with the fictional demo data? Your current data is downloaded first.',
+        t('Replace all current data with the fictional demo data? Your current data is downloaded first.'),
       )
     )
       return;
-    await replaceWith(buildDemoBackup(), 'Demo data');
+    await replaceWith(buildDemoBackup(), t('Demo data'));
   };
 
   const [locked, setLocked] = useState<EncryptedBackup>();
@@ -968,11 +998,14 @@ function Backup() {
     const n = parsed.file.data.accounts.length;
     if (
       !confirm(
-        `Replace all data with this backup (${n} accounts, exported ${parsed.file.exportedAt.slice(0, 10)})? Your current data is downloaded first.`,
+        t(
+          'Replace all data with this backup ({n} accounts, exported {slice})? Your current data is downloaded first.',
+          { n, slice: parsed.file.exportedAt.slice(0, 10) },
+        ),
       )
     )
       return;
-    await replaceWith(parsed.file, 'Backup');
+    await replaceWith(parsed.file, t('Backup'));
   };
 
   const onFile = async (file: File) => {
@@ -980,13 +1013,13 @@ function Backup() {
     try {
       raw = JSON.parse(await file.text());
     } catch {
-      setMessage({ tone: 'critical', text: 'The file is not valid JSON.' });
+      setMessage({ tone: 'critical', text: t('The file is not valid JSON.') });
       return;
     }
     if (isEncryptedBackup(raw)) {
       setLocked(raw);
       setPassphrase('');
-      setMessage({ tone: 'info', text: 'This backup is encrypted. Enter its passphrase.' });
+      setMessage({ tone: 'info', text: t('This backup is encrypted. Enter its passphrase.') });
       return;
     }
     await restoreParsed(raw);
@@ -1007,26 +1040,28 @@ function Backup() {
   return (
     <Section
       id="backup"
-      title="Backup and restore"
-      description="Your data lives only in this browser (IndexedDB). The JSON backup is the only copy outside it — keep it somewhere safe, not in the code repository."
+      title={t('Backup and restore')}
+      description={t(
+        'Your data lives only in this browser (IndexedDB). The JSON backup is the only copy outside it — keep it somewhere safe, not in the code repository.',
+      )}
     >
       <div className="flex flex-wrap gap-2">
         <Button
           onClick={() =>
-            void downloadBackup().then(() => setMessage({ tone: 'info', text: 'Backup downloaded.' }))
+            void downloadBackup().then(() => setMessage({ tone: 'info', text: t('Backup downloaded.') }))
           }
         >
-          <Download aria-hidden /> Export backup (JSON)
+          <Download aria-hidden /> {t('Export backup (JSON)')}
         </Button>
         <Button variant="outline" onClick={() => fileRef.current?.click()}>
-          <Upload aria-hidden /> Import backup
+          <Upload aria-hidden /> {t('Import backup')}
         </Button>
         <input
           ref={fileRef}
           type="file"
           accept=".json,application/json"
           className="hidden"
-          aria-label="Backup file"
+          aria-label={t('Backup file')}
           onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = '';
@@ -1041,10 +1076,10 @@ function Backup() {
             await markBackedUp();
           }}
         >
-          <Download aria-hidden /> Export CSV
+          <Download aria-hidden /> {t('Export CSV')}
         </Button>
         <Button variant="outline" onClick={() => void loadDemo()}>
-          Load demo data
+          {t('Load demo data')}
         </Button>
       </div>
       {message && (
@@ -1060,7 +1095,7 @@ function Backup() {
             void unlock();
           }}
         >
-          <Field label="Passphrase">
+          <Field label={t('Passphrase')}>
             {(id) => (
               <Input
                 id={id}
@@ -1074,10 +1109,10 @@ function Backup() {
             )}
           </Field>
           <Button type="submit" disabled={!passphrase}>
-            Decrypt and restore
+            {t('Decrypt and restore')}
           </Button>
           <Button variant="ghost" onClick={() => setLocked(undefined)}>
-            Cancel
+            {t('Cancel')}
           </Button>
         </form>
       )}
@@ -1085,29 +1120,35 @@ function Backup() {
       <AutosaveControls />
       <ul className="mt-4 flex flex-col gap-1 text-sm text-muted-foreground">
         <li>
-          Last backup:{' '}
+          {t('Last backup:')}{' '}
           <strong className="text-foreground">
-            {settings.lastBackupAt ? settings.lastBackupAt.slice(0, 16).replace('T', ' ') : 'never'}
+            {settings.lastBackupAt ? settings.lastBackupAt.slice(0, 16).replace('T', ' ') : t('never')}
           </strong>
         </li>
         <li>
-          Persistent storage:{' '}
+          {t('Persistent storage:')}{' '}
           {persisted === undefined ? (
-            'unknown'
+            t('unknown')
           ) : persisted ? (
-            <Badge tone="good">granted</Badge>
+            <Badge tone="good">{t('granted')}</Badge>
           ) : (
             <>
-              <Badge tone="warning">not granted — the browser may clear data under storage pressure</Badge>{' '}
+              <Badge tone="warning">
+                {t('not granted — the browser may clear data under storage pressure')}
+              </Badge>{' '}
               <Button size="sm" variant="ghost" onClick={() => void requestPersistence().then(setPersisted)}>
-                Ask the browser to keep it
+                {t('Ask the browser to keep it')}
               </Button>
             </>
           )}
         </li>
-        <li>Backups are named *.fi.json; the repository's .gitignore blocks them from being committed.</li>
         <li>
-          Safari deletes site data after 7 days without a visit; prefer Chrome or Edge, or back up weekly.
+          {t("Backups are named *.fi.json; the repository's .gitignore blocks them from being committed.")}
+        </li>
+        <li>
+          {t(
+            'Safari deletes site data after 7 days without a visit; prefer Chrome or Edge, or back up weekly.',
+          )}
         </li>
       </ul>
     </Section>
@@ -1118,18 +1159,18 @@ function DangerZone() {
   return (
     <Section
       id="danger"
-      title="Clear data"
-      description="Deletes everything stored in this browser. Export a backup first."
+      title={t('Clear data')}
+      description={t('Deletes everything stored in this browser. Export a backup first.')}
     >
       <Button
         variant="destructive"
         onClick={async () => {
-          if (!confirm('Delete ALL data in this browser? This cannot be undone.')) return;
+          if (!confirm(t('Delete ALL data in this browser? This cannot be undone.'))) return;
           await clearAllData();
           await ensureDefaults();
         }}
       >
-        <Trash2 aria-hidden /> Delete all data
+        <Trash2 aria-hidden /> {t('Delete all data')}
       </Button>
     </Section>
   );
@@ -1140,11 +1181,13 @@ function Reminder() {
   return (
     <Section
       id="reminder"
-      title="Monthly reminder"
-      description="A repeating event for your calendar app, linking to the monthly update. Made on this device; nothing is sent anywhere."
+      title={t('Monthly reminder')}
+      description={t(
+        'A repeating event for your calendar app, linking to the monthly update. Made on this device; nothing is sent anywhere.',
+      )}
     >
       <div className="flex flex-wrap items-end gap-2">
-        <Field label="Day of the month">
+        <Field label={t('Day of the month')}>
           {(id) => (
             <Select id={id} className="w-28" value={day} onChange={(e) => setDay(Number(e.target.value))}>
               {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
@@ -1156,7 +1199,7 @@ function Reminder() {
           )}
         </Field>
         <Button variant="outline" onClick={() => downloadMonthlyReminder(today(), day)}>
-          <CalendarPlus aria-hidden /> Add to calendar (.ics)
+          <CalendarPlus aria-hidden /> {t('Add to calendar (.ics)')}
         </Button>
       </div>
     </Section>
@@ -1172,10 +1215,11 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader
-        title="Settings"
-        description="General settings, assumptions, Taiwan rules, categories, and backup."
+        title={t('Settings')}
+        description={t('General settings, assumptions, Taiwan rules, categories, and backup.')}
       />
-      <Section id="general" title="General">
+      <Section id="general" title={t('General')}>
+        <LanguageSwitch className="mb-4" />
         <GeneralSettings s={settings} />
       </Section>
       <AssumptionSets />

@@ -7,6 +7,7 @@ import {
   type BaselineContext,
 } from './baseline';
 import { runProjection } from './projection';
+import { t } from '@/i18n';
 
 export interface SensitivityRow {
   label: string;
@@ -33,19 +34,19 @@ export function sensitivity(
     ...spec,
     overrides: { ...o, ...patch },
   });
-  const base = run('Base', spec);
+  const base = run(t('Base'), spec);
   const shiftReturn = o.returnShift ?? 0;
   const mult = o.spendingMultiplier ?? 1;
   const rows = [
-    run('Return +1%', with_({ returnShift: shiftReturn + 0.01 })),
-    run('Return −1%', with_({ returnShift: shiftReturn - 0.01 })),
-    run('Spending −10%', with_({ spendingMultiplier: mult * 0.9 })),
-    run('Spending +10%', with_({ spendingMultiplier: mult * 1.1 })),
+    run(t('Return +1%'), with_({ returnShift: shiftReturn + 0.01 })),
+    run(t('Return −1%'), with_({ returnShift: shiftReturn - 0.01 })),
+    run(t('Spending −10%'), with_({ spendingMultiplier: mult * 0.9 })),
+    run(t('Spending +10%'), with_({ spendingMultiplier: mult * 1.1 })),
   ];
   const baseSr = o.savingsRate ?? ctx.t12.savingsRate;
   if (Number.isFinite(baseSr)) {
-    rows.push(run('Savings rate +5 pts', with_({ savingsRate: Math.min(1, baseSr + 0.05) })));
-    rows.push(run('Savings rate −5 pts', with_({ savingsRate: baseSr - 0.05 })));
+    rows.push(run(t('Savings rate +5 pts'), with_({ savingsRate: Math.min(1, baseSr + 0.05) })));
+    rows.push(run(t('Savings rate −5 pts'), with_({ savingsRate: baseSr - 0.05 })));
   }
   for (const r of rows) {
     if (r.yearsToFi !== undefined && base.yearsToFi !== undefined) r.shift = r.yearsToFi - base.yearsToFi;

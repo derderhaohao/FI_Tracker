@@ -41,6 +41,7 @@ import {
   type RateShock,
   type Timing,
 } from './library';
+import { t } from '@/i18n';
 
 /**
  * Monthly playback engine (PRD EN-1 to EN-5). It follows the yearly projection's rules
@@ -71,12 +72,12 @@ export const DEFAULT_GLOBAL_SPLIT: Required<Exposure> = {
 
 export type RegionKey = 'TW' | 'US' | 'JP' | 'EU' | 'EM' | 'Other';
 export const REGION_KEY_LABELS: Record<RegionKey, string> = {
-  TW: 'Taiwan',
+  TW: t('Taiwan'),
   US: 'US',
-  JP: 'Japan',
-  EU: 'Europe',
-  EM: 'China/EM',
-  Other: 'Other',
+  JP: t('Japan'),
+  EU: t('Europe'),
+  EM: t('China/EM'),
+  Other: t('Other'),
 };
 
 const REGION_FACTOR: Partial<Record<RegionKey, Factor>> = {
@@ -244,7 +245,7 @@ export function playbackSetup(
     const fake = { assetClass: cls, currency, type: 'brokerage' as const };
     accounts.push({
       id: `new:${cls}`,
-      name: `New savings: ${ASSET_CLASS_LABELS[cls]}`,
+      name: t('New savings: {ASSET_CLASS_LABELS}', { ASSET_CLASS_LABELS: ASSET_CLASS_LABELS[cls] }),
       cls,
       currency,
       bucket: 'liquid',

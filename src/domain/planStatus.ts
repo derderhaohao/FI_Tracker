@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 /**
  * One way to state a plan's health everywhere (product review, "one answer"): the status
  * comes from the chance the money lasts in simulated futures, and every page rounds and
@@ -7,9 +9,9 @@
 export type PlanStatus = 'on_track' | 'watch' | 'at_risk';
 
 export const STATUS_LABELS: Record<PlanStatus, string> = {
-  on_track: 'On track',
-  watch: 'Watch',
-  at_risk: 'At risk',
+  on_track: t('On track'),
+  watch: t('Watch'),
+  at_risk: t('At risk'),
 };
 
 /** On track 85%+, Watch 70–84%, At risk under 70%. */
@@ -28,9 +30,9 @@ export function chanceDots(chance: number): number {
 
 /** "Nearly all", "7 in 10", "Almost none". */
 export function chanceText(chance: number): string {
-  if (chance >= 0.95) return 'Nearly all';
-  if (chance <= 0.05) return 'Almost none';
-  return `${chanceDots(chance)} in 10`;
+  if (chance >= 0.95) return t('Nearly all');
+  if (chance <= 0.05) return t('Almost none');
+  return t('{chance} in 10', { chance: chanceDots(chance) });
 }
 
 /**
@@ -41,11 +43,26 @@ export function lastsSentence(
   chance: number,
   horizonAge: number,
   depletionAge?: number,
-  futures = 'simulated futures',
+  futures = t('simulated futures'),
 ): string {
-  const dep = depletionAge !== undefined ? `, typically around age ${Math.round(depletionAge)}` : '';
-  if (chance >= 0.95) return `In nearly all ${futures} your money lasts to ${horizonAge}.`;
-  if (chance <= 0.05) return `In almost all ${futures} your money runs out before ${horizonAge}${dep}.`;
+  const dep =
+    depletionAge !== undefined
+      ? t(', typically around age {depletionAge}', { depletionAge: Math.round(depletionAge) })
+      : '';
+  if (chance >= 0.95)
+    return t('In nearly all {futures} your money lasts to {horizonAge}.', { futures, horizonAge });
+  if (chance <= 0.05)
+    return t('In almost all {futures} your money runs out before {horizonAge}{dep}.', {
+      futures,
+      horizonAge,
+      dep,
+    });
   const n = chanceDots(chance);
-  return `In ${n} of 10 ${futures} your money lasts to ${horizonAge}; in the other ${10 - n} it runs out${dep}.`;
+  return t('In {n} of 10 {futures} your money lasts to {horizonAge}; in the other {v} it runs out{dep}.', {
+    n,
+    futures,
+    horizonAge,
+    v: 10 - n,
+    dep,
+  });
 }

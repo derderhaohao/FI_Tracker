@@ -8,6 +8,7 @@ import { downloadBackup } from '@/lib/backupActions';
 import { autosaveSupported, enableAutosave, resumeAutosave, useAutosave } from '@/lib/autosave';
 import { Button } from '@/components/ui/button';
 import { useAppData } from './data';
+import { t } from '@/i18n';
 
 const SNOOZE_KEY = 'fi-tracker-backup-snooze';
 const SNOOZE_DAYS = 7;
@@ -40,19 +41,25 @@ export function BackupBanner() {
   if (autosave.status === 'needs-permission') {
     return (
       <Banner
-        message={`Auto-save to ${autosave.fileName ?? 'your file'} is paused until you allow it again.`}
+        message={t('Auto-save to {v} is paused until you allow it again.', {
+          v: autosave.fileName ?? t('your file'),
+        })}
       >
         <Button size="sm" variant="outline" onClick={() => void resumeAutosave()}>
-          Resume auto-save
+          {t('Resume auto-save')}
         </Button>
       </Banner>
     );
   }
   if (autosave.status === 'error') {
     return (
-      <Banner message={`Auto-save failed: ${autosave.error ?? 'unknown error'}. Export a backup manually.`}>
+      <Banner
+        message={t('Auto-save failed: {v}. Export a backup manually.', {
+          v: autosave.error ?? t('unknown error'),
+        })}
+      >
         <Button size="sm" variant="outline" onClick={() => void downloadBackup()}>
-          Export backup
+          {t('Export backup')}
         </Button>
       </Banner>
     );
@@ -66,12 +73,12 @@ export function BackupBanner() {
   const age = settings.lastBackupAt ? daysBetween(settings.lastBackupAt.slice(0, 10), now) : undefined;
   const message =
     nudge === 'setup'
-      ? 'Setup saved. Your data lives only in this browser: keep a copy somewhere safe.'
+      ? t('Setup saved. Your data lives only in this browser: keep a copy somewhere safe.')
       : nudge === 'review'
-        ? 'Review saved. A good moment to back up.'
+        ? t('Review saved. A good moment to back up.')
         : age === undefined
-          ? `No backup in over 30 days. Your data lives only in this browser.`
-          : `Last backup was ${age} days ago.`;
+          ? t('No backup in over 30 days. Your data lives only in this browser.')
+          : t('Last backup was {age} days ago.', { age });
   const later = async () => {
     const until = addDays(now, SNOOZE_DAYS);
     try {
@@ -93,14 +100,14 @@ export function BackupBanner() {
               await patch(db.settings, 'singleton', { backupPrompt: undefined });
           }}
         >
-          Turn on auto-save (recommended)
+          {t('Turn on auto-save (recommended)')}
         </Button>
       )}
       <Button size="sm" variant="outline" onClick={() => void downloadBackup()}>
-        Export backup
+        {t('Export backup')}
       </Button>
-      <Button size="sm" variant="ghost" aria-label="Remind me later" onClick={() => void later()}>
-        <X aria-hidden /> Later
+      <Button size="sm" variant="ghost" aria-label={t('Remind me later')} onClick={() => void later()}>
+        <X aria-hidden /> {t('Later')}
       </Button>
     </Banner>
   );

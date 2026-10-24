@@ -4,6 +4,7 @@ import { runBacktest, HISTORY, type HistoricalYear } from './backtest';
 import { runMonteCarlo } from './montecarlo/runner';
 import { runProjection, type ProjectionInput } from './projection';
 import { defaultTaiwanSettings } from './taiwan/defaults';
+import { t } from '@/i18n';
 
 /**
  * Built-in reference tests shown in the Strategy Lab (PRD R10), so users can see the
@@ -24,12 +25,12 @@ export function zeroVolatilityCheck(input: ProjectionInput): ReferenceCheck {
   let maxDiff = 0;
   mc.p50.forEach((v, k) => (maxDiff = Math.max(maxDiff, Math.abs(v - typical[k]))));
   return {
-    name: 'Zero-volatility simulations equal the typical path',
+    name: t('Zero-volatility simulations equal the typical path'),
     pass: maxDiff < 1,
     detail:
       maxDiff < 1
-        ? 'With all randomness removed, every simulated future matches the typical path to the dollar.'
-        : `Largest gap: NT$${Math.round(maxDiff).toLocaleString()}.`,
+        ? t('With all randomness removed, every simulated future matches the typical path to the dollar.')
+        : t('Largest gap: NT${toLocaleString}.', { toLocaleString: Math.round(maxDiff).toLocaleString() }),
   };
 }
 
@@ -89,9 +90,12 @@ export function classicWithdrawalCheck(history: readonly HistoricalYear[] = HIST
   const b = runBacktest(classicInput(), history);
   const pass = b.successRate >= CLASSIC_RANGE[0] && b.successRate <= CLASSIC_RANGE[1];
   return {
-    name: 'Classic 4% rule over 30 years matches published results',
+    name: t('Classic 4% rule over 30 years matches published results'),
     pass,
-    detail: `60/40 stocks/bonds, 4% of the start value each year after inflation, 30 years: money lasts in ${Math.round(b.successRate * 100)}% of ${b.runs} start years (${b.firstYear}–${b.lastYear}). Published studies (Bengen 1994, the Trinity study 1998) report about 95%.`,
+    detail: t(
+      '60/40 stocks/bonds, 4% of the start value each year after inflation, 30 years: money lasts in {round}% of {runs} start years ({firstYear}–{lastYear}). Published studies (Bengen 1994, the Trinity study 1998) report about 95%.',
+      { round: Math.round(b.successRate * 100), runs: b.runs, firstYear: b.firstYear, lastYear: b.lastYear },
+    ),
   };
 }
 

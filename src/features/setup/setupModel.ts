@@ -24,6 +24,7 @@ import { fromMinor } from '@/domain/money';
 import { runProjection } from '@/domain/projection';
 import { db } from '@/db/db';
 import { newId } from '@/db/repo';
+import { t } from '@/i18n';
 
 export type SetupKind = 'bank' | 'tw_broker' | 'us_broker' | 'pension' | 'insurance' | 'home' | 'loan';
 
@@ -38,60 +39,60 @@ interface KindPreset {
 
 export const SETUP_KINDS: Record<SetupKind, KindPreset> = {
   bank: {
-    label: 'Bank account',
-    nickname: 'Bank account',
+    label: t('Bank account'),
+    nickname: t('Bank account'),
     type: 'cash',
     assetClass: 'cash',
     currency: 'TWD',
-    hint: 'Savings and current accounts, time deposits',
+    hint: t('Savings and current accounts, time deposits'),
   },
   tw_broker: {
-    label: 'TW broker',
-    nickname: 'TW broker',
+    label: t('TW broker'),
+    nickname: t('TW broker'),
     type: 'brokerage',
     assetClass: 'tw_equity',
     currency: 'TWD',
-    hint: 'Taiwan stocks and ETFs, market value',
+    hint: t('Taiwan stocks and ETFs, market value'),
   },
   us_broker: {
-    label: 'US broker',
-    nickname: 'US broker',
+    label: t('US broker'),
+    nickname: t('US broker'),
     type: 'brokerage',
     assetClass: 'us_equity',
     currency: 'USD',
-    hint: 'Overseas stocks and ETFs, in USD',
+    hint: t('Overseas stocks and ETFs, in USD'),
   },
   pension: {
-    label: '勞退 account',
-    nickname: '勞退 account',
+    label: t('勞退 account'),
+    nickname: t('勞退 account'),
     type: 'pension',
     assetClass: 'other',
     currency: 'TWD',
-    hint: 'Labor pension balance (locked until 60)',
+    hint: t('Labor pension balance (locked until 60)'),
   },
   insurance: {
-    label: 'Savings insurance',
-    nickname: 'Savings insurance',
+    label: t('Savings insurance'),
+    nickname: t('Savings insurance'),
     type: 'insurance',
     assetClass: 'other',
     currency: 'TWD',
-    hint: '儲蓄險 cash value',
+    hint: t('儲蓄險 cash value'),
   },
   home: {
-    label: 'Home',
-    nickname: 'Home',
+    label: t('Home'),
+    nickname: t('Home'),
     type: 'property',
     assetClass: 'property',
     currency: 'TWD',
-    hint: 'Estimated market value',
+    hint: t('Estimated market value'),
   },
   loan: {
-    label: 'Loan / mortgage',
-    nickname: 'Loan',
+    label: t('Loan / mortgage'),
+    nickname: t('Loan'),
     type: 'liability',
     assetClass: 'other',
     currency: 'TWD',
-    hint: 'Amount still owed',
+    hint: t('Amount still owed'),
   },
 };
 
@@ -134,18 +135,18 @@ export const MIX_PRESETS: Record<
   { label: string; text: string; allocation: Allocation }
 > = {
   growth: {
-    label: 'Mostly shares',
-    text: '80% shares, 15% bonds, 5% cash. Bigger swings, higher typical growth.',
+    label: t('Mostly shares'),
+    text: t('80% shares, 15% bonds, 5% cash. Bigger swings, higher typical growth.'),
     allocation: { global_equity: 0.4, us_equity: 0.25, tw_equity: 0.15, bond: 0.15, cash: 0.05 },
   },
   balanced: {
-    label: 'Balanced',
-    text: '60% shares, 30% bonds, 10% cash.',
+    label: t('Balanced'),
+    text: t('60% shares, 30% bonds, 10% cash.'),
     allocation: { global_equity: 0.3, us_equity: 0.18, tw_equity: 0.12, bond: 0.3, cash: 0.1 },
   },
   cautious: {
-    label: 'Cautious',
-    text: '35% shares, 45% bonds, 20% cash. Smaller swings, lower typical growth.',
+    label: t('Cautious'),
+    text: t('35% shares, 45% bonds, 20% cash. Smaller swings, lower typical growth.'),
     allocation: { global_equity: 0.2, us_equity: 0.1, tw_equity: 0.05, bond: 0.45, cash: 0.2 },
   },
 };
@@ -169,12 +170,12 @@ export function emptyDraft(swr: number): SetupDraft {
 }
 
 export const STEPS = [
-  'About you',
-  'Accounts',
-  'Money in & out',
-  'FI goal',
-  'Taiwan pensions',
-  'Review',
+  t('About you'),
+  t('Accounts'),
+  t('Money in & out'),
+  t('FI goal'),
+  t('Taiwan pensions'),
+  t('Review'),
 ] as const;
 
 /** Problems that stop the user leaving a step; empty when the step is complete. */
@@ -182,52 +183,56 @@ export function validateStep(step: number, d: SetupDraft, currentYear: number): 
   const errors: string[] = [];
   switch (step) {
     case 0: {
-      if (d.birthYear === undefined) errors.push('Enter your birth year.');
+      if (d.birthYear === undefined) errors.push(t('Enter your birth year.'));
       else if (d.birthYear < 1930 || d.birthYear > currentYear - 16)
-        errors.push(`Birth year must be between 1930 and ${currentYear - 16}.`);
+        errors.push(t('Birth year must be between 1930 and {v}.', { v: currentYear - 16 }));
       if (d.targetFiAge !== undefined && d.birthYear !== undefined) {
         const age = currentYear - d.birthYear;
         if (d.targetFiAge <= age || d.targetFiAge > 100)
-          errors.push(`Target FI age must be between ${age + 1} and 100, or left empty.`);
+          errors.push(t('Target FI age must be between {v} and 100, or left empty.', { v: age + 1 }));
       }
       break;
     }
     case 1: {
       if (!d.accounts.some((a) => a.kind !== 'loan'))
-        errors.push('Add at least one account you own, such as a bank account.');
+        errors.push(t('Add at least one account you own, such as a bank account.'));
       for (const a of d.accounts) {
-        if (!a.nickname.trim()) errors.push('Every account needs a nickname.');
+        if (!a.nickname.trim()) errors.push(t('Every account needs a nickname.'));
         else if (/\d{6,}/.test(a.nickname))
-          errors.push(`“${a.nickname}” looks like an account number; use a nickname instead.`);
+          errors.push(
+            t('“{nickname}” looks like an account number; use a nickname instead.', { nickname: a.nickname }),
+          );
         if (a.balanceMinor === undefined || a.balanceMinor < 0)
-          errors.push(`Enter today's balance for ${a.nickname.trim() || 'each account'} (0 is fine).`);
+          errors.push(
+            t("Enter today's balance for {v} (0 is fine).", { v: a.nickname.trim() || t('each account') }),
+          );
       }
       if (d.accounts.some((a) => a.currency === 'USD') && !(d.usdRate && d.usdRate > 0))
-        errors.push('Enter today’s USD/TWD rate for your USD accounts.');
+        errors.push(t('Enter today’s USD/TWD rate for your USD accounts.'));
       break;
     }
     case 2:
       if (d.monthlyIncomeMinor === undefined)
-        errors.push('Enter your monthly take-home pay (0 if none right now).');
-      if (d.monthlySpendingMinor === undefined) errors.push('Enter your monthly spending.');
+        errors.push(t('Enter your monthly take-home pay (0 if none right now).'));
+      if (d.monthlySpendingMinor === undefined) errors.push(t('Enter your monthly spending.'));
       break;
     case 3:
       if (!d.fiSpendingMinor || d.fiSpendingMinor <= 0)
-        errors.push('Enter how much you would spend per year once you stop working.');
-      if (d.swr < 0.025 || d.swr > 0.05) errors.push('The withdrawal rate must be between 2.5% and 5%.');
+        errors.push(t('Enter how much you would spend per year once you stop working.'));
+      if (d.swr < 0.025 || d.swr > 0.05) errors.push(t('The withdrawal rate must be between 2.5% and 5%.'));
       break;
     case 5:
-      if (!d.mix) errors.push('Choose how your new savings will be invested.');
+      if (!d.mix) errors.push(t('Choose how your new savings will be invested.'));
       else if (d.mix === 'current' && !currentMix(d))
-        errors.push('There is no current mix to keep yet; pick one of the ready-made mixes.');
+        errors.push(t('There is no current mix to keep yet; pick one of the ready-made mixes.'));
       break;
     case 4: {
-      const t = d.taiwan;
-      if (t.skipped) break;
-      if (t.insuredYears !== undefined && (t.insuredYears < 0 || t.insuredYears > 50))
-        errors.push('勞保 insured years must be between 0 and 50.');
-      if (t.claimAge !== undefined && (t.claimAge < 60 || t.claimAge > 70))
-        errors.push('勞保 claim age must be between 60 and 70.');
+      const tw = d.taiwan;
+      if (tw.skipped) break;
+      if (tw.insuredYears !== undefined && (tw.insuredYears < 0 || tw.insuredYears > 50))
+        errors.push(t('勞保 insured years must be between 0 and 50.'));
+      if (tw.claimAge !== undefined && (tw.claimAge < 60 || tw.claimAge > 70))
+        errors.push(t('勞保 claim age must be between 60 and 70.'));
       break;
     }
   }
@@ -256,7 +261,7 @@ export interface SetupContext {
   now: string;
 }
 
-export const LIVING_COSTS = 'Living costs';
+export const LIVING_COSTS = t('Living costs');
 
 /**
  * The mix of usable investments (not 勞退, home, insurance or loans), as whole
@@ -354,12 +359,16 @@ export function buildSetupRecords(d: SetupDraft, ctx: SetupContext): SetupRecord
       : [];
 
   const categories = ctx.categories.map((c) => ({ ...c }));
-  let salary = categories.find((c) => c.kind === 'income' && c.name.toLowerCase() === 'salary');
+  let salary = categories.find(
+    (c) => c.kind === 'income' && [t('Salary'), 'salary'].includes(c.name.toLowerCase()),
+  );
   if (!salary) {
-    salary = { id: newId(), name: 'Salary', kind: 'income', essential: false, ...at };
+    salary = { id: newId(), name: t('Salary'), kind: 'income', essential: false, ...at };
     categories.push(salary);
   }
-  let living = categories.find((c) => c.kind === 'expense' && c.name === LIVING_COSTS);
+  let living = categories.find(
+    (c) => c.kind === 'expense' && [LIVING_COSTS, 'Living costs'].includes(c.name),
+  );
   if (!living) {
     living = { id: newId(), name: LIVING_COSTS, kind: 'expense', essential: true, ...at };
     categories.push(living);

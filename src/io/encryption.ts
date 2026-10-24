@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 /**
  * Encrypted backups (P2): AES-GCM with a key derived from a passphrase by PBKDF2
  * (SHA-256), using the browser's Web Crypto API. Nothing leaves the device.
@@ -76,7 +78,7 @@ export async function encryptBackup(
 /** Decrypts to the parsed JSON backup. Throws a readable error for a wrong passphrase. */
 export async function decryptBackup(file: EncryptedBackup, passphrase: string): Promise<unknown> {
   if (file.format !== 1 || file.kdf?.name !== 'PBKDF2' || file.cipher?.name !== 'AES-GCM') {
-    throw new Error('Unsupported encrypted backup format.');
+    throw new Error(t('Unsupported encrypted backup format.'));
   }
   const key = await deriveKey(passphrase, fromBase64(file.kdf.salt), file.kdf.iterations);
   let plain: ArrayBuffer;
@@ -87,7 +89,7 @@ export async function decryptBackup(file: EncryptedBackup, passphrase: string): 
       fromBase64(file.data),
     );
   } catch {
-    throw new Error('Wrong passphrase, or the file is damaged.');
+    throw new Error(t('Wrong passphrase, or the file is damaged.'));
   }
   return JSON.parse(new TextDecoder().decode(plain));
 }

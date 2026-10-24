@@ -24,10 +24,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input, Select } from '@/components/ui/input';
 import { Badge, EmptyState, PageHeader, Table } from '@/components/ui/misc';
+import { t } from '@/i18n';
 
 const formSchema = z
   .object({
-    nickname: z.string().trim().min(1, 'Give it a nickname').max(80),
+    nickname: z.string().trim().min(1, t('Give it a nickname')).max(80),
     institution: z.string().trim().max(80),
     type: z.enum(ACCOUNT_TYPES),
     assetClass: z.enum(ASSET_CLASSES),
@@ -35,24 +36,24 @@ const formSchema = z
       .string()
       .trim()
       .toUpperCase()
-      .regex(/^[A-Z]{3}$/, 'Use a 3-letter code such as TWD or USD'),
+      .regex(/^[A-Z]{3}$/, t('Use a 3-letter code such as TWD or USD')),
     investable: z.boolean(),
-    accessAge: z.string().regex(/^(\d{1,3})?$/, 'Whole years'),
+    accessAge: z.string().regex(/^(\d{1,3})?$/, t('Whole years')),
     interestRate: z.string(),
     monthlyPayment: z.string(),
-    remainingMonths: z.string().regex(/^(\d{1,4})?$/, 'Whole months'),
+    remainingMonths: z.string().regex(/^(\d{1,4})?$/, t('Whole months')),
     region: z.string(),
     location: z.string(),
     /** "US 62, EU 15, JP 6, EM 11, Other 6" */
     exposure: z
       .string()
-      .regex(/^(\s*(TW|US|JP|EU|EM|Other)\s+\d{1,3}(\.\d+)?\s*,?)*$/, 'Use pairs like “US 62, EU 15”'),
+      .regex(/^(\s*(TW|US|JP|EU|EM|Other)\s+\d{1,3}(\.\d+)?\s*,?)*$/, t('Use pairs like “US 62, EU 15”')),
     floating: z.boolean(),
     propertyAccountId: z.string(),
   })
   .refine((v) => !/\d{6,}/.test(v.nickname), {
     path: ['nickname'],
-    message: 'Do not store account numbers; use a nickname.',
+    message: t('Do not store account numbers; use a nickname.'),
   });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -168,13 +169,13 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Field label="Nickname" error={errors.nickname?.message} hint="No account numbers">
+      <Field label={t('Nickname')} error={errors.nickname?.message} hint={t('No account numbers')}>
         {(id) => (
           <Input id={id} {...register('nickname')} aria-invalid={!!errors.nickname || undefined} autoFocus />
         )}
       </Field>
-      <Field label="Institution">{(id) => <Input id={id} {...register('institution')} />}</Field>
-      <Field label="Type">
+      <Field label={t('Institution')}>{(id) => <Input id={id} {...register('institution')} />}</Field>
+      <Field label={t('Type')}>
         {(id) => (
           <Select
             id={id}
@@ -196,7 +197,7 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           </Select>
         )}
       </Field>
-      <Field label="Asset class">
+      <Field label={t('Asset class')}>
         {(id) => (
           <Select id={id} {...register('assetClass')}>
             {ASSET_CLASSES.map((c) => (
@@ -207,28 +208,28 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           </Select>
         )}
       </Field>
-      <Field label="Currency" error={errors.currency?.message}>
+      <Field label={t('Currency')} error={errors.currency?.message}>
         {(id) => <Input id={id} {...register('currency')} list="currencies" maxLength={3} />}
       </Field>
       {type !== 'liability' && (
         <>
           <Field
-            label="Access age"
-            hint="E.g. 60 for 勞退; blank if usable now"
+            label={t('Access age')}
+            hint={t('E.g. 60 for 勞退; blank if usable now')}
             error={errors.accessAge?.message}
           >
             {(id) => <Input id={id} inputMode="numeric" {...register('accessAge')} />}
           </Field>
           <div className="flex items-end pb-2">
-            <Checkbox label="Investable (can fund withdrawals)" {...register('investable')} />
+            <Checkbox label={t('Investable (can fund withdrawals)')} {...register('investable')} />
           </div>
         </>
       )}
       {type !== 'liability' && (
-        <Field label="Region" hint="For playback stories; Auto uses class and currency">
+        <Field label={t('Region')} hint={t('For playback stories; Auto uses class and currency')}>
           {(id) => (
             <Select id={id} {...register('region')}>
-              <option value="">Auto</option>
+              <option value="">{t('Auto')}</option>
               {REGIONS.map((r) => (
                 <option key={r} value={r}>
                   {REGION_LABELS[r]}
@@ -239,10 +240,10 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
         </Field>
       )}
       {assetClass === 'property' && (
-        <Field label="Location">
+        <Field label={t('Location')}>
           {(id) => (
             <Select id={id} {...register('location')}>
-              <option value="">Auto (by currency)</option>
+              <option value="">{t('Auto (by currency)')}</option>
               {LOCATIONS.map((l) => (
                 <option key={l} value={l}>
                   {LOCATION_LABELS[l]}
@@ -254,22 +255,22 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
       )}
       {(region === 'Global' || (assetClass === 'global_equity' && !region)) && (
         <Field
-          label="Region split (%)"
-          hint="Blank = US 62, EU 15, JP 6, EM 11, Other 6"
+          label={t('Region split (%)')}
+          hint={t('Blank = US 62, EU 15, JP 6, EM 11, Other 6')}
           error={errors.exposure?.message}
         >
           {(id) => (
-            <Input id={id} placeholder="US 62, EU 15, JP 6, EM 11, Other 6" {...register('exposure')} />
+            <Input id={id} placeholder={t('US 62, EU 15, JP 6, EM 11, Other 6')} {...register('exposure')} />
           )}
         </Field>
       )}
       {type === 'liability' && (
         <>
           <div className="flex items-end pb-2">
-            <Checkbox label="Floating rate (follows rate shocks)" {...register('floating')} />
+            <Checkbox label={t('Floating rate (follows rate shocks)')} {...register('floating')} />
           </div>
           {properties.length > 0 && (
-            <Field label="Secured on">
+            <Field label={t('Secured on')}>
               {(id) => (
                 <Select id={id} {...register('propertyAccountId')}>
                   <option value="">—</option>
@@ -282,13 +283,13 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
               )}
             </Field>
           )}
-          <Field label="Interest rate (% a year)">
+          <Field label={t('Interest rate (% a year)')}>
             {(id) => <Input id={id} inputMode="decimal" {...register('interestRate')} />}
           </Field>
-          <Field label="Monthly payment">
+          <Field label={t('Monthly payment')}>
             {(id) => <Input id={id} inputMode="decimal" {...register('monthlyPayment')} />}
           </Field>
-          <Field label="Remaining term (months)" error={errors.remainingMonths?.message}>
+          <Field label={t('Remaining term (months)')} error={errors.remainingMonths?.message}>
             {(id) => <Input id={id} inputMode="numeric" {...register('remainingMonths')} />}
           </Field>
         </>
@@ -301,10 +302,10 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
       </datalist>
       <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
         <Button type="submit" disabled={isSubmitting}>
-          {account ? 'Save account' : 'Add account'}
+          {account ? t('Save account') : t('Add account')}
         </Button>
         <Button variant="ghost" onClick={onDone}>
-          Cancel
+          {t('Cancel')}
         </Button>
       </div>
     </form>
@@ -330,17 +331,23 @@ export function AccountsPage() {
   return (
     <>
       <PageHeader
-        title="Accounts"
-        description="Every account by nickname. Balances go in Snapshots, in each account's own currency."
+        title={t('Accounts')}
+        description={t(
+          "Every account by nickname. Balances go in Snapshots, in each account's own currency.",
+        )}
         actions={
           <Button onClick={() => setEditing('new')}>
-            <Plus aria-hidden /> Add account
+            <Plus aria-hidden /> {t('Add account')}
           </Button>
         }
       />
       {editing && (
         <Card className="mb-4">
-          <CardHeader title={editing === 'new' ? 'New account' : `Edit ${editing.nickname}`} />
+          <CardHeader
+            title={
+              editing === 'new' ? t('New account') : t('Edit {nickname}', { nickname: editing.nickname })
+            }
+          />
           <CardContent>
             <AccountForm
               key={editing === 'new' ? 'new' : editing.id}
@@ -351,16 +358,16 @@ export function AccountsPage() {
         </Card>
       )}
       {accounts.length === 0 && !editing ? (
-        <EmptyState title="No accounts yet">
-          Add your bank, broker, pension and insurance accounts.
+        <EmptyState title={t('No accounts yet')}>
+          {t('Add your bank, broker, pension and insurance accounts.')}
         </EmptyState>
       ) : (
         <Card>
           <CardHeader
-            title={`${visible.length} account${visible.length === 1 ? '' : 's'}`}
+            title={t('{length} account{v}', { length: visible.length, v: visible.length === 1 ? '' : 's' })}
             actions={
               <Checkbox
-                label="Show archived"
+                label={t('Show archived')}
                 checked={showArchived}
                 onChange={(e) => setShowArchived(e.target.checked)}
               />
@@ -370,14 +377,14 @@ export function AccountsPage() {
             <Table>
               <thead>
                 <tr>
-                  <th>Nickname</th>
-                  <th>Institution</th>
-                  <th>Type</th>
-                  <th>Asset class</th>
-                  <th>Currency</th>
-                  <th className="text-right">Latest balance</th>
-                  <th>Investable</th>
-                  <th>Terms</th>
+                  <th>{t('Nickname')}</th>
+                  <th>{t('Institution')}</th>
+                  <th>{t('Type')}</th>
+                  <th>{t('Asset class')}</th>
+                  <th>{t('Currency')}</th>
+                  <th className="text-right">{t('Latest balance')}</th>
+                  <th>{t('Investable')}</th>
+                  <th>{t('Terms')}</th>
                   <th className="w-28" />
                 </tr>
               </thead>
@@ -387,7 +394,7 @@ export function AccountsPage() {
                   return (
                     <tr key={a.id} className={a.archived ? 'opacity-60' : undefined}>
                       <td className="font-medium">
-                        {a.nickname} {a.archived && <Badge>Archived</Badge>}
+                        {a.nickname} {a.archived && <Badge>{t('Archived')}</Badge>}
                       </td>
                       <td className="text-muted-foreground">{a.institution}</td>
                       <td>{ACCOUNT_TYPE_LABELS[a.type]}</td>
@@ -408,13 +415,20 @@ export function AccountsPage() {
                           ? '—'
                           : a.investable
                             ? a.accessAge
-                              ? `From age ${a.accessAge}`
-                              : 'Yes'
-                            : 'No'}
+                              ? t('From age {accessAge}', { accessAge: a.accessAge })
+                              : t('Yes')
+                            : t('No')}
                       </td>
                       <td className="text-muted-foreground">
                         {terms
-                          ? `${(terms.interestRate * 100).toFixed(2)}% · ${formatMoney(fromMinor(terms.monthlyPaymentMinor), a.currency)}/mo · ${terms.remainingMonths} mo`
+                          ? t('{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths} mo', {
+                              toFixed: (terms.interestRate * 100).toFixed(2),
+                              monthlyPaymentMinor: formatMoney(
+                                fromMinor(terms.monthlyPaymentMinor),
+                                a.currency,
+                              ),
+                              remainingMonths: terms.remainingMonths,
+                            })
                           : ''}
                       </td>
                       <td>
@@ -422,7 +436,7 @@ export function AccountsPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            aria-label={`Edit ${a.nickname}`}
+                            aria-label={t('Edit {nickname}', { nickname: a.nickname })}
                             onClick={() => setEditing(a)}
                           >
                             <Pencil />
@@ -430,7 +444,11 @@ export function AccountsPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            aria-label={a.archived ? `Restore ${a.nickname}` : `Archive ${a.nickname}`}
+                            aria-label={
+                              a.archived
+                                ? t('Restore {nickname}', { nickname: a.nickname })
+                                : t('Archive {nickname}', { nickname: a.nickname })
+                            }
                             onClick={() => void patch(db.accounts, a.id, { archived: !a.archived })}
                           >
                             {a.archived ? <ArchiveRestore /> : <Archive />}
@@ -439,9 +457,13 @@ export function AccountsPage() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              aria-label={`Delete ${a.nickname}`}
+                              aria-label={t('Delete {nickname}', { nickname: a.nickname })}
                               onClick={() => {
-                                if (confirm(`Delete ${a.nickname}? It has no snapshots.`)) {
+                                if (
+                                  confirm(
+                                    t('Delete {nickname}? It has no snapshots.', { nickname: a.nickname }),
+                                  )
+                                ) {
                                   void db.transaction('rw', db.accounts, db.liabilities, async () => {
                                     await db.accounts.delete(a.id);
                                     await db.liabilities.delete(a.id);
@@ -460,7 +482,7 @@ export function AccountsPage() {
               </tbody>
             </Table>
             <p className="mt-3 text-xs text-subtle">
-              Accounts with snapshots can be archived but not deleted, so history stays intact.
+              {t('Accounts with snapshots can be archived but not deleted, so history stays intact.')}
             </p>
           </CardContent>
         </Card>

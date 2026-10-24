@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { t } from '@/i18n';
 
 /**
  * Zod schemas for the twelve PRD entities. They are shared by the database layer,
@@ -25,12 +26,12 @@ export const assetClassSchema = z.enum(ASSET_CLASSES);
 export const REGIONS = ['TW', 'US', 'JP', 'EU', 'EM', 'Global'] as const;
 export type Region = (typeof REGIONS)[number];
 export const REGION_LABELS: Record<Region, string> = {
-  TW: 'Taiwan',
+  TW: t('Taiwan'),
   US: 'US',
-  JP: 'Japan',
-  EU: 'Europe',
-  EM: 'China/EM',
-  Global: 'Global',
+  JP: t('Japan'),
+  EU: t('Europe'),
+  EM: t('China/EM'),
+  Global: t('Global'),
 };
 export const regionSchema = z.enum(REGIONS);
 
@@ -38,12 +39,12 @@ export const regionSchema = z.enum(REGIONS);
 export const LOCATIONS = ['taipei', 'taichung', 'kaohsiung', 'other_tw', 'tokyo', 'other_jp', 'us'] as const;
 export type PropertyLocation = (typeof LOCATIONS)[number];
 export const LOCATION_LABELS: Record<PropertyLocation, string> = {
-  taipei: 'Taipei / New Taipei',
-  taichung: 'Taichung',
-  kaohsiung: 'Kaohsiung',
-  other_tw: 'Other Taiwan',
-  tokyo: 'Tokyo',
-  other_jp: 'Other Japan',
+  taipei: t('Taipei / New Taipei'),
+  taichung: t('Taichung'),
+  kaohsiung: t('Kaohsiung'),
+  other_tw: t('Other Taiwan'),
+  tokyo: t('Tokyo'),
+  other_jp: t('Other Japan'),
   us: 'US',
 };
 export const locationSchema = z.enum(LOCATIONS);
@@ -59,28 +60,28 @@ export type AssetClass = z.infer<typeof assetClassSchema>;
 export type AccountType = z.infer<typeof accountTypeSchema>;
 
 export const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
-  cash: 'Cash',
-  tw_equity: 'TW equity',
-  us_equity: 'US equity',
-  global_equity: 'Global equity',
-  bond: 'Bonds',
-  property: 'Property',
-  other: 'Other',
+  cash: t('Cash'),
+  tw_equity: t('TW equity'),
+  us_equity: t('US equity'),
+  global_equity: t('Global equity'),
+  bond: t('Bonds'),
+  property: t('Property'),
+  other: t('Other'),
 };
 
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
-  cash: 'Cash',
-  brokerage: 'Brokerage',
-  pension: 'Pension',
-  insurance: 'Insurance',
-  property: 'Property',
-  liability: 'Liability',
+  cash: t('Cash'),
+  brokerage: t('Brokerage'),
+  pension: t('Pension'),
+  insurance: t('Insurance'),
+  property: t('Property'),
+  liability: t('Liability'),
 };
 
 const idSchema = z.string().min(1);
-export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
-export const monthSchema = z.string().regex(/^\d{4}-\d{2}$/, 'Use YYYY-MM');
-export const currencySchema = z.string().regex(/^[A-Z]{3}$/, 'Use a 3-letter currency code');
+export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, t('Use YYYY-MM-DD'));
+export const monthSchema = z.string().regex(/^\d{4}-\d{2}$/, t('Use YYYY-MM'));
+export const currencySchema = z.string().regex(/^[A-Z]{3}$/, t('Use a 3-letter currency code'));
 const minorSchema = z.number().int();
 const rateSchema = z.number().min(-1).max(10);
 const ageSchema = z.number().int().min(0).max(120);

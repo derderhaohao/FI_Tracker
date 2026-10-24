@@ -3,6 +3,7 @@ import { runMonteCarlo, type MonteCarloOptions, type MonteCarloSummary } from '@
 import { monteCarloChance, solveLever, type SolveLever, type SolveResult } from '@/domain/montecarlo/solve';
 import type { ProjectionInput } from '@/domain/projection';
 import { referenceChecks, type ReferenceCheck } from '@/domain/referenceChecks';
+import { setLang, type Lang } from '@/i18n';
 
 /** Runs Monte Carlo off the main thread so the UI stays responsive. */
 const api = {
@@ -23,7 +24,9 @@ const api = {
     const chance = monteCarloChance(options);
     return levers.map((lever) => solveLever(input, lever, target, stop, chance));
   },
-  checks(input: ProjectionInput): ReferenceCheck[] {
+  /** The checks' wording follows the page's language. */
+  checks(input: ProjectionInput, lang: Lang): ReferenceCheck[] {
+    setLang(lang);
     return referenceChecks(input);
   },
 };

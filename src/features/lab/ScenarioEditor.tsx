@@ -22,12 +22,13 @@ import { Term } from '@/components/ui/term';
 import type { GlossaryParams } from '@/lib/glossary';
 import { pct, twd } from '@/lib/format';
 import { nameCheck, savingsRateOf, spendingNow, stopAge, type LabRow } from './model';
+import { t } from '@/i18n';
 
 /** "Today: 23.2% · −3.2 pts vs today" (PRD R6). */
 function TodayHint({ today, change, extra }: { today: string; change?: string; extra?: string }) {
   return (
     <>
-      Today: {today}
+      {t('Today: {today}', { today })}
       {change && <span className="font-medium text-foreground"> · {change}</span>}
       {extra && <span className="block">{extra}</span>}
     </>
@@ -37,14 +38,14 @@ function TodayHint({ today, change, extra }: { today: string; change?: string; e
 function moneyChange(now: number, today: number, unit = '/yr'): string | undefined {
   const d = Math.round(now - today);
   if (Math.abs(d) < 1) return undefined;
-  return `${d > 0 ? '+' : '−'}${twd(Math.abs(d))}${unit} vs today`;
+  return t('{v}{d}{unit} vs today', { v: d > 0 ? '+' : '−', d: twd(Math.abs(d)), unit });
 }
 
 function pointsChange(now: number | undefined, today: number | undefined): string | undefined {
   if (now === undefined || today === undefined) return undefined;
   const d = (now - today) * 100;
-  if (Math.abs(d) < 0.05) return 'same as today';
-  return `${d > 0 ? '+' : '−'}${Math.abs(d).toFixed(1)} pts vs today`;
+  if (Math.abs(d) < 0.05) return t('same as today');
+  return t('{v}{toFixed} pts vs today', { v: d > 0 ? '+' : '−', toFixed: Math.abs(d).toFixed(1) });
 }
 
 function setLevers(s: Scenario, changes: Partial<ScenarioLevers>) {
@@ -85,10 +86,11 @@ function WorldEvents({ s }: { s: Scenario }) {
   const [severity, setSeverity] = useState<Severity>('typical');
   return (
     <div className="sm:col-span-2 xl:col-span-3">
-      <div className="mb-1 text-sm font-medium">World events</div>
+      <div className="mb-1 text-sm font-medium">{t('World events')}</div>
       <p className="mb-2 text-xs text-muted-foreground">
-        The same events as the Projection playback, applied to every simulated future. Hypothetical stress
-        stories, not forecasts.
+        {t(
+          'The same events as the Projection playback, applied to every simulated future. Hypothetical stress stories, not forecasts.',
+        )}
       </p>
       {list.length > 0 && (
         <ul className="mb-2 flex flex-col gap-1 text-sm">
@@ -98,13 +100,15 @@ function WorldEvents({ s }: { s: Scenario }) {
                 {options.find((x) => x.id === e.eventId)?.name ?? e.eventId}
               </span>
               <span className="text-muted-foreground">
-                {e.timing === 'afterStop' ? 'just after you stop work' : `in year ${e.years}`} ·{' '}
-                {SEVERITY_LABELS[e.severity]}
+                {e.timing === 'afterStop'
+                  ? t('just after you stop work')
+                  : t('in year {years}', { years: e.years })}{' '}
+                · {SEVERITY_LABELS[e.severity]}
               </span>
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label="Remove world event"
+                aria-label={t('Remove world event')}
                 onClick={() => void setLevers(s, { stressEvents: list.filter((_, j) => j !== i) })}
               >
                 <Trash2 />
@@ -115,7 +119,7 @@ function WorldEvents({ s }: { s: Scenario }) {
       )}
       <div className="flex flex-wrap items-end gap-2">
         <Select
-          aria-label="World event"
+          aria-label={t('World event')}
           className="h-8 w-56"
           value={eventId}
           onChange={(e) => setEventId(e.target.value)}
@@ -127,17 +131,17 @@ function WorldEvents({ s }: { s: Scenario }) {
           ))}
         </Select>
         <Select
-          aria-label="When it starts"
+          aria-label={t('When it starts')}
           className="h-8 w-48"
           value={timing}
           onChange={(e) => setTiming(e.target.value as 'afterStop' | 'year')}
         >
-          <option value="afterStop">Just after I stop work</option>
-          <option value="year">In a chosen year</option>
+          <option value="afterStop">{t('Just after I stop work')}</option>
+          <option value="year">{t('In a chosen year')}</option>
         </Select>
         {timing === 'year' && (
           <Input
-            aria-label="Year"
+            aria-label={t('Year')}
             className="h-8 w-20"
             type="number"
             min={0}
@@ -147,7 +151,7 @@ function WorldEvents({ s }: { s: Scenario }) {
           />
         )}
         <Select
-          aria-label="Severity"
+          aria-label={t('Severity')}
           className="h-8 w-28"
           value={severity}
           onChange={(e) => setSeverity(e.target.value as Severity)}
@@ -171,7 +175,7 @@ function WorldEvents({ s }: { s: Scenario }) {
             })
           }
         >
-          <Plus aria-hidden /> Add
+          <Plus aria-hidden /> {t('Add')}
         </Button>
       </div>
     </div>
@@ -192,10 +196,10 @@ function IncomeChanges({ s }: { s: Scenario }) {
       <Table>
         <thead>
           <tr>
-            <th>Income change</th>
-            <th className="text-right">From age</th>
-            <th className="text-right">To age</th>
-            <th className="text-right">Net income / year</th>
+            <th>{t('Income change')}</th>
+            <th className="text-right">{t('From age')}</th>
+            <th className="text-right">{t('To age')}</th>
+            <th className="text-right">{t('Net income / year')}</th>
             <th />
           </tr>
         </thead>
@@ -204,13 +208,13 @@ function IncomeChanges({ s }: { s: Scenario }) {
             <tr key={i}>
               <td>{c.label || '—'}</td>
               <td className="text-right">{c.fromAge}</td>
-              <td className="text-right">{c.toAge ?? 'FI'}</td>
+              <td className="text-right">{c.toAge ?? t('FI')}</td>
               <td className="text-right">{formatMinor(c.annualIncomeMinor)}</td>
               <td className="text-right">
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label="Remove income change"
+                  aria-label={t('Remove income change')}
                   onClick={() => void setLevers(s, { incomeChanges: changes.filter((_, j) => j !== i) })}
                 >
                   <Trash2 />
@@ -221,16 +225,16 @@ function IncomeChanges({ s }: { s: Scenario }) {
           <tr>
             <td>
               <Input
-                aria-label="Income change label"
+                aria-label={t('Income change label')}
                 className="h-8"
-                placeholder="Raise, job change, career break"
+                placeholder={t('Raise, job change, career break')}
                 value={draft.label}
                 onChange={(e) => setDraft({ ...draft, label: e.target.value })}
               />
             </td>
             <td>
               <Input
-                aria-label="From age"
+                aria-label={t('From age')}
                 className="h-8 text-right"
                 inputMode="numeric"
                 value={draft.fromAge}
@@ -239,20 +243,20 @@ function IncomeChanges({ s }: { s: Scenario }) {
             </td>
             <td>
               <Input
-                aria-label="To age"
+                aria-label={t('To age')}
                 className="h-8 text-right"
                 inputMode="numeric"
-                placeholder="until FI"
+                placeholder={t('until FI')}
                 value={draft.toAge}
                 onChange={(e) => setDraft({ ...draft, toAge: e.target.value })}
               />
             </td>
             <td>
               <Input
-                aria-label="Income during change"
+                aria-label={t('Income during change')}
                 className="h-8 text-right"
                 inputMode="decimal"
-                placeholder="0 = break"
+                placeholder={t('0 = break')}
                 value={draft.income}
                 onChange={(e) => setDraft({ ...draft, income: e.target.value })}
               />
@@ -277,7 +281,7 @@ function IncomeChanges({ s }: { s: Scenario }) {
                   setDraft({ label: '', fromAge: '', toAge: '', income: '' });
                 }}
               >
-                <Plus aria-hidden /> Add
+                <Plus aria-hidden /> {t('Add')}
               </Button>
             </td>
           </tr>
@@ -296,9 +300,9 @@ function Events({ s }: { s: Scenario }) {
       <Table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Event</th>
-            <th className="text-right">Amount (− = cost)</th>
+            <th>{t('Date')}</th>
+            <th>{t('Event')}</th>
+            <th className="text-right">{t('Amount (− = cost)')}</th>
             <th />
           </tr>
         </thead>
@@ -312,7 +316,7 @@ function Events({ s }: { s: Scenario }) {
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label="Remove event"
+                  aria-label={t('Remove event')}
                   onClick={() =>
                     void patch(db.scenarios, s.id, { events: s.events.filter((_, j) => j !== i) })
                   }
@@ -325,7 +329,7 @@ function Events({ s }: { s: Scenario }) {
           <tr>
             <td>
               <Input
-                aria-label="Event date"
+                aria-label={t('Event date')}
                 type="date"
                 className="h-8"
                 value={draft.date}
@@ -334,16 +338,16 @@ function Events({ s }: { s: Scenario }) {
             </td>
             <td>
               <Input
-                aria-label="Event description"
+                aria-label={t('Event description')}
                 className="h-8"
-                placeholder="Home down payment"
+                placeholder={t('Home down payment')}
                 value={draft.description}
                 onChange={(e) => setDraft({ ...draft, description: e.target.value })}
               />
             </td>
             <td>
               <Input
-                aria-label="Event amount"
+                aria-label={t('Event amount')}
                 className="h-8 text-right"
                 inputMode="decimal"
                 placeholder="-3,000,000"
@@ -366,7 +370,7 @@ function Events({ s }: { s: Scenario }) {
                   setDraft({ date: '', amount: '', description: '' });
                 }}
               >
-                <Plus aria-hidden /> Add
+                <Plus aria-hidden /> {t('Add')}
               </Button>
             </td>
           </tr>
@@ -394,16 +398,16 @@ function AllocationEditor({ s }: { s: Scenario }) {
               })
             }
           />
-          Custom allocation (rebalanced every year)
+          {t('Custom allocation (rebalanced every year)')}
         </label>
         {custom === undefined && (
           <span className="text-muted-foreground">
-            Using the target allocation from Settings for new savings.
+            {t('Using the target allocation from Settings for new savings.')}
           </span>
         )}
         {custom !== undefined && Math.abs(sum - 1) > 0.001 && (
           <span className="text-warning">
-            Adds up to {(sum * 100).toFixed(0)}%; it will be scaled to 100%.
+            {t('Adds up to {toFixed}%; it will be scaled to 100%.', { toFixed: (sum * 100).toFixed(0) })}
           </span>
         )}
       </div>
@@ -457,7 +461,7 @@ export function ScenarioEditor({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Field label="Name" className={advanced ? undefined : 'sm:col-span-3'}>
+        <Field label={t('Name')} className={advanced ? undefined : 'sm:col-span-3'}>
           {(id) => (
             <Input
               id={id}
@@ -470,7 +474,7 @@ export function ScenarioEditor({
           )}
         </Field>
         {advanced && (
-          <Field label="Assumption set">
+          <Field label={t('Assumption set')}>
             {(id) => (
               <Select
                 id={id}
@@ -487,7 +491,7 @@ export function ScenarioEditor({
           </Field>
         )}
         {advanced && (
-          <Field label="Monte Carlo seed" hint="Stored so reruns are reproducible">
+          <Field label={t('Monte Carlo seed')} hint={t('Stored so reruns are reproducible')}>
             {(id) => (
               <NumberInput
                 id={id}
@@ -500,9 +504,9 @@ export function ScenarioEditor({
       </div>
       {warning && <Notice tone="warning">{warning}</Notice>}
 
-      <Section title="Work and saving" hint="Blank fields keep today's value from your data.">
+      <Section title={t('Work and saving')} hint={t("Blank fields keep today's value from your data.")}>
         <Field
-          label="Take-home pay / year"
+          label={t('Take-home pay / year')}
           hint={
             <TodayHint
               today={twd(base.annualIncome)}
@@ -519,13 +523,13 @@ export function ScenarioEditor({
               id={id}
               value={o.annualIncomeMinor}
               currency="TWD"
-              placeholder="today"
+              placeholder={t('today')}
               onCommit={(v) => void setLevers(s, { annualIncomeMinor: v })}
             />
           )}
         </Field>
         <Field
-          label="Spending while working / year"
+          label={t('Spending while working / year')}
           hint={
             <TodayHint
               today={twd(spendingNow(base))}
@@ -544,18 +548,18 @@ export function ScenarioEditor({
               id={id}
               value={o.currentSpendingMinor}
               currency="TWD"
-              placeholder="today"
+              placeholder={t('today')}
               onCommit={(v) => void setLevers(s, { currentSpendingMinor: v })}
             />
           )}
         </Field>
         <Field
-          label="Savings rate"
+          label={t('Savings rate')}
           hint={
             <TodayHint
               today={todayRate !== undefined ? pct(todayRate, 1) : '—'}
               change={o.savingsRate !== undefined ? pointsChange(rowRate, todayRate) : undefined}
-              extra="Sets spending to pay × (1 − rate)"
+              extra={t('Sets spending to pay × (1 − rate)')}
             />
           }
         >
@@ -571,18 +575,23 @@ export function ScenarioEditor({
           )}
         </Field>
         <Field
-          label="Stop working at age"
+          label={t('Stop working at age')}
           hint={
             <TodayHint
               today={
-                todayStop !== undefined ? `${todayStop} (as soon as you reach your target)` : 'not reached'
+                todayStop !== undefined
+                  ? t('{todayStop} (as soon as you reach your target)', { todayStop })
+                  : t('not reached')
               }
               change={
                 o.targetFiAge !== undefined &&
                 todayStop !== undefined &&
                 rowStop !== undefined &&
                 rowStop !== todayStop
-                  ? `${rowStop > todayStop ? '+' : '−'}${Math.abs(rowStop - todayStop)} yrs vs today`
+                  ? t('{v}{abs} yrs vs today', {
+                      v: rowStop > todayStop ? '+' : '−',
+                      abs: Math.abs(rowStop - todayStop),
+                    })
                   : undefined
               }
             />
@@ -594,15 +603,15 @@ export function ScenarioEditor({
               value={o.targetFiAge}
               min={0}
               max={120}
-              placeholder="at FI"
+              placeholder={t('at FI')}
               onCommit={(v) => void setLevers(s, { targetFiAge: v })}
             />
           )}
         </Field>
         {o.targetFiAge === undefined && (
           <Field
-            label="Keep working after reaching your target (years)"
-            hint="0 = stop as soon as investments reach the money needed"
+            label={t('Keep working after reaching your target (years)')}
+            hint={t('0 = stop as soon as investments reach the money needed')}
           >
             {(id) => (
               <NumberInput
@@ -618,8 +627,10 @@ export function ScenarioEditor({
         )}
         {advanced && (
           <Field
-            label="Voluntary 勞退 contribution"
-            hint={`Up to ${(tw.laborPension.maxVoluntaryRate * 100).toFixed(0)}%, tax-deductible`}
+            label={t('Voluntary 勞退 contribution')}
+            hint={t('Up to {toFixed}%, tax-deductible', {
+              toFixed: (tw.laborPension.maxVoluntaryRate * 100).toFixed(0),
+            })}
           >
             {(id) => (
               <PercentInput
@@ -636,9 +647,9 @@ export function ScenarioEditor({
         <IncomeChanges s={s} />
       </Section>
 
-      <Section title="After you stop working">
+      <Section title={t('After you stop working')}>
         {advanced && (
-          <Field label="FI tier">
+          <Field label={t('FI tier')}>
             {(id) => (
               <Select
                 id={id}
@@ -647,16 +658,16 @@ export function ScenarioEditor({
                   void setLevers(s, { fiTier: (e.target.value || undefined) as ScenarioLevers['fiTier'] })
                 }
               >
-                <option value="">Same as Goal</option>
-                <option value="lean">Lean</option>
-                <option value="full">Full</option>
-                <option value="fat">Fat</option>
+                <option value="">{t('Same as Goal')}</option>
+                <option value="lean">{t('Lean')}</option>
+                <option value="full">{t('Full')}</option>
+                <option value="fat">{t('Fat')}</option>
               </Select>
             )}
           </Field>
         )}
         <Field
-          label="Spending once you stop / year"
+          label={t('Spending once you stop / year')}
           hint={
             <TodayHint
               today={twd(base.fiSpending)}
@@ -675,14 +686,14 @@ export function ScenarioEditor({
               id={id}
               value={o.fiSpendingMinor}
               currency="TWD"
-              placeholder="today"
+              placeholder={t('today')}
               onCommit={(v) => void setLevers(s, { fiSpendingMinor: v })}
             />
           )}
         </Field>
         <Field
-          label="Spending change (%)"
-          hint="−10% = spend less. Applies from today to spending both while working and after you stop."
+          label={t('Spending change (%)')}
+          hint={t('−10% = spend less. Applies from today to spending both while working and after you stop.')}
         >
           {(id) => (
             <PercentInput
@@ -696,11 +707,11 @@ export function ScenarioEditor({
           )}
         </Field>
         <Field
-          label="Part-time income after you stop / year"
+          label={t('Part-time income after you stop / year')}
           hint={
             <TodayHint
               today={base.barista ? twd(base.barista.annual) : 'none'}
-              extra="Also lowers the money you need"
+              extra={t('Also lowers the money you need')}
             />
           }
         >
@@ -709,7 +720,7 @@ export function ScenarioEditor({
               id={id}
               value={o.baristaIncome?.annualMinor}
               currency="TWD"
-              placeholder="none"
+              placeholder={t('none')}
               onCommit={(v) =>
                 void setLevers(s, {
                   baristaIncome: v
@@ -724,7 +735,7 @@ export function ScenarioEditor({
             />
           )}
         </Field>
-        <Field label="Part-time until age">
+        <Field label={t('Part-time until age')}>
           {(id) => (
             <NumberInput
               id={id}
@@ -745,7 +756,7 @@ export function ScenarioEditor({
             <TodayHint
               today={pct(base.swr, 2)}
               change={o.swr !== undefined ? pointsChange(row.input.swr, base.swr) : undefined}
-              extra="Lower = a bigger target, safer spending"
+              extra={t('Lower = a bigger target, safer spending')}
             />
           }
         >
@@ -763,8 +774,8 @@ export function ScenarioEditor({
       </Section>
 
       {advanced && (
-        <Section title="Withdrawal rule">
-          <Field label="Rule">
+        <Section title={t('Withdrawal rule')}>
+          <Field label={t('Rule')}>
             {(id) => (
               <Select
                 id={id}
@@ -785,7 +796,10 @@ export function ScenarioEditor({
           </Field>
           {rule.kind === 'guardrails' && (
             <>
-              <Field label="Guardrail band" hint="Cut or raise when the rate drifts this far from the SWR">
+              <Field
+                label={t('Guardrail band')}
+                hint={t('Cut or raise when the rate drifts this far from the SWR')}
+              >
                 {(id) => (
                   <PercentInput
                     id={id}
@@ -800,7 +814,7 @@ export function ScenarioEditor({
                   />
                 )}
               </Field>
-              <Field label="Adjustment step">
+              <Field label={t('Adjustment step')}>
                 {(id) => (
                   <PercentInput
                     id={id}
@@ -818,7 +832,7 @@ export function ScenarioEditor({
             </>
           )}
           {rule.kind === 'fixed_percentage' && (
-            <Field label="Withdraw each year">
+            <Field label={t('Withdraw each year')}>
               {(id) => (
                 <PercentInput
                   id={id}
@@ -835,29 +849,31 @@ export function ScenarioEditor({
             </Field>
           )}
           <p className="self-center text-xs text-muted-foreground sm:col-span-2 xl:col-span-2">
-            {rule.kind === 'fixed_swr' && 'Spend the FI budget every year, adjusted for inflation.'}
+            {rule.kind === 'fixed_swr' && t('Spend the FI budget every year, adjusted for inflation.')}
             {rule.kind === 'guardrails' &&
-              'Start at the FI budget; cut 10% when the withdrawal rate rises 20% above the SWR, raise 10% when it falls 20% below.'}
+              t(
+                'Start at the FI budget; cut 10% when the withdrawal rate rises 20% above the SWR, raise 10% when it falls 20% below.',
+              )}
             {rule.kind === 'fixed_percentage' &&
-              'Spending follows the portfolio; it never runs out, but spending can fall.'}
+              t('Spending follows the portfolio; it never runs out, but spending can fall.')}
             {rule.kind === 'dividend' &&
-              'Spend only the dividends (yields from the assumption set) plus guaranteed income.'}
+              t('Spend only the dividends (yields from the assumption set) plus guaranteed income.')}
           </p>
         </Section>
       )}
 
       {advanced && (
         <Section
-          title="How the target is sized"
-          hint="Leave blank to size the money-needed target on your spending once you stop."
+          title={t('How the target is sized')}
+          hint={t('Leave blank to size the money-needed target on your spending once you stop.')}
         >
-          <Field label="Size the target on spending of / year">
+          <Field label={t('Size the target on spending of / year')}>
             {(id) => (
               <MoneyInput
                 id={id}
                 value={o.targetSpendingMinor}
                 currency="TWD"
-                placeholder="same as above"
+                placeholder={t('same as above')}
                 onCommit={(v) => void setLevers(s, { targetSpendingMinor: v })}
               />
             )}
@@ -873,21 +889,24 @@ export function ScenarioEditor({
                   })
                 }
               />
-              Part-time income lowers the target (stop sooner)
+              {t('Part-time income lowers the target (stop sooner)')}
             </label>
           )}
         </Section>
       )}
 
-      <Section title="Investment mix">
+      <Section title={t('Investment mix')}>
         <AllocationEditor s={s} />
       </Section>
 
       {advanced && (
-        <Section title="Taiwan levers">
+        <Section title={t('Taiwan levers')}>
           <Field
-            label="勞保 claim age"
-            hint={`Normal ${tw.laborInsurance.claimAge}; −/+${(tw.laborInsurance.adjustmentPerYear * 100).toFixed(0)}% a year`}
+            label={t('勞保 claim age')}
+            hint={t('Normal {claimAge}; −/+{toFixed}% a year', {
+              claimAge: tw.laborInsurance.claimAge,
+              toFixed: (tw.laborInsurance.adjustmentPerYear * 100).toFixed(0),
+            })}
           >
             {(id) => (
               <NumberInput
@@ -900,7 +919,7 @@ export function ScenarioEditor({
               />
             )}
           </Field>
-          <Field label="勞保 haircut" hint="Fund-solvency scenario">
+          <Field label={t('勞保 haircut')} hint={t('Fund-solvency scenario')}>
             {(id) => (
               <PercentInput
                 id={id}
@@ -912,7 +931,7 @@ export function ScenarioEditor({
               />
             )}
           </Field>
-          <Field label="Return shift" hint="Added to every asset class">
+          <Field label={t('Return shift')} hint={t('Added to every asset class')}>
             {(id) => (
               <PercentInput
                 id={id}
@@ -927,10 +946,10 @@ export function ScenarioEditor({
         </Section>
       )}
 
-      <Section title="Stress test">
+      <Section title={t('Stress test')}>
         <Field
-          label="Shares fall just after you stop (%)"
-          hint="Spread over the first 2 years after stopping"
+          label={t('Shares fall just after you stop (%)')}
+          hint={t('Spread over the first 2 years after stopping')}
         >
           {(id) => (
             <PercentInput
@@ -949,13 +968,13 @@ export function ScenarioEditor({
       </Section>
 
       <Section
-        title="One-off events"
-        hint="Home purchase, inheritance, large costs. Applied at the start of their year."
+        title={t('One-off events')}
+        hint={t('Home purchase, inheritance, large costs. Applied at the start of their year.')}
       >
         <Events s={s} />
       </Section>
 
-      <Field label="Notes">
+      <Field label={t('Notes')}>
         {(id) => (
           <Textarea
             id={id}
@@ -965,7 +984,7 @@ export function ScenarioEditor({
           />
         )}
       </Field>
-      <p className="text-xs text-subtle">Changes save automatically. Amounts are in today's money.</p>
+      <p className="text-xs text-subtle">{t("Changes save automatically. Amounts are in today's money.")}</p>
     </div>
   );
 }

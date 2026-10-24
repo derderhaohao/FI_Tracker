@@ -21,6 +21,7 @@ import { lockProjection } from '@/domain/planVsActual';
 import { runProjection } from '@/domain/projection';
 import { SCHEMA_VERSION } from '@/db/db';
 import type { BackupFile } from './backup';
+import { t } from '@/i18n';
 
 /**
  * Fictional demo data for development and the public demo. The person, the
@@ -51,7 +52,7 @@ export function buildDemoBackup(): BackupFile {
   const cautious: AssumptionSet = {
     ...structuredClone(assumptionSet),
     id: 'demo-assumptions-cautious',
-    name: 'Cautious',
+    name: t('Cautious'),
     inflation: 0.025,
     assets: assumptionSet.assets.map((a) => ({ ...a, expectedReturn: a.expectedReturn - 0.015 })),
   };
@@ -87,7 +88,7 @@ export function buildDemoBackup(): BackupFile {
   });
   const accounts = {
     everyday: account({
-      nickname: 'Everyday account',
+      nickname: t('Everyday account'),
       institution: 'Demo Bank',
       type: 'cash',
       assetClass: 'cash',
@@ -95,7 +96,7 @@ export function buildDemoBackup(): BackupFile {
       investable: true,
     }),
     savings: account({
-      nickname: 'Emergency fund',
+      nickname: t('Emergency fund'),
       institution: 'Demo Bank',
       type: 'cash',
       assetClass: 'cash',
@@ -103,7 +104,7 @@ export function buildDemoBackup(): BackupFile {
       investable: true,
     }),
     twBroker: account({
-      nickname: 'TW ETFs',
+      nickname: t('TW ETFs'),
       institution: 'Demo Securities',
       type: 'brokerage',
       assetClass: 'tw_equity',
@@ -111,7 +112,7 @@ export function buildDemoBackup(): BackupFile {
       investable: true,
     }),
     usBroker: account({
-      nickname: 'US ETFs',
+      nickname: t('US ETFs'),
       institution: 'Sample Broker',
       type: 'brokerage',
       assetClass: 'us_equity',
@@ -119,7 +120,7 @@ export function buildDemoBackup(): BackupFile {
       investable: true,
     }),
     bonds: account({
-      nickname: 'Bond ETF',
+      nickname: t('Bond ETF'),
       institution: 'Sample Broker',
       type: 'brokerage',
       assetClass: 'bond',
@@ -127,8 +128,8 @@ export function buildDemoBackup(): BackupFile {
       investable: true,
     }),
     pension: account({
-      nickname: '勞退 account',
-      institution: 'Labor pension fund',
+      nickname: t('勞退 account'),
+      institution: t('Labor pension fund'),
       type: 'pension',
       assetClass: 'other',
       currency: 'TWD',
@@ -136,7 +137,7 @@ export function buildDemoBackup(): BackupFile {
       accessAge: 60,
     }),
     insurance: account({
-      nickname: 'USD savings policy',
+      nickname: t('USD savings policy'),
       institution: 'Demo Life',
       type: 'insurance',
       assetClass: 'other',
@@ -144,7 +145,7 @@ export function buildDemoBackup(): BackupFile {
       investable: false,
     }),
     loan: account({
-      nickname: 'Car loan',
+      nickname: t('Car loan'),
       institution: 'Demo Bank',
       type: 'liability',
       assetClass: 'other',
@@ -225,18 +226,18 @@ export function buildDemoBackup(): BackupFile {
     ...at,
   });
   const c = {
-    salary: cat('Salary', 'income', false),
-    bonus: cat('Bonus', 'income', false),
-    dividends: cat('Dividends', 'income', false),
-    housing: cat('Housing', 'expense', true, 216_000),
-    food: cat('Food', 'expense', true, 132_000),
-    transport: cat('Transport', 'expense', true, 30_000),
-    utilities: cat('Utilities & phone', 'expense', true, 30_000),
-    health: cat('Insurance & health', 'expense', true, 24_000),
-    family: cat('Family', 'expense', true, 72_000),
-    travel: cat('Travel', 'expense', false, 90_000),
-    leisure: cat('Leisure & shopping', 'expense', false, 60_000),
-    loan: cat('Loan repayment', 'expense', false, 0),
+    salary: cat(t('Salary'), 'income', false),
+    bonus: cat(t('Bonus'), 'income', false),
+    dividends: cat(t('Dividends'), 'income', false),
+    housing: cat(t('Housing'), 'expense', true, 216_000),
+    food: cat(t('Food'), 'expense', true, 132_000),
+    transport: cat(t('Transport'), 'expense', true, 30_000),
+    utilities: cat(t('Utilities & phone'), 'expense', true, 30_000),
+    health: cat(t('Insurance & health'), 'expense', true, 24_000),
+    family: cat(t('Family'), 'expense', true, 72_000),
+    travel: cat(t('Travel'), 'expense', false, 90_000),
+    leisure: cat(t('Leisure & shopping'), 'expense', false, 60_000),
+    loan: cat(t('Loan repayment'), 'expense', false, 0),
   };
   const categories = Object.values(c);
 
@@ -255,8 +256,8 @@ export function buildDemoBackup(): BackupFile {
   for (const m of months) {
     const raise = m >= '2026-03' ? 1.04 : 1;
     flow(m, c.salary, 86_500 * raise);
-    if (m.endsWith('-01')) flow(m, c.bonus, 173_000, true, 'Year-end bonus');
-    if (m.endsWith('-09')) flow(m, c.bonus, 30_000, true, 'Mid-Autumn bonus');
+    if (m.endsWith('-01')) flow(m, c.bonus, 173_000, true, t('Year-end bonus'));
+    if (m.endsWith('-09')) flow(m, c.bonus, 30_000, true, t('Mid-Autumn bonus'));
     if (['03', '06', '09', '12'].includes(m.slice(5))) flow(m, c.dividends, 14_000 + noise(3_000));
     flow(m, c.housing, 18_000);
     flow(m, c.food, 11_500 + noise(1_500));
@@ -266,7 +267,7 @@ export function buildDemoBackup(): BackupFile {
     flow(m, c.family, 6_000);
     flow(m, c.leisure, 5_500 + noise(2_000));
     flow(m, c.loan, 12_500);
-    if (m === '2025-07') flow(m, c.travel, 68_000, true, 'Japan trip');
+    if (m === '2025-07') flow(m, c.travel, 68_000, true, t('Japan trip'));
     else flow(m, c.travel, 1_500 + noise(1_000));
   }
 
@@ -282,30 +283,30 @@ export function buildDemoBackup(): BackupFile {
   });
   const scenarios: Scenario[] = [
     scenario({
-      name: 'Baseline',
+      name: t('Baseline'),
       overrides: {},
       events: [],
       withdrawalRule: { kind: 'fixed_swr' },
       seed: 42,
     }),
     scenario({
-      name: 'Save 50%',
+      name: t('Save 50%'),
       overrides: { savingsRate: 0.5 },
       events: [],
       withdrawalRule: { kind: 'guardrails', band: 0.2, step: 0.1 },
       seed: 42,
     }),
     scenario({
-      name: 'Barista FI at 45',
+      name: t('Barista FI at 45'),
       overrides: { targetFiAge: 45, baristaIncome: { annualMinor: toMinor(360_000), untilAge: 55 } },
       events: [],
       withdrawalRule: { kind: 'fixed_swr' },
       seed: 42,
     }),
     scenario({
-      name: 'Buy a flat in 2029',
+      name: t('Buy a flat in 2029'),
       overrides: { currentSpendingMinor: toMinor(780_000) },
-      events: [{ date: '2029-06-01', amountMinor: toMinor(-3_000_000), description: 'Down payment' }],
+      events: [{ date: '2029-06-01', amountMinor: toMinor(-3_000_000), description: t('Down payment') }],
       withdrawalRule: { kind: 'fixed_swr' },
       seed: 42,
     }),
@@ -378,8 +379,8 @@ export function buildDemoBackup(): BackupFile {
       date: lockDate,
       type: 'annual',
       planOfRecordId: baseline.id,
-      notes: 'First annual reset. Locked the baseline as plan of record.',
-      decisions: ['Keep 45% in US equity', 'Raise emergency fund to 6 months'],
+      notes: t('First annual reset. Locked the baseline as plan of record.'),
+      decisions: [t('Keep 45% in US equity'), t('Raise emergency fund to 6 months')],
       checklist: {},
       ...at,
     },
@@ -388,8 +389,8 @@ export function buildDemoBackup(): BackupFile {
       date: lastDate,
       type: 'quarterly',
       planOfRecordId: baseline.id,
-      notes: 'Ahead of plan thanks to the raise in March.',
-      decisions: ['Test a 50% savings-rate scenario'],
+      notes: t('Ahead of plan thanks to the raise in March.'),
+      decisions: [t('Test a 50% savings-rate scenario')],
       checklist: {},
       ...at,
     },

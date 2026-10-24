@@ -17,6 +17,7 @@ import { ChartLegend, TooltipBox } from '@/components/charts/ChartParts';
 import { axisTick, useChartTheme } from '@/components/charts/theme';
 import { twdCompact } from '@/lib/format';
 import type { Fade } from './usePlayback';
+import { getLang, t } from '@/i18n';
 
 export type ChartView = 'total' | 'breakdown';
 
@@ -110,15 +111,15 @@ export const PlaybackChart = memo(function PlaybackChart({
   const ghostOpacity = fade ? Math.max(0, 1 - fadeT) * 0.8 : 0;
 
   return (
-    <figure aria-label="Playback chart" className="m-0">
+    <figure aria-label={t('Playback chart')} className="m-0">
       <ChartLegend
         items={
           view === 'total'
             ? [
-                { label: 'Investments', color: c },
-                { label: 'Total net worth', color: theme.series[2] },
-                { label: 'Money needed', color: theme.series[1], dashed: true },
-                { label: 'Normal story', color: theme.axis, dashed: true },
+                { label: t('Investments'), color: c },
+                { label: t('Total net worth'), color: theme.series[2] },
+                { label: t('Money needed'), color: theme.series[1], dashed: true },
+                { label: t('Normal story'), color: theme.axis, dashed: true },
               ]
             : groups.map((g, i) => ({
                 label: g.label,
@@ -147,7 +148,7 @@ export const PlaybackChart = memo(function PlaybackChart({
               stroke={theme.axis}
               tickLine={false}
               axisLine={false}
-              width={64}
+              width={getLang() === 'zh-TW' ? 76 : 64}
             />
             {bands.map((e) => (
               <ReferenceArea
@@ -165,7 +166,12 @@ export const PlaybackChart = memo(function PlaybackChart({
                 x={path.retireMonth}
                 stroke={theme.axis}
                 strokeDasharray="2 3"
-                label={{ value: 'Stop work', position: 'insideBottomLeft', fill: theme.text, fontSize: 10 }}
+                label={{
+                  value: t('Stop work'),
+                  position: 'insideBottomLeft',
+                  fill: theme.text,
+                  fontSize: 10,
+                }}
               />
             )}
             {path.depletionMonth !== undefined && (
@@ -173,7 +179,7 @@ export const PlaybackChart = memo(function PlaybackChart({
                 x={path.depletionMonth}
                 stroke={theme.critical}
                 label={{
-                  value: 'Money runs out',
+                  value: t('Money runs out'),
                   position: 'insideBottomRight',
                   fill: theme.critical,
                   fontSize: 10,
@@ -197,12 +203,12 @@ export const PlaybackChart = memo(function PlaybackChart({
                 const r = payload[0].payload as Record<string, number>;
                 return (
                   <TooltipBox
-                    title={`Age ${(path.startAge + r.m / 12).toFixed(1)}`}
+                    title={t('Age {toFixed}', { toFixed: (path.startAge + r.m / 12).toFixed(1) })}
                     rows={[
-                      { label: 'Investments', value: twdCompact(r.investable), color: c },
-                      { label: 'Total net worth', value: twdCompact(r.total), color: theme.series[2] },
-                      { label: 'Money needed', value: twdCompact(r.need), color: theme.series[1] },
-                      { label: 'Normal story', value: twdCompact(r.normal), color: theme.axis },
+                      { label: t('Investments'), value: twdCompact(r.investable), color: c },
+                      { label: t('Total net worth'), value: twdCompact(r.total), color: theme.series[2] },
+                      { label: t('Money needed'), value: twdCompact(r.need), color: theme.series[1] },
+                      { label: t('Normal story'), value: twdCompact(r.normal), color: theme.axis },
                     ]}
                   />
                 );

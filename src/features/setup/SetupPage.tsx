@@ -34,6 +34,7 @@ import {
   type SetupDraft,
   type SetupKind,
 } from './setupModel';
+import { t } from '@/i18n';
 
 type StepProps = { d: SetupDraft; set: (p: Partial<SetupDraft>) => void };
 
@@ -67,30 +68,37 @@ function StepAbout({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) =>
   return (
     <div className="flex flex-col gap-4">
       <Explain>
-        Your age sets the timeline: when 勞退 unlocks (60), when 勞保 starts (65), and how many years your
-        money must last.
+        {t(
+          'Your age sets the timeline: when 勞退 unlocks (60), when 勞保 starts (65), and how many years your money must last.',
+        )}
       </Explain>
       <div className="grid max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Birth year" hint={age !== undefined ? `You turn ${age} this year` : 'For example 1990'}>
+        <Field
+          label={t('Birth year')}
+          hint={age !== undefined ? t('You turn {age} this year', { age }) : t('For example 1990')}
+        >
           {(id) => (
             <NumberInput
               id={id}
               value={d.birthYear}
               min={1900}
               max={2100}
-              placeholder="YYYY"
+              placeholder={t('YYYY')}
               onCommit={(v) => set({ birthYear: v })}
             />
           )}
         </Field>
-        <Field label="Target FI age (optional)" hint="An age you'd like to stop depending on a paycheck">
+        <Field
+          label={t('Target FI age (optional)')}
+          hint={t("An age you'd like to stop depending on a paycheck")}
+        >
           {(id) => (
             <NumberInput
               id={id}
               value={d.targetFiAge}
               min={0}
               max={120}
-              placeholder="none"
+              placeholder={t('none')}
               onCommit={(v) => set({ targetFiAge: v })}
             />
           )}
@@ -108,10 +116,11 @@ function StepAccounts({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>)
   return (
     <div className="flex flex-col gap-4">
       <Explain>
-        List what you own and owe, with today’s balance. Rough numbers are fine; you will update them monthly
-        in Snapshots. Use nicknames only, never account numbers.
+        {t(
+          'List what you own and owe, with today’s balance. Rough numbers are fine; you will update them monthly in Snapshots. Use nicknames only, never account numbers.',
+        )}
       </Explain>
-      <div className="flex flex-wrap gap-2" aria-label="Add an account">
+      <div className="flex flex-wrap gap-2" aria-label={t('Add an account')}>
         {(Object.keys(SETUP_KINDS) as SetupKind[]).map((k) => (
           <Button
             key={k}
@@ -130,7 +139,7 @@ function StepAccounts({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>)
             key={a.key}
             className="grid grid-cols-2 items-end gap-2 rounded-md border p-3 sm:grid-cols-[11.5rem_1fr_6rem_12rem_auto]"
           >
-            <Field label="Kind" className="col-span-2 sm:col-span-1">
+            <Field label={t('Kind')} className="col-span-2 sm:col-span-1">
               {(id) => (
                 <Select
                   id={id}
@@ -150,7 +159,7 @@ function StepAccounts({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>)
                 </Select>
               )}
             </Field>
-            <Field label="Nickname" className="col-span-2 sm:col-span-1">
+            <Field label={t('Nickname')} className="col-span-2 sm:col-span-1">
               {(id) => (
                 <Input
                   id={id}
@@ -159,7 +168,7 @@ function StepAccounts({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>)
                 />
               )}
             </Field>
-            <Field label="Currency">
+            <Field label={t('Currency')}>
               {(id) => (
                 <Select
                   id={id}
@@ -171,7 +180,7 @@ function StepAccounts({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>)
                 </Select>
               )}
             </Field>
-            <Field label={a.kind === 'loan' ? 'Amount owed' : 'Balance today'}>
+            <Field label={a.kind === 'loan' ? t('Amount owed') : t('Balance today')}>
               {(id) => (
                 <MoneyInput
                   id={id}
@@ -185,7 +194,7 @@ function StepAccounts({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>)
             <Button
               size="icon"
               variant="ghost"
-              aria-label={`Remove ${a.nickname}`}
+              aria-label={t('Remove {nickname}', { nickname: a.nickname })}
               onClick={() => set({ accounts: d.accounts.filter((x) => x.key !== a.key) })}
             >
               <Trash2 />
@@ -196,8 +205,8 @@ function StepAccounts({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>)
       </div>
       {hasUsd && (
         <Field
-          label="TWD per USD today"
-          hint="Check your bank's rate; used to convert USD balances"
+          label={t('TWD per USD today')}
+          hint={t("Check your bank's rate; used to convert USD balances")}
           className="max-w-56"
         >
           {(id) => (
@@ -226,12 +235,12 @@ function StepMoney({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) =>
   return (
     <div className="flex flex-col gap-4">
       <Explain>
-        A typical month, as two totals. Spending means everything that leaves your accounts: rent or loan
-        payments, insurance, food, fun. You can split it into categories and add bonuses later on the Cash
-        flow page.
+        {t(
+          'A typical month, as two totals. Spending means everything that leaves your accounts: rent or loan payments, insurance, food, fun. You can split it into categories and add bonuses later on the Cash flow page.',
+        )}
       </Explain>
       <div className="grid max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Monthly take-home pay" hint="After tax, 勞健保 and any voluntary 勞退">
+        <Field label={t('Monthly take-home pay')} hint={t('After tax, 勞健保 and any voluntary 勞退')}>
           {(id) => (
             <MoneyInput
               id={id}
@@ -241,7 +250,7 @@ function StepMoney({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) =>
             />
           )}
         </Field>
-        <Field label="Monthly spending" hint="Everything you spend in a typical month">
+        <Field label={t('Monthly spending')} hint={t('Everything you spend in a typical month')}>
           {(id) => (
             <MoneyInput
               id={id}
@@ -254,9 +263,9 @@ function StepMoney({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) =>
       </div>
       {Number.isFinite(rate) && (
         <p className="text-sm">
-          You save <strong>{twd((income ?? 0) - (spending ?? 0))}</strong> a month, a savings rate of{' '}
-          <strong>{pct(rate)}</strong>.
-          {rate < 0 && ' Spending is above pay, so savings are being drawn down.'}
+          {t('You save')} <strong>{twd((income ?? 0) - (spending ?? 0))}</strong>{' '}
+          {t('a month, a savings rate of')} <strong>{pct(rate)}</strong>.
+          {rate < 0 && t(' Spending is above pay, so savings are being drawn down.')}
         </p>
       )}
     </div>
@@ -270,12 +279,12 @@ function StepGoal({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) => 
   return (
     <div className="flex flex-col gap-4">
       <Explain>
-        How much would you spend per year once you no longer need a paycheck? Today’s spending is a good
-        start; adjust for things that change (a paid-off loan, more travel). The FI number is how big your
-        investments must be to fund that.
+        {t(
+          'How much would you spend per year once you no longer need a paycheck? Today’s spending is a good start; adjust for things that change (a paid-off loan, more travel). The FI number is how big your investments must be to fund that.',
+        )}
       </Explain>
       <div className="grid max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Yearly spending once FI" hint="In today’s TWD">
+        <Field label={t('Yearly spending once FI')} hint={t('In today’s TWD')}>
           {(id) => (
             <MoneyInput
               id={id}
@@ -286,8 +295,8 @@ function StepGoal({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) => 
           )}
         </Field>
         <Field
-          label="Safe withdrawal rate"
-          hint="Share of investments you spend each year. 4% is common; 3.5% is safer for 40+ years."
+          label={t('Safe withdrawal rate')}
+          hint={t('Share of investments you spend each year. 4% is common; 3.5% is safer for 40+ years.')}
         >
           {(id) => (
             <PercentInput
@@ -303,9 +312,13 @@ function StepGoal({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) => 
       </div>
       {annual !== undefined && annual > 0 && (
         <p className="text-sm">
-          FI number: ({twd(annual)} + {twd(post)} self-paid NHI after leaving work) ÷ {pct(d.swr, 2)} ={' '}
-          <strong>{twd((annual + post) / d.swr)}</strong>. Guaranteed income such as 勞保 lowers what you
-          need; the projection accounts for it.
+          {t('FI number: ({annual} + {post} self-paid NHI after leaving work) ÷ {swr} =', {
+            annual: twd(annual),
+            post: twd(post),
+            swr: pct(d.swr, 2),
+          })}{' '}
+          <strong>{twd((annual + post) / d.swr)}</strong>
+          {t('. Guaranteed income such as 勞保 lowers what you need; the projection accounts for it.')}
         </p>
       )}
     </div>
@@ -313,37 +326,37 @@ function StepGoal({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) => 
 }
 
 function StepTaiwan({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) => void }) {
-  const t = d.taiwan;
-  const setT = (p: Partial<SetupDraft['taiwan']>) => set({ taiwan: { ...t, ...p } });
+  const tx = d.taiwan;
+  const setT = (p: Partial<SetupDraft['taiwan']>) => set({ taiwan: { ...tx, ...p } });
   return (
     <div className="flex flex-col gap-4">
       <Explain>
-        Optional, but it can move your FI date by years. 勞退 adds employer contributions to a locked account;
-        the 勞保 annuity pays from 65 and reduces what your portfolio must cover. Your figures are on the
-        勞保局 e化服務 site or app. Skip if unsure and fill it in later in Settings.
+        {t(
+          'Optional, but it can move your FI date by years. 勞退 adds employer contributions to a locked account; the 勞保 annuity pays from 65 and reduces what your portfolio must cover. Your figures are on the 勞保局 e化服務 site or app. Skip if unsure and fill it in later in Settings.',
+        )}
       </Explain>
       <div className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
-          label="勞退 monthly contribution wage"
-          hint="月提繳工資; usually close to your monthly salary, max NT$150,000"
+          label={t('勞退 monthly contribution wage')}
+          hint={t('月提繳工資; usually close to your monthly salary, max NT$150,000')}
         >
           {(id) => (
             <MoneyInput
               id={id}
-              value={t.pensionWageMinor}
+              value={tx.pensionWageMinor}
               currency="TWD"
               onCommit={(v) => setT({ pensionWageMinor: v, skipped: false })}
             />
           )}
         </Field>
-        <Field label="勞保 insured years so far" hint="保險年資">
+        <Field label={t('勞保 insured years so far')} hint="保險年資">
           {(id) => (
             <Input
               id={id}
               type="number"
               step={0.5}
               min={0}
-              defaultValue={t.insuredYears}
+              defaultValue={tx.insuredYears}
               onBlur={(e) =>
                 setT({
                   insuredYears: e.target.value === '' ? undefined : Number(e.target.value),
@@ -353,21 +366,27 @@ function StepTaiwan({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) =
             />
           )}
         </Field>
-        <Field label="勞保 average monthly insured salary" hint="平均月投保薪資; capped at NT$45,800">
+        <Field
+          label={t('勞保 average monthly insured salary')}
+          hint={t('平均月投保薪資; capped at NT$45,800')}
+        >
           {(id) => (
             <MoneyInput
               id={id}
-              value={t.avgInsuredSalaryMinor}
+              value={tx.avgInsuredSalaryMinor}
               currency="TWD"
               onCommit={(v) => setT({ avgInsuredSalaryMinor: v, skipped: false })}
             />
           )}
         </Field>
-        <Field label="勞保 claim age" hint="65 for those born 1962 or later; up to 5 years earlier or later">
+        <Field
+          label={t('勞保 claim age')}
+          hint={t('65 for those born 1962 or later; up to 5 years earlier or later')}
+        >
           {(id) => (
             <NumberInput
               id={id}
-              value={t.claimAge}
+              value={tx.claimAge}
               min={60}
               max={70}
               placeholder="65"
@@ -391,7 +410,9 @@ function mixText(a: Allocation): string {
 function MixChoiceField({ d, set }: StepProps) {
   const current = currentMix(d);
   const options: { value: MixChoice; label: string; text: string }[] = [
-    ...(current ? [{ value: 'current' as const, label: 'Keep my current mix', text: mixText(current) }] : []),
+    ...(current
+      ? [{ value: 'current' as const, label: t('Keep my current mix'), text: mixText(current) }]
+      : []),
     ...(Object.entries(MIX_PRESETS) as [Exclude<MixChoice, 'current'>, (typeof MIX_PRESETS)['growth']][]).map(
       ([value, p]) => ({ value, label: p.label, text: p.text }),
     ),
@@ -399,10 +420,11 @@ function MixChoiceField({ d, set }: StepProps) {
   const chosen = chosenMix(d);
   return (
     <fieldset className="rounded-lg border p-4">
-      <legend className="px-1 text-sm font-semibold">How should new savings be invested?</legend>
+      <legend className="px-1 text-sm font-semibold">{t('How should new savings be invested?')}</legend>
       <p className="mb-3 text-sm text-muted-foreground">
-        The projection invests what you save each month in this mix. It matters: cash grows slowly, so a mix
-        that is mostly cash pushes your FI date later. You can change it any time in Settings.
+        {t(
+          'The projection invests what you save each month in this mix. It matters: cash grows slowly, so a mix that is mostly cash pushes your FI date later. You can change it any time in Settings.',
+        )}
       </p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {options.map((o) => (
@@ -429,8 +451,10 @@ function MixChoiceField({ d, set }: StepProps) {
       </div>
       {chosen && (chosen.cash ?? 0) > CASH_WARNING && (
         <Notice tone="warning" className="mt-3">
-          {Math.round((chosen.cash ?? 0) * 100)}% of new savings would stay in cash, which barely beats
-          inflation. Unless you need it soon, a mix with more shares and bonds usually reaches FI sooner.
+          {t(
+            '{round}% of new savings would stay in cash, which barely beats inflation. Unless you need it soon, a mix with more shares and bonds usually reaches FI sooner.',
+            { round: Math.round((chosen.cash ?? 0) * 100) },
+          )}
         </Notice>
       )}
     </fieldset>
@@ -454,81 +478,106 @@ function StepReview({ d, set }: StepProps) {
     <div className="flex flex-col gap-5">
       <MixChoiceField d={d} set={set} />
       <section className="rounded-lg border bg-surface-2 p-5">
-        <div className="text-sm text-muted-foreground">Most likely FI date</div>
+        <div className="text-sm text-muted-foreground">{t('Most likely FI date')}</div>
         {preview.fiAge !== undefined && preview.yearsToFi !== undefined ? (
           <>
             <div className="mt-1 text-4xl font-semibold tracking-tight">
               {dateAfterYears(preview.asOfDate, preview.yearsToFi)}
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              Age {preview.fiAge}, in {preview.yearsToFi.toFixed(1)} years if nothing changes ·{' '}
-              {preview.success
-                ? `money lasts to ${settings.horizonAge}`
-                : `money runs out at ${preview.depletionAge}`}
+              {t('Age {fiAge}, in {toFixed} years if nothing changes · {v}', {
+                fiAge: preview.fiAge,
+                toFixed: preview.yearsToFi.toFixed(1),
+                v: preview.success
+                  ? t('money lasts to {horizonAge}', { horizonAge: settings.horizonAge })
+                  : t('money runs out at {depletionAge}', { depletionAge: preview.depletionAge }),
+              })}
             </div>
             {d.targetFiAge !== undefined && preview.fiAge > d.targetFiAge && (
               <p className="mt-2 text-sm">
-                That is {preview.fiAge - d.targetFiAge} year{preview.fiAge - d.targetFiAge === 1 ? '' : 's'}{' '}
-                after your target age of {d.targetFiAge}. The Goal page shows the monthly savings that would
-                close the gap, and the Strategy Lab lets you test ways to get there.
+                {t(
+                  'That is {v} year{v2} after your target age of {targetFiAge}. The Goal page shows the monthly savings that would close the gap, and the Strategy Lab lets you test ways to get there.',
+                  {
+                    v: preview.fiAge - d.targetFiAge,
+                    v2: preview.fiAge - d.targetFiAge === 1 ? '' : 's',
+                    targetFiAge: d.targetFiAge,
+                  },
+                )}
               </p>
             )}
           </>
         ) : (
           <div className="mt-1 text-2xl font-semibold">
-            Not reached by age {settings.horizonAge} at today’s savings
+            {t('Not reached by age {horizonAge} at today’s savings', { horizonAge: settings.horizonAge })}
           </div>
         )}
         <p className="mt-2 text-xs text-subtle">
-          Uses the default return and inflation assumptions; you can change them in Settings and test
-          alternatives in the Strategy Lab.
+          {t(
+            'Uses the default return and inflation assumptions; you can change them in Settings and test alternatives in the Strategy Lab.',
+          )}
         </p>
       </section>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat
-          label="Investable now"
+          label={t('Investable now')}
           value={twdCompact(preview.investableNow)}
-          sub={`${owned.length} account${owned.length === 1 ? '' : 's'} you own`}
+          sub={t('{length} account{v} you own', { length: owned.length, v: owned.length === 1 ? '' : 's' })}
         />
         <Stat
-          label="Saving per month"
+          label={t('Saving per month')}
           value={twdCompact(fromMinor((d.monthlyIncomeMinor ?? 0) - (d.monthlySpendingMinor ?? 0)))}
-          sub={`Pay ${twd(fromMinor(d.monthlyIncomeMinor ?? 0))} · spend ${twd(fromMinor(d.monthlySpendingMinor ?? 0))}`}
+          sub={t('Pay {fromMinor} · spend {fromMinor2}', {
+            fromMinor: twd(fromMinor(d.monthlyIncomeMinor ?? 0)),
+            fromMinor2: twd(fromMinor(d.monthlySpendingMinor ?? 0)),
+          })}
         />
         <Stat
-          label="FI number"
+          label={t('FI number')}
           value={twdCompact(preview.fiNumber)}
-          sub={`${twd(fromMinor(d.fiSpendingMinor ?? 0))}/yr at ${pct(d.swr, 2)}`}
+          sub={t('{fromMinor}/yr at {swr}', {
+            fromMinor: twd(fromMinor(d.fiSpendingMinor ?? 0)),
+            swr: pct(d.swr, 2),
+          })}
         />
       </div>
       <div className="text-sm">
-        <h3 className="mb-1 font-semibold">What will be saved</h3>
+        <h3 className="mb-1 font-semibold">{t('What will be saved')}</h3>
         <ul className="list-disc pl-5 text-muted-foreground">
           <li>
-            Birth year {d.birthYear}
-            {d.targetFiAge ? `, target FI age ${d.targetFiAge}` : ''}.
+            {t('Birth year {birthYear}{v}.', {
+              birthYear: d.birthYear,
+              v: d.targetFiAge ? t(', target FI age {targetFiAge}', { targetFiAge: d.targetFiAge }) : '',
+            })}
           </li>
           <li>
-            {d.accounts.length} account{d.accounts.length === 1 ? '' : 's'} with today’s balances:{' '}
+            {t('{length} account{v} with today’s balances:', {
+              length: d.accounts.length,
+              v: d.accounts.length === 1 ? '' : 's',
+            })}{' '}
             {d.accounts
               .map(
                 (a) =>
                   `${a.nickname} ${formatMoney(fromMinor(a.balanceMinor ?? 0), a.currency, { compact: true })}`,
               )
               .join(', ')}
-            {d.usdRate ? ` (USD at ${d.usdRate})` : ''}.
+            {d.usdRate ? t(' (USD at {usdRate})', { usdRate: d.usdRate }) : ''}.
           </li>
           <li>
-            Last month’s pay (Salary) and spending (a “Living costs” category, which also holds your FI
-            budget).
+            {t(
+              'Last month’s pay (Salary) and spending (a “Living costs” category, which also holds your FI budget).',
+            )}
           </li>
-          <li>{d.taiwan.skipped ? 'Taiwan pension details skipped.' : 'Your 勞退 and 勞保 details.'}</li>
+          <li>
+            {d.taiwan.skipped ? t('Taiwan pension details skipped.') : t('Your 勞退 and 勞保 details.')}
+          </li>
           <li>
             {chosenMix(d)
-              ? `New savings invested as: ${mixText(chosenMix(d)!)}.`
-              : 'Choose how new savings are invested, above.'}
+              ? t('New savings invested as: {mixText}.', { mixText: mixText(chosenMix(d)!) })
+              : t('Choose how new savings are invested, above.')}
           </li>
-          <li>Your browser is asked to keep this data safe from automatic clean-up when space runs low.</li>
+          <li>
+            {t('Your browser is asked to keep this data safe from automatic clean-up when space runs low.')}
+          </li>
         </ul>
       </div>
     </div>
@@ -547,19 +596,19 @@ export function SetupPage() {
   if (accounts.length > 0 && !saving) {
     return (
       <>
-        <PageHeader title="Set up FI Tracker" />
+        <PageHeader title={t('Set up FI Tracker')} />
         <Notice>
-          Setup is for a fresh start, and this browser already has data. Add to it from{' '}
+          {t('Setup is for a fresh start, and this browser already has data. Add to it from')}{' '}
           <Link to="/accounts" className="text-primary hover:underline">
-            Accounts
+            {t('Accounts')}
           </Link>{' '}
-          and{' '}
+          {t('and')}{' '}
           <Link to="/snapshots" className="text-primary hover:underline">
-            Snapshots
+            {t('Snapshots')}
           </Link>
-          , or go to the{' '}
+          {t(', or go to the')}{' '}
           <Link to="/" className="text-primary hover:underline">
-            Dashboard
+            {t('Dashboard')}
           </Link>
           .
         </Notice>
@@ -613,7 +662,7 @@ export function SetupPage() {
       navigate(`/?setup=done&storage=${kept ? 'kept' : 'not-kept'}`);
     } catch (e) {
       setSaving(false);
-      setErrors([`Could not save: ${e instanceof Error ? e.message : String(e)}`]);
+      setErrors([t('Could not save: {v}', { v: e instanceof Error ? e.message : String(e) })]);
     }
   };
 
@@ -622,10 +671,12 @@ export function SetupPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        title="Set up FI Tracker"
-        description="The minimum the projection needs. Everything is saved at the end, and can be changed later."
+        title={t('Set up FI Tracker')}
+        description={t(
+          'The minimum the projection needs. Everything is saved at the end, and can be changed later.',
+        )}
       />
-      <ol className="mb-5 flex flex-wrap gap-2" aria-label="Setup steps">
+      <ol className="mb-5 flex flex-wrap gap-2" aria-label={t('Setup steps')}>
         {STEPS.map((name, i) => (
           <li key={name}>
             <button
@@ -658,7 +709,7 @@ export function SetupPage() {
         <CardContent className="flex flex-col gap-5 p-6">
           <div>
             <div className="text-xs text-subtle">
-              Step {step + 1} of {STEPS.length}
+              {t('Step {v} of {length}', { v: step + 1, length: STEPS.length })}
             </div>
             <h2 className="text-xl font-semibold">{STEPS[step]}</h2>
           </div>
@@ -680,7 +731,7 @@ export function SetupPage() {
           <div className="flex flex-wrap items-center gap-2 border-t pt-4">
             {step > 0 && (
               <Button variant="ghost" onClick={() => go(step - 1)}>
-                Back
+                {t('Back')}
               </Button>
             )}
             <div className="flex-1" />
@@ -693,15 +744,15 @@ export function SetupPage() {
                   setStep(5);
                 }}
               >
-                Skip for now
+                {t('Skip for now')}
               </Button>
             )}
             {last ? (
               <Button onClick={() => void finish()} disabled={saving}>
-                {saving ? 'Saving…' : 'Finish and see my dashboard'}
+                {saving ? t('Saving…') : t('Finish and see my dashboard')}
               </Button>
             ) : (
-              <Button onClick={() => go(step + 1)}>Next</Button>
+              <Button onClick={() => go(step + 1)}>{t('Next')}</Button>
             )}
           </div>
         </CardContent>
