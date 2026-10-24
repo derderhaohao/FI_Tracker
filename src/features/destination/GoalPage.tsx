@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import type { Category, FiTier } from '@/domain/entities';
-import { fiNumber, fiTarget } from '@/domain/fiNumber';
+import { coastFi, fiNumber, fiTarget } from '@/domain/fiNumber';
 import { fromMinor, parseMoneyInput } from '@/domain/money';
-import { guaranteedStreams, laborInsuranceYears } from '@/domain/projection';
+import { guaranteedStreams, laborInsuranceYears, portfolioRealReturn } from '@/domain/projection';
 import { laborInsuranceAnnual } from '@/domain/taiwan/laborInsurance';
 import { db } from '@/db/db';
 import { newId, patch, save } from '@/db/repo';
 import { useAppData } from '@/app/data';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { PlanHealthCard } from '@/components/PlanHealthCard';
+import { Term } from '@/components/ui/term';
 import { LineChart } from '@/components/charts/LineChart';
 import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
@@ -292,6 +293,20 @@ export function GoalPage() {
 
   const targetAge = d.targetFiAge;
   const planAge = data.baseline.retireAge ?? data.baseline.fiAge;
+  const coast =
+    targetAge !== undefined && targetAge > startAge
+      ? coastFi(
+          fiTarget(
+            baselineInput.fiSpending,
+            guaranteedStreams(baselineInput, targetAge),
+            swr,
+            targetAge,
+            baselineInput.horizonAge,
+          ),
+          portfolioRealReturn(baselineInput),
+          targetAge - startAge,
+        )
+      : undefined;
   const targetMoney =
     targetAge !== undefined
       ? fiTarget(
@@ -403,7 +418,7 @@ export function GoalPage() {
               )}
             </Field>
             <Field
-              label="Safe withdrawal rate"
+              label={<Term k="drawRate" advanced />}
               hint="Default 4%; 3.25–3.5% is more conservative for 40+ years"
             >
               {(id) => (
@@ -542,7 +557,15 @@ export function GoalPage() {
               {targetMoney !== undefined && (
                 <p className="mt-1 text-muted-foreground">
                   Money needed to stop at {targetAge}: {twdCompact(targetMoney)} in usable investments (FI
-                  number plus a bridge until pensions start).
+                  number plus a <Term k="bridgeFund">bridge fund</Term> until pensions start).
+                </p>
+              )}
+              {coast !== undefined && (
+                <p className="mt-1 text-muted-foreground">
+                  <Term k="coastFi" />: {twdCompact(coast)}.{' '}
+                  {ctx.netWorth.investable >= coast
+                    ? `You have passed it: even with no more saving, your usable investments would typically grow to the money needed by ${targetAge}.`
+                    : `You are ${pct(ctx.netWorth.investable / coast, 0)} of the way there.`}
                 </p>
               )}
             </CardContent>

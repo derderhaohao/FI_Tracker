@@ -14,6 +14,7 @@ import { LabPage } from '@/features/lab/LabPage';
 import { ReviewsPage } from '@/features/review/ReviewsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { SetupPage } from '@/features/setup/SetupPage';
+import { UpdatePage } from '@/features/update/UpdatePage';
 import { DataProvider } from './data';
 import { PlanHealthProvider } from './planHealth';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -76,6 +77,7 @@ export function App() {
                 <Route path="reviews" element={<ReviewsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="setup" element={<SetupPage />} />
+                <Route path="update" element={<UpdatePage />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

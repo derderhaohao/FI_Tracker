@@ -9,11 +9,14 @@ import { periodChanges } from '@/domain/reconcile';
 import { useAppData } from '@/app/data';
 import { Welcome } from '@/features/setup/Welcome';
 import { NextSteps } from '@/features/setup/NextSteps';
+import { FiMoveCard } from './FiMoveCard';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { PlanHealthCard } from '@/components/PlanHealthCard';
 import { LineChart } from '@/components/charts/LineChart';
 import { ShareBars } from '@/components/charts/ShareBars';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { buttonVariants } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 import { EmptyState, Notice, PageHeader, Stat } from '@/components/ui/misc';
 import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
 
@@ -87,7 +90,14 @@ export function DashboardPage() {
       <PageHeader
         title="Dashboard"
         description={`As of the snapshot on ${ctx.asOfDate}. All amounts in TWD.`}
-        actions={<AssumptionBadge set={data.activeAssumptions} />}
+        actions={
+          <>
+            <Link to="/update" className={buttonVariants({ size: 'sm' })}>
+              <RefreshCw aria-hidden /> Monthly update
+            </Link>
+            <AssumptionBadge set={data.activeAssumptions} />
+          </>
+        }
       />
       <NextSteps />
       {ctx.warnings.length > 0 && (
@@ -107,6 +117,8 @@ export function DashboardPage() {
             : 'The age is the typical path, where markets return their typical amount every year; the status counts how often the money lasts across 1,000 simulated futures.'
         }
       />
+
+      <FiMoveCard />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat

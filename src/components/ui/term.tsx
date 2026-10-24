@@ -1,5 +1,20 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { GLOSSARY, type GlossaryKey, type GlossaryParams } from '@/lib/glossary';
+import { HISTORY } from '@/domain/backtest';
+import { useAppData } from '@/app/data';
+import { HEALTH_RUNS } from '@/lib/mcWorker';
+
+function useGlossaryParams(): GlossaryParams {
+  const { baselineInput } = useAppData();
+  return {
+    runs: HEALTH_RUNS,
+    horizonAge: baselineInput.horizonAge,
+    firstYear: HISTORY[0].year,
+    lastYear: HISTORY.at(-1)!.year,
+    fiSpending: baselineInput.fiSpending,
+    swr: baselineInput.swr,
+  };
+}
 import { cn } from '@/lib/cn';
 
 const WIDTH = 256;
@@ -17,13 +32,15 @@ export function Term({
   className,
 }: {
   k: GlossaryKey;
-  params: GlossaryParams;
+  /** Defaults to the plan today's numbers. */
+  params?: GlossaryParams;
   advanced?: boolean;
   /** Overrides the label text. */
   children?: ReactNode;
   className?: string;
 }) {
   const entry = GLOSSARY[k];
+  const defaults = useGlossaryParams();
   const id = useId();
   const ref = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number }>();
@@ -43,7 +60,7 @@ export function Term({
         type="button"
         className="cursor-help border-b border-dotted border-current text-left"
         aria-describedby={id}
-        onClick={() => (pos ? hide() : show())}
+        onClick={show}
         onMouseEnter={show}
         onMouseLeave={hide}
         onFocus={show}
@@ -62,7 +79,7 @@ export function Term({
           pos ? 'block' : 'hidden',
         )}
       >
-        {entry.tooltip(params)}
+        {entry.tooltip(params ?? defaults)}
       </span>
     </span>
   );

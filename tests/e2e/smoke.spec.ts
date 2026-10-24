@@ -37,7 +37,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
 
   await page.getByRole('link', { name: 'Projection' }).first().click();
   await expect(page.getByText('Investable net worth against the FI target')).toBeVisible();
-  await expect(page.getByText('Start').first()).toBeVisible();
+  await expect(page.getByText('Start', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('2026-10-31 · age 35')).toBeVisible();
 
   // Strategy Lab: simulated futures run on their own and lead with a plain verdict.
