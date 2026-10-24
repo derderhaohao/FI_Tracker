@@ -185,3 +185,23 @@ From "FI Tracker — Product Review & Roadmap" (24 Oct 2026).
   requested when setup finishes (and from Settings), not silently on every start.
 - **Phone navigation**: Dashboard, Snapshots, Cash flow and Strategy Lab, plus More for the rest.
 - Unknown links show "Page not found"; Accounts lists the latest balance.
+
+## Product review, "Next" phase: the monthly habit
+
+- **FI date as a range**: the plan-health card adds "Likely between age A and B (8 in 10 futures)"
+  from the simulated FI ages (P10–P90), shown when at least 9 in 10 futures reach FI and the plan
+  stops at FI rather than a set age.
+- **Why did my FI date move?** (`domain/fiDateMove.ts`): between the last two snapshots, inputs
+  are swapped one group at a time from the earlier state to the latest: a month passing, saving,
+  markets, exchange rates (balances move along the Snapshots page's split of the net-worth
+  change), pay and spending, then the FI goal (from goal history). The parts add up exactly. Both
+  dates use today's assumptions, since assumption changes are not stored over time.
+- **Monthly update** (`#/update`, a phone tab): one card per account pre-filled with the previous
+  balance, "Same as last month" or swipe right, accounts unchanged for three snapshots grouped on
+  one card, then each foreign currency's rate. Saved in one transaction; the time taken is kept
+  on the device (last 12) for the under-3-minutes goal.
+- **No FX fetch**: the app stays fully offline (decided with the owner).
+- **Monthly reminder**: an .ics file with a monthly repeat and a link to `#/update`, made on the
+  device (Settings, and the end of the update).
+- **Inline glossary**: terms can be tapped anywhere; added Coast FI and bridge fund, and used on
+  the Dashboard, Projection and Goal pages (Coast FI is back on the Goal page, explained).

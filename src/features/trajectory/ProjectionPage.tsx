@@ -6,6 +6,7 @@ import { useAppData, assumptionSetFor } from '@/app/data';
 import { useUi } from '@/state/ui';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { PlanHealthCard } from '@/components/PlanHealthCard';
+import { Term } from '@/components/ui/term';
 import { LineChart } from '@/components/charts/LineChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -108,7 +109,13 @@ export function ProjectionPage() {
       <Card className="mb-4">
         <CardHeader
           title="Investable net worth against the FI target"
-          description="Investable includes locked pension. Money needed is what usable investments must cover to stop work that year: the FI number plus a bridge until pensions start. It falls with age because fewer years are left to fund."
+          description={
+            <>
+              The <Term k="typicalPath" />. Investable includes locked pension. <Term k="moneyNeeded" /> is
+              what usable investments must cover to stop work that year: the FI number plus a{' '}
+              <Term k="bridgeFund">bridge fund</Term> until pensions start.
+            </>
+          }
         />
         <CardContent>
           <LineChart

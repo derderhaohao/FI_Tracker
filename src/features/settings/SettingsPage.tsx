@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Copy, Download, Lock, Plus, Trash2, Upload } from 'lucide-react';
+import { CalendarPlus, Copy, Download, Lock, Plus, Trash2, Upload } from 'lucide-react';
+import { downloadMonthlyReminder } from '@/lib/ics';
 import {
   ASSET_CLASSES,
   ASSET_CLASS_LABELS,
@@ -1134,6 +1135,34 @@ function DangerZone() {
   );
 }
 
+function Reminder() {
+  const [day, setDay] = useState(1);
+  return (
+    <Section
+      id="reminder"
+      title="Monthly reminder"
+      description="A repeating event for your calendar app, linking to the monthly update. Made on this device; nothing is sent anywhere."
+    >
+      <div className="flex flex-wrap items-end gap-2">
+        <Field label="Day of the month">
+          {(id) => (
+            <Select id={id} className="w-28" value={day} onChange={(e) => setDay(Number(e.target.value))}>
+              {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Button variant="outline" onClick={() => downloadMonthlyReminder(today(), day)}>
+          <CalendarPlus aria-hidden /> Add to calendar (.ics)
+        </Button>
+      </div>
+    </Section>
+  );
+}
+
 export function SettingsPage() {
   const { settings } = useAppData();
   const { hash } = useLocation();
@@ -1152,6 +1181,7 @@ export function SettingsPage() {
       <AssumptionSets />
       <Categories />
       <Backup />
+      <Reminder />
       <DangerZone />
     </>
   );

@@ -104,6 +104,18 @@ export const GLOSSARY = {
     advanced: 'Seed',
     tooltip: () => 'Keeps the random sequence the same, so reruns and comparisons are fair.',
   },
+  coastFi: {
+    label: 'Coast FI',
+    advanced: 'Coast FI',
+    tooltip: () =>
+      'The amount that, left invested with no more saving, grows into the money needed by your target age. Past it, saving more only brings the date forward.',
+  },
+  bridgeFund: {
+    label: 'Bridge fund',
+    advanced: 'Bridge fund',
+    tooltip: () =>
+      'Extra money needed if you stop before pensions such as 勞保 start: it covers the years until they begin.',
+  },
   todaysMoney: {
     label: "Today's money",
     advanced: 'Real TWD',

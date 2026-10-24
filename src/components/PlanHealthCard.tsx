@@ -5,6 +5,7 @@ import { useAppData } from '@/app/data';
 import { usePlanHealth } from '@/app/planHealth';
 import { stopAge, stopDate } from '@/features/lab/model';
 import { Badge } from '@/components/ui/misc';
+import { Term } from '@/components/ui/term';
 import { Dots } from '@/features/lab/Dots';
 import { pct } from '@/lib/format';
 import { cn } from '@/lib/cn';
@@ -27,6 +28,15 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
   const date = stopDate(baselineInput, baseline, ctx.asOfDate);
   const headline =
     age !== undefined ? `Most likely age ${age} · ${date}` : `Not reached by ${baselineInput.horizonAge}`;
+  // FI date as a range (product review, Next phase): 8 in 10 futures reach FI between these ages.
+  const lo = summary?.fiAgeP10 !== undefined ? Math.round(summary.fiAgeP10) : undefined;
+  const hi = summary?.fiAgeP90 !== undefined ? Math.round(summary.fiAgeP90) : undefined;
+  const range =
+    baselineInput.retireAtAge === undefined && lo !== undefined && hi !== undefined && summary!.fiRate >= 0.9
+      ? lo === hi
+        ? `Reach your target at ${lo} in 8 of 10 futures`
+        : `Likely between age ${lo} and ${hi} (8 in 10 futures)`
+      : undefined;
   const badge = status ? (
     <Badge tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>
   ) : (
@@ -42,6 +52,11 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
           <span className="font-medium">
             {age !== undefined ? `Stop work most likely at ${age} (${date})` : headline}
           </span>
+          {lo !== undefined && hi !== undefined && lo !== hi && range && (
+            <span className="text-muted-foreground">
+              · range {lo}–{hi}
+            </span>
+          )}
           {summary && (
             <span className="text-muted-foreground">
               · money lasts to {baselineInput.horizonAge} in {chanceText(summary.successRate).toLowerCase()}{' '}
@@ -63,6 +78,7 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
       <div className={cn('mt-1 font-semibold tracking-tight', age !== undefined ? 'text-4xl' : 'text-3xl')}>
         {headline}
       </div>
+      {range && <div className="mt-1 text-sm text-muted-foreground">{range}</div>}
       {summary ? (
         <div className="mt-2 flex flex-col gap-1 text-sm">
           <p>{lastsSentence(summary.successRate, baselineInput.horizonAge, summary.depletionAgeP50)}</p>
@@ -71,7 +87,9 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
               filled={chanceDots(summary.successRate)}
               label={`${chanceText(summary.successRate)} simulated futures last`}
             />
-            Chance your money lasts: {pct(summary.successRate, 0)}
+            <span>
+              <Term k="chanceLasts">Chance your money lasts</Term>: {pct(summary.successRate, 0)}
+            </span>
           </div>
         </div>
       ) : (

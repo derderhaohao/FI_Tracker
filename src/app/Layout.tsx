@@ -7,6 +7,7 @@ import {
   Landmark,
   LayoutDashboard,
   MoreHorizontal,
+  RefreshCw,
   Settings as SettingsIcon,
   Table2,
   Target,
@@ -17,6 +18,7 @@ import { BackupBanner } from './BackupBanner';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/update', label: 'Monthly update', icon: RefreshCw },
   { to: '/accounts', label: 'Accounts', icon: Landmark },
   { to: '/snapshots', label: 'Snapshots', icon: Table2 },
   { to: '/cashflow', label: 'Cash flow', icon: ArrowLeftRight },
@@ -28,7 +30,8 @@ const NAV = [
 ] as const;
 
 /** Phone tabs (product review, issue 9): four destinations plus More, which lists the rest. */
-const PHONE_TABS = ['/', '/snapshots', '/cashflow', '/lab'];
+const PHONE_LABELS: Record<string, string> = { '/update': 'Update' };
+const PHONE_TABS = ['/', '/update', '/cashflow', '/lab'];
 
 function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -75,7 +78,7 @@ function MobileNav() {
             className={({ isActive }) => cn(item, isActive ? 'text-primary' : 'text-muted-foreground')}
           >
             <Icon className="size-5" aria-hidden />
-            <span className="whitespace-nowrap">{label}</span>
+            <span className="whitespace-nowrap">{PHONE_LABELS[to] ?? label}</span>
           </NavLink>
         ))}
         <button
