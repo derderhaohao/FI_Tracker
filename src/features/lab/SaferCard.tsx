@@ -14,12 +14,13 @@ import { saferVariants } from './levers';
 import { stopAge, type LabRow } from './model';
 import { shortMoney } from './templates';
 import { monteCarloWorker, signature } from './useMonteCarlo';
+import { t } from '@/i18n';
 
 const LEVERS: SolveLever[] = ['stopAge', 'fiSpending', 'partTime'];
 
 function points(delta: number): string {
   const p = Math.round(delta * 100);
-  return p === 0 ? 'no change' : `${p > 0 ? '+' : '−'}${Math.abs(p)} pts`;
+  return p === 0 ? t('no change') : t('{sign}{n} pts', { sign: p > 0 ? '+' : '−', n: Math.abs(p) });
 }
 
 /**
@@ -79,54 +80,78 @@ export function SaferCard({
     const named = (text: string) =>
       row.scenario ? `${row.scenario.name}: ${text}` : text.charAt(0).toUpperCase() + text.slice(1);
     if (r.lever === 'stopAge') {
-      if (!r.reachable) return { text: `Working until ${r.value} is not enough on its own.` };
-      if (r.value === stop) return { text: 'Already there at your current stop-work age.' };
+      if (!r.reachable)
+        return { text: t('Working until {value} is not enough on its own.', { value: r.value }) };
+      if (r.value === stop) return { text: t('Already there at your current stop-work age.') };
       return {
-        text: `Stop working at ${r.value}${stop !== undefined ? ` (${r.value! - stop} more year${r.value! - stop === 1 ? '' : 's'})` : ''}: ${pct(r.chance!, 0)}.`,
+        text: t('Stop working at {value}{v}: {pct}.', {
+          value: r.value,
+          v:
+            stop !== undefined
+              ? t(' ({v} more year{v2})', { v: r.value! - stop, v2: r.value! - stop === 1 ? '' : 's' })
+              : '',
+          pct: pct(r.chance!, 0),
+        }),
         overrides:
           row.input.retireAtAge === undefined
             ? { ...o, workExtraYears: (o.workExtraYears ?? 0) + (r.value! - stop!) }
             : { ...o, targetFiAge: r.value },
-        name: named(`stop at ${r.value}`),
+        name: named(t('stop at {value}', { value: r.value })),
       };
     }
     if (r.lever === 'fiSpending') {
-      if (!r.reachable) return { text: 'Even spending 60% less after you stop is not enough on its own.' };
+      if (!r.reachable) return { text: t('Even spending 60% less after you stop is not enough on its own.') };
       const cut = 1 - r.value! / row.input.fiSpending;
-      if (cut < 0.005) return { text: 'Already there at your current FI spending.' };
+      if (cut < 0.005) return { text: t('Already there at your current FI spending.') };
       return {
-        text: `Spend ${twd(r.value!)} a year after you stop (${Math.round(cut * 100)}% less): ${pct(r.chance!, 0)}.`,
+        text: t('Spend {twd} a year after you stop ({round}% less): {pct}.', {
+          twd: twd(r.value!),
+          round: Math.round(cut * 100),
+          pct: pct(r.chance!, 0),
+        }),
         overrides: {
           ...o,
           fiSpendingMinor: toMinor(r.value!),
           targetSpendingMinor: toMinor(Math.round(row.input.targetSpending ?? row.input.fiSpending)),
         },
-        name: named(`spend ${Math.round(cut * 100)}% less after stopping`),
+        name: named(t('spend {round}% less after stopping', { round: Math.round(cut * 100) })),
       };
     }
     const untilAge = Math.max(60, (stop ?? row.input.startAge) + 5);
-    if (!r.reachable) return { text: 'Part-time income alone, up to your full FI spending, is not enough.' };
-    if (r.value === 0) return { text: 'Already there without part-time income.' };
+    if (!r.reachable)
+      return { text: t('Part-time income alone, up to your full FI spending, is not enough.') };
+    if (r.value === 0) return { text: t('Already there without part-time income.') };
     return {
-      text: `Earn ${shortMoney(r.value! / 12)} a month part-time until ${untilAge}: ${pct(r.chance!, 0)}.`,
+      text: t('Earn {shortMoney} a month part-time until {untilAge}: {pct}.', {
+        shortMoney: shortMoney(r.value! / 12),
+        untilAge,
+        pct: pct(r.chance!, 0),
+      }),
       overrides: { ...o, baristaIncome: { annualMinor: toMinor(r.value!), untilAge, inTarget: false } },
-      name: named(`part-time ${shortMoney(r.value! / 12)} a month to ${untilAge}`),
+      name: named(
+        t('part-time {shortMoney} a month to {untilAge}', {
+          shortMoney: shortMoney(r.value! / 12),
+          untilAge,
+        }),
+      ),
     };
   };
 
   return (
-    <Card className="mt-4" aria-label="What would make it safer">
+    <Card className="mt-4" aria-label={t('What would make it safer')}>
       <CardHeader
-        title={`What would make “${row.name}” safer?`}
-        description="Each line changes one thing and reruns the same simulated futures. These are what-if results, not advice."
+        title={t('What would make “{name}” safer?', { name: row.name })}
+        description={t(
+          'Each line changes one thing and reruns the same simulated futures. These are what-if results, not advice.',
+        )}
       />
       <CardContent>
         <Table>
           <thead>
             <tr>
-              <th className="min-w-52">Change</th>
-              <th className="text-right">Chance your money lasts</th>
-              <th className="text-right">vs now</th>
+              <th className="min-w-52">{t('Change')}</th>
+              <th className="text-right">{t('Chance your money lasts')}</th>
+              <th className="text-right">{t('vs now')}</th>
               <th className="w-28" />
             </tr>
           </thead>
@@ -142,7 +167,7 @@ export function SaferCard({
                 </td>
                 <td className="text-right">
                   <Button size="sm" variant="ghost" onClick={() => void onSave(v.name, v.overrides)}>
-                    <Plus aria-hidden /> Save
+                    <Plus aria-hidden /> {t('Save')}
                   </Button>
                 </td>
               </tr>
@@ -152,9 +177,9 @@ export function SaferCard({
 
         <div className="mt-5 border-t pt-4">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-medium">What does it take to reach</span>
+            <span className="font-medium">{t('What does it take to reach')}</span>
             <Select
-              aria-label="Target chance"
+              aria-label={t('Target chance')}
               className="h-8 w-24"
               value={target}
               onChange={(e) => setTarget(Number(e.target.value))}
@@ -184,13 +209,15 @@ export function SaferCard({
                 }
               }}
             >
-              {solving ? 'Working it out…' : 'Find out'}
+              {solving ? t('Working it out…') : t('Find out')}
             </Button>
           </div>
           {solved && solved.key === solveKey && (
             <ul className="mt-3 flex flex-col gap-2 text-sm">
               <li className="text-muted-foreground">
-                To reach {Math.round(solved.target * 100)}%, any one of these on its own:
+                {t('To reach {round}%, any one of these on its own:', {
+                  round: Math.round(solved.target * 100),
+                })}
               </li>
               {solved.results.map((r) => {
                 const s = solveText(r);
@@ -202,7 +229,7 @@ export function SaferCard({
                     <span>{s.text}</span>
                     {s.overrides && s.name && (
                       <Button size="sm" variant="ghost" onClick={() => void onSave(s.name!, s.overrides!)}>
-                        <Plus aria-hidden /> Save as scenario
+                        <Plus aria-hidden /> {t('Save as scenario')}
                       </Button>
                     )}
                   </li>

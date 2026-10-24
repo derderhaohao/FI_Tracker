@@ -19,8 +19,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
 import { budgetVsActual, pct, twd, twdCompact } from '@/lib/format';
+import { t } from '@/i18n';
 
-const TIER_LABELS: Record<FiTier, string> = { lean: 'Lean', full: 'Full', fat: 'Fat' };
+const TIER_LABELS: Record<FiTier, string> = { lean: t('Lean'), full: t('Full'), fat: t('Fat') };
 
 function updateDestination(changes: Partial<ReturnType<typeof useAppData>['settings']['destination']>) {
   return db.settings
@@ -34,14 +35,14 @@ function BudgetRow({ c, actual }: { c: Category; actual: number }) {
       <td className="font-medium">{c.name}</td>
       <td>
         <Checkbox
-          label="Essential"
+          label={t('Essential')}
           checked={c.essential}
           onChange={(e) => void patch(db.categories, c.id, { essential: e.target.checked })}
         />
       </td>
       <td className="w-44">
         <MoneyInput
-          aria-label={`FI budget for ${c.name}`}
+          aria-label={t('FI budget for {name}', { name: c.name })}
           value={c.fiAnnualMinor}
           currency="TWD"
           onCommit={(v) => void patch(db.categories, c.id, { fiAnnualMinor: v })}
@@ -73,11 +74,11 @@ function IncomeStreams() {
     <Table>
       <thead>
         <tr>
-          <th>Stream</th>
-          <th className="text-right">Start age</th>
-          <th className="text-right">End age</th>
-          <th className="text-right">Per year (today's TWD)</th>
-          <th>Inflation-linked</th>
+          <th>{t('Stream')}</th>
+          <th className="text-right">{t('Start age')}</th>
+          <th className="text-right">{t('End age')}</th>
+          <th className="text-right">{t("Per year (today's TWD)")}</th>
+          <th>{t('Inflation-linked')}</th>
           <th />
         </tr>
       </thead>
@@ -87,7 +88,7 @@ function IncomeStreams() {
             <td className="font-medium">{s.name}</td>
             <td className="w-24">
               <NumberInput
-                aria-label="Start age"
+                aria-label={t('Start age')}
                 value={s.startAge}
                 min={0}
                 max={120}
@@ -97,7 +98,7 @@ function IncomeStreams() {
             </td>
             <td className="w-24">
               <NumberInput
-                aria-label="End age"
+                aria-label={t('End age')}
                 value={s.endAge}
                 min={0}
                 max={120}
@@ -107,7 +108,7 @@ function IncomeStreams() {
             </td>
             <td className="w-44">
               <MoneyInput
-                aria-label="Annual amount"
+                aria-label={t('Annual amount')}
                 value={s.annualMinor}
                 currency="TWD"
                 onCommit={(v) => void patch(db.incomeStreams, s.id, { annualMinor: v ?? 0 })}
@@ -116,7 +117,7 @@ function IncomeStreams() {
             <td>
               <input
                 type="checkbox"
-                aria-label="Inflation-linked"
+                aria-label={t('Inflation-linked')}
                 checked={s.inflationLinked}
                 onChange={(e) => void patch(db.incomeStreams, s.id, { inflationLinked: e.target.checked })}
               />
@@ -125,7 +126,7 @@ function IncomeStreams() {
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label={`Delete ${s.name}`}
+                aria-label={t('Delete {name}', { name: s.name })}
                 onClick={() => void db.incomeStreams.delete(s.id)}
               >
                 <Trash2 />
@@ -136,16 +137,16 @@ function IncomeStreams() {
         <tr>
           <td>
             <Input
-              aria-label="Stream name"
+              aria-label={t('Stream name')}
               className="h-8"
-              placeholder="Rental, part-time…"
+              placeholder={t('Rental, part-time…')}
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             />
           </td>
           <td>
             <Input
-              aria-label="New start age"
+              aria-label={t('New start age')}
               className="h-8 text-right"
               inputMode="numeric"
               value={draft.startAge}
@@ -154,17 +155,17 @@ function IncomeStreams() {
           </td>
           <td>
             <Input
-              aria-label="New end age"
+              aria-label={t('New end age')}
               className="h-8 text-right"
               inputMode="numeric"
-              placeholder="none"
+              placeholder={t('none')}
               value={draft.endAge}
               onChange={(e) => setDraft({ ...draft, endAge: e.target.value })}
             />
           </td>
           <td>
             <Input
-              aria-label="New annual amount"
+              aria-label={t('New annual amount')}
               className="h-8 text-right"
               inputMode="decimal"
               value={draft.annual}
@@ -174,7 +175,7 @@ function IncomeStreams() {
           <td>
             <input
               type="checkbox"
-              aria-label="New stream inflation-linked"
+              aria-label={t('New stream inflation-linked')}
               checked={draft.inflationLinked}
               onChange={(e) => setDraft({ ...draft, inflationLinked: e.target.checked })}
             />
@@ -196,7 +197,7 @@ function IncomeStreams() {
                 setDraft({ name: '', startAge: '', endAge: '', annual: '', inflationLinked: true });
               }}
             >
-              <Plus aria-hidden /> Add
+              <Plus aria-hidden /> {t('Add')}
             </Button>
           </td>
         </tr>
@@ -211,34 +212,38 @@ function GoalHistoryCard() {
   return (
     <Card className="lg:col-span-3">
       <CardHeader
-        title="Goal history"
-        description="Recorded automatically whenever the FI budget, tier, SWR, guaranteed income or target age changes (one entry per day)."
+        title={t('Goal history')}
+        description={t(
+          'Recorded automatically whenever the FI budget, tier, SWR, guaranteed income or target age changes (one entry per day).',
+        )}
       />
       <CardContent>
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No history yet. It starts once an FI budget is set.</p>
+          <p className="text-sm text-muted-foreground">
+            {t('No history yet. It starts once an FI budget is set.')}
+          </p>
         ) : (
           <>
             {rows.length > 1 && (
               <LineChart
-                ariaLabel="FI number over time"
+                ariaLabel={t('FI number over time')}
                 data={rows.map((r) => ({ date: r.date, fiNumber: fromMinor(r.fiNumberMinor) }))}
                 xKey="date"
-                series={[{ key: 'fiNumber', label: 'FI number', slot: 0 }]}
+                series={[{ key: 'fiNumber', label: t('FI number'), slot: 0 }]}
                 height={200}
               />
             )}
             <Table className="mt-3">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Tier</th>
-                  <th className="text-right">FI spending / yr</th>
-                  <th className="text-right">Guaranteed / yr</th>
-                  <th className="text-right">SWR</th>
-                  <th className="text-right">Target age</th>
-                  <th className="text-right">FI number</th>
-                  <th className="text-right">Change</th>
+                  <th>{t('Date')}</th>
+                  <th>{t('Tier')}</th>
+                  <th className="text-right">{t('FI spending / yr')}</th>
+                  <th className="text-right">{t('Guaranteed / yr')}</th>
+                  <th className="text-right">{t('SWR')}</th>
+                  <th className="text-right">{t('Target age')}</th>
+                  <th className="text-right">{t('FI number')}</th>
+                  <th className="text-right">{t('Change')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -257,7 +262,9 @@ function GoalHistoryCard() {
                         <td className="text-right">{r.targetFiAge ?? '—'}</td>
                         <td className="text-right font-medium">{twdCompact(fromMinor(r.fiNumberMinor))}</td>
                         <td className="text-right text-muted-foreground">
-                          {change === undefined ? 'first' : `${change >= 0 ? '+' : ''}${twdCompact(change)}`}
+                          {change === undefined
+                            ? t('first')
+                            : `${change >= 0 ? '+' : ''}${twdCompact(change)}`}
                         </td>
                       </tr>
                     );
@@ -321,43 +328,55 @@ export function GoalPage() {
   return (
     <>
       <PageHeader
-        title="Goal"
-        description="What FI means for you: the FI-phase budget by category, guaranteed income, and the safe withdrawal rate."
+        title={t('Goal')}
+        description={t(
+          'What FI means for you: the FI-phase budget by category, guaranteed income, and the safe withdrawal rate.',
+        )}
         actions={<AssumptionBadge set={activeAssumptions} />}
       />
       <PlanHealthCard
         compact
         note={
           G > 0
-            ? `The FI numbers below count ${twdCompact(G)} a year of guaranteed income, as the plan receives it if you stop at ${data.planStopAge}.`
+            ? t(
+                'The FI numbers below count {G} a year of guaranteed income, as the plan receives it if you stop at {planStopAge}.',
+                { G: twdCompact(G), planStopAge: data.planStopAge },
+              )
             : undefined
         }
       />
       {ctx.fiSpendingFromT12 && (
         <Notice tone="warning" className="mb-4">
-          No FI budget yet, so FI spending uses your trailing-12-month spending ({twd(ctx.t12.annualExpense)}
-          ). Fill in the annual FI-phase amount per category below.
+          {t(
+            'No FI budget yet, so FI spending uses your trailing-12-month spending ({annualExpense}). Fill in the annual FI-phase amount per category below.',
+            { annualExpense: twd(ctx.t12.annualExpense) },
+          )}
         </Notice>
       )}
 
       <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {(['lean', 'full', 'fat'] as const).map((t) => (
+        {(['lean', 'full', 'fat'] as const).map((tier) => (
           <Stat
-            key={t}
-            className={d.fiTier === t ? 'border-primary' : undefined}
+            key={tier}
+            className={d.fiTier === tier ? 'border-primary' : undefined}
             label={
               <span className="flex items-center gap-2">
-                {TIER_LABELS[t]} FI {d.fiTier === t && <Badge tone="primary">Plan</Badge>}
+                {t('{TIER_LABELS} FI', { TIER_LABELS: TIER_LABELS[tier] })}{' '}
+                {d.fiTier === tier && <Badge tone="primary">{t('Plan')}</Badge>}
               </span>
             }
             value={twdCompact(
               fiNumber(
-                ctx.fiSpendingFromT12 ? ctx.t12.annualExpense + tiers.postEmployment : tiers[t],
+                ctx.fiSpendingFromT12 ? ctx.t12.annualExpense + tiers.postEmployment : tiers[tier],
                 G,
                 swr,
               ),
             )}
-            sub={`Spending ${twd(ctx.fiSpendingFromT12 ? ctx.t12.annualExpense + tiers.postEmployment : tiers[t])}/yr${G > 0 ? ` − guaranteed ${twdCompact(G)}` : ''} ÷ SWR ${pct(swr, 2)}`}
+            sub={t('Spending {twd}/yr{v} ÷ SWR {swr}', {
+              twd: twd(ctx.fiSpendingFromT12 ? ctx.t12.annualExpense + tiers.postEmployment : tiers[tier]),
+              v: G > 0 ? t(' − guaranteed {G}', { G: twdCompact(G) }) : '',
+              swr: pct(swr, 2),
+            })}
           />
         ))}
       </div>
@@ -365,18 +384,20 @@ export function GoalPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader
-            title="FI budget"
-            description="Annual spending once FI, per category. Trailing-12-month actuals are the reality check."
+            title={t('FI budget')}
+            description={t(
+              'Annual spending once FI, per category. Trailing-12-month actuals are the reality check.',
+            )}
           />
           <CardContent>
             <Table>
               <thead>
                 <tr>
-                  <th>Category</th>
-                  <th>Tier</th>
-                  <th>FI budget / year</th>
-                  <th className="text-right">Last 12 months</th>
-                  <th className="text-right">Budget vs now</th>
+                  <th>{t('Category')}</th>
+                  <th>{t('Tier')}</th>
+                  <th>{t('FI budget / year')}</th>
+                  <th className="text-right">{t('Last 12 months')}</th>
+                  <th className="text-right">{t('Budget vs now')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -384,7 +405,7 @@ export function GoalPage() {
                   <BudgetRow key={c.id} c={c} actual={ctx.t12.byCategory[c.id] ?? 0} />
                 ))}
                 <tr className="font-medium">
-                  <td>Total</td>
+                  <td>{t('Total')}</td>
                   <td />
                   <td className="text-right">{twd(tiers.full - tiers.postEmployment)}</td>
                   <td className="text-right">{twd(ctx.t12.expense)}</td>
@@ -393,25 +414,25 @@ export function GoalPage() {
               </tbody>
             </Table>
             <p className="mt-2 text-xs text-subtle">
-              “Budget vs now”: how much more or less the FI budget is than you spent in the last 12 months.
-              Lean counts essential categories only. Fat multiplies Full by the fat multiplier. Trailing
-              actuals cover {ctx.t12.monthsWithData} month
-              {ctx.t12.monthsWithData === 1 ? '' : 's'}; add categories in Settings.
+              {t(
+                '“Budget vs now”: how much more or less the FI budget is than you spent in the last 12 months. Lean counts essential categories only. Fat multiplies Full by the fat multiplier. Trailing actuals cover {monthsWithData} month{v}; add categories in Settings.',
+                { monthsWithData: ctx.t12.monthsWithData, v: ctx.t12.monthsWithData === 1 ? '' : 's' },
+              )}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader title="Settings" />
+          <CardHeader title={t('Settings')} />
           <CardContent className="flex flex-col gap-4">
-            <Field label="Plan on tier">
+            <Field label={t('Plan on tier')}>
               {() => (
                 <Segmented
-                  label="FI tier"
+                  label={t('FI tier')}
                   value={d.fiTier}
-                  options={(['lean', 'full', 'fat'] as const).map((t) => ({
-                    value: t,
-                    label: TIER_LABELS[t],
+                  options={(['lean', 'full', 'fat'] as const).map((tier) => ({
+                    value: tier,
+                    label: TIER_LABELS[tier],
                   }))}
                   onChange={(v) => void updateDestination({ fiTier: v })}
                 />
@@ -419,7 +440,7 @@ export function GoalPage() {
             </Field>
             <Field
               label={<Term k="drawRate" advanced />}
-              hint="Default 4%; 3.25–3.5% is more conservative for 40+ years"
+              hint={t('Default 4%; 3.25–3.5% is more conservative for 40+ years')}
             >
               {(id) => (
                 <PercentInput
@@ -432,7 +453,7 @@ export function GoalPage() {
                 />
               )}
             </Field>
-            <Field label="Fat multiplier" hint="Fat = Full × this">
+            <Field label={t('Fat multiplier')} hint={t('Fat = Full × this')}>
               {(id) => (
                 <Input
                   id={id}
@@ -448,14 +469,14 @@ export function GoalPage() {
                 />
               )}
             </Field>
-            <Field label="Target FI age" hint="Optional; compares it with your plan below">
+            <Field label={t('Target FI age')} hint={t('Optional; compares it with your plan below')}>
               {(id) => (
                 <NumberInput
                   id={id}
                   value={d.targetFiAge}
                   min={startAge}
                   max={settings.horizonAge}
-                  placeholder="none"
+                  placeholder={t('none')}
                   onCommit={(v) => void updateDestination({ targetFiAge: v })}
                 />
               )}
@@ -464,9 +485,9 @@ export function GoalPage() {
         </Card>
 
         <Card>
-          <CardHeader title="After leaving work" description="Added to every tier's FI spending." />
+          <CardHeader title={t('After leaving work')} description={t("Added to every tier's FI spending.")} />
           <CardContent className="flex flex-col gap-3">
-            <Field label="Self-paid NHI premium / month">
+            <Field label={t('Self-paid NHI premium / month')}>
               {(id) => (
                 <MoneyInput
                   id={id}
@@ -476,7 +497,7 @@ export function GoalPage() {
                 />
               )}
             </Field>
-            <Field label="Private health insurance / year">
+            <Field label={t('Private health insurance / year')}>
               {(id) => (
                 <MoneyInput
                   id={id}
@@ -486,7 +507,7 @@ export function GoalPage() {
                 />
               )}
             </Field>
-            <Field label="Healthcare reserve / year">
+            <Field label={t('Healthcare reserve / year')}>
               {(id) => (
                 <MoneyInput
                   id={id}
@@ -496,28 +517,32 @@ export function GoalPage() {
                 />
               )}
             </Field>
-            <p className="text-sm text-muted-foreground">Total {twd(tiers.postEmployment)} a year.</p>
+            <p className="text-sm text-muted-foreground">
+              {t('Total {postEmployment} a year.', { postEmployment: twd(tiers.postEmployment) })}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-2">
           <CardHeader
-            title="Guaranteed income"
-            description="Streams that reduce what the portfolio must cover once you stop working. 勞退 is not listed here: its balance unlocks into the portfolio at its access age."
+            title={t('Guaranteed income')}
+            description={t(
+              'Streams that reduce what the portfolio must cover once you stop working. 勞退 is not listed here: its balance unlocks into the portfolio at its access age.',
+            )}
           />
           <CardContent>
             <IncomeStreams />
             <p className="mt-3 text-sm text-muted-foreground">
               {li.enabled ? (
                 <>
-                  Estimated 勞保 annuity from age {li.claimAge}: <strong>{twd(laborNow)}</strong> a year
-                  (today's TWD), from Taiwan settings.{' '}
+                  {t('Estimated 勞保 annuity from age {claimAge}:', { claimAge: li.claimAge })}{' '}
+                  <strong>{twd(laborNow)}</strong> {t("a year (today's TWD), from Taiwan settings.")}{' '}
                 </>
               ) : (
-                <>The 勞保 annuity is off. </>
+                <>{t('The 勞保 annuity is off.')} </>
               )}
               <Link to="/settings#taiwan" className="text-primary hover:underline">
-                Taiwan settings
+                {t('Taiwan settings')}
               </Link>
             </p>
           </CardContent>
@@ -526,46 +551,58 @@ export function GoalPage() {
         {targetAge !== undefined && (
           <Card className="lg:col-span-3">
             <CardHeader
-              title={`Your target age: ${targetAge}`}
-              description="From the same year-by-year projection as the Dashboard, so the answers match."
+              title={t('Your target age: {targetAge}', { targetAge })}
+              description={t('From the same year-by-year projection as the Dashboard, so the answers match.')}
             />
             <CardContent className="text-sm">
               {planAge === undefined ? (
                 <p>
-                  On the typical path your investments do not reach the money needed before{' '}
-                  {settings.horizonAge}, so {targetAge} is out of reach at today's savings.
+                  {t(
+                    "On the typical path your investments do not reach the money needed before {horizonAge}, so {targetAge} is out of reach at today's savings.",
+                    { horizonAge: settings.horizonAge, targetAge },
+                  )}
                 </p>
               ) : planAge <= targetAge ? (
                 <p>
-                  On the typical path you could stop at {planAge}
+                  {t('On the typical path you could stop at {planAge}', { planAge })}
                   {planAge < targetAge
-                    ? `, ${targetAge - planAge} year${targetAge - planAge === 1 ? '' : 's'} before your target`
-                    : ', right on your target'}
+                    ? t(', {v} year{v2} before your target', {
+                        v: targetAge - planAge,
+                        v2: targetAge - planAge === 1 ? '' : 's',
+                      })
+                    : t(', right on your target')}
                   .
                 </p>
               ) : (
                 <p>
-                  On the typical path you could stop at {planAge}, {planAge - targetAge} year
-                  {planAge - targetAge === 1 ? '' : 's'} after your target. To see what closes the gap, try
-                  “Retire at {targetAge}” in the{' '}
+                  {t(
+                    'On the typical path you could stop at {planAge}, {v} year{v2} after your target. To see what closes the gap, try “Retire at {targetAge}” in the',
+                    { planAge, v: planAge - targetAge, v2: planAge - targetAge === 1 ? '' : 's', targetAge },
+                  )}{' '}
                   <Link to="/lab" className="text-primary hover:underline">
-                    Strategy Lab
+                    {t('Strategy Lab')}
                   </Link>
-                  : it shows the chance your money lasts and which changes help most.
+                  {t(': it shows the chance your money lasts and which changes help most.')}
                 </p>
               )}
               {targetMoney !== undefined && (
                 <p className="mt-1 text-muted-foreground">
-                  Money needed to stop at {targetAge}: {twdCompact(targetMoney)} in usable investments (FI
-                  number plus a <Term k="bridgeFund">bridge fund</Term> until pensions start).
+                  {t(
+                    'Money needed to stop at {targetAge}: {targetMoney} in usable investments (FI number plus a',
+                    { targetAge, targetMoney: twdCompact(targetMoney) },
+                  )}{' '}
+                  <Term k="bridgeFund">{t('bridge fund')}</Term> {t('until pensions start).')}
                 </p>
               )}
               {coast !== undefined && (
                 <p className="mt-1 text-muted-foreground">
                   <Term k="coastFi" />: {twdCompact(coast)}.{' '}
                   {ctx.netWorth.investable >= coast
-                    ? `You have passed it: even with no more saving, your usable investments would typically grow to the money needed by ${targetAge}.`
-                    : `You are ${pct(ctx.netWorth.investable / coast, 0)} of the way there.`}
+                    ? t(
+                        'You have passed it: even with no more saving, your usable investments would typically grow to the money needed by {targetAge}.',
+                        { targetAge },
+                      )
+                    : t('You are {pct} of the way there.', { pct: pct(ctx.netWorth.investable / coast, 0) })}
                 </p>
               )}
             </CardContent>
@@ -575,7 +612,9 @@ export function GoalPage() {
         <GoalHistoryCard />
       </div>
       <p className="mt-4 text-xs text-subtle">
-        Annual amounts are in today's TWD. Streams that are not inflation-linked lose real value over time.
+        {t(
+          "Annual amounts are in today's TWD. Streams that are not inflation-linked lose real value over time.",
+        )}
       </p>
     </>
   );

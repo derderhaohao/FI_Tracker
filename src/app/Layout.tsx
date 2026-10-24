@@ -15,22 +15,24 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { BackupBanner } from './BackupBanner';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { t } from '@/i18n';
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/update', label: 'Monthly update', icon: RefreshCw },
-  { to: '/accounts', label: 'Accounts', icon: Landmark },
-  { to: '/snapshots', label: 'Snapshots', icon: Table2 },
-  { to: '/cashflow', label: 'Cash flow', icon: ArrowLeftRight },
-  { to: '/goal', label: 'Goal', icon: Target },
-  { to: '/projection', label: 'Projection', icon: TrendingUp },
-  { to: '/lab', label: 'Strategy Lab', icon: FlaskConical },
-  { to: '/reviews', label: 'Reviews', icon: ClipboardCheck },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon },
+  { to: '/', label: t('Dashboard'), icon: LayoutDashboard },
+  { to: '/update', label: t('Monthly update'), icon: RefreshCw },
+  { to: '/accounts', label: t('Accounts'), icon: Landmark },
+  { to: '/snapshots', label: t('Snapshots'), icon: Table2 },
+  { to: '/cashflow', label: t('Cash flow'), icon: ArrowLeftRight },
+  { to: '/goal', label: t('Goal'), icon: Target },
+  { to: '/projection', label: t('Projection'), icon: TrendingUp },
+  { to: '/lab', label: t('Strategy Lab'), icon: FlaskConical },
+  { to: '/reviews', label: t('Reviews'), icon: ClipboardCheck },
+  { to: '/settings', label: t('Settings'), icon: SettingsIcon },
 ] as const;
 
 /** Phone tabs (product review, issue 9): four destinations plus More, which lists the rest. */
-const PHONE_LABELS: Record<string, string> = { '/update': 'Update' };
+const PHONE_LABELS: Record<string, string> = { '/update': t('Update') };
 const PHONE_TABS = ['/', '/update', '/cashflow', '/lab'];
 
 function MobileNav() {
@@ -45,7 +47,7 @@ function MobileNav() {
       {open && (
         <div className="fixed inset-0 z-20 md:hidden" onClick={() => setOpen(false)}>
           <nav
-            aria-label="More pages"
+            aria-label={t('More pages')}
             className="absolute inset-x-0 bottom-14 rounded-t-lg border-t bg-surface p-2 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
@@ -65,10 +67,14 @@ function MobileNav() {
                 {label}
               </NavLink>
             ))}
+            <LanguageSwitch className="border-t px-3 pt-3 pb-1" />
           </nav>
         </div>
       )}
-      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-surface md:hidden">
+      <nav
+        aria-label={t('Main')}
+        className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-surface md:hidden"
+      >
         {tabs.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -84,12 +90,12 @@ function MobileNav() {
         <button
           type="button"
           aria-expanded={open}
-          aria-label="More pages"
+          aria-label={t('More pages')}
           className={cn(item, moreActive || open ? 'text-primary' : 'text-muted-foreground')}
           onClick={() => setOpen((o) => !o)}
         >
           <MoreHorizontal className="size-5" aria-hidden />
-          <span>More</span>
+          <span>{t('More')}</span>
         </button>
       </nav>
     </>
@@ -102,9 +108,9 @@ export function Layout() {
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r bg-surface md:flex">
         <div className="flex items-center gap-2 px-4 py-4">
           <img src="./favicon.svg" alt="" className="size-6" />
-          <span className="font-semibold">FI Tracker</span>
+          <span className="font-semibold">{t('FI Tracker')}</span>
         </div>
-        <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 px-2">
+        <nav aria-label={t('Main')} className="flex flex-1 flex-col gap-0.5 px-2">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -124,7 +130,8 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
-        <p className="px-4 py-3 text-xs text-subtle">Data stays in this browser.</p>
+        <LanguageSwitch className="px-4 pt-3" />
+        <p className="px-4 py-3 text-xs text-subtle">{t('Data stays in this browser.')}</p>
       </aside>
       <div className="min-w-0 flex-1 pb-20 md:pb-0">
         <BackupBanner />

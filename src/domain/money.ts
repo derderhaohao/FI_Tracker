@@ -1,3 +1,4 @@
+import { getLang } from '@/i18n';
 /** Money helpers. Stored amounts are integer minor units (×100); projections use floats in major units. */
 
 export const MINOR_PER_MAJOR = 100;
@@ -43,11 +44,18 @@ export function formatMoney(major: number, currency = 'TWD', options: FormatOpti
   const sign = major < 0 ? '-' : '';
   const abs = Math.abs(major);
   if (options.compact) {
-    const units: [number, string][] = [
-      [1e9, 'B'],
-      [1e6, 'M'],
-      [1e3, 'K'],
-    ];
+    // Taiwan counts large amounts in 萬 (10^4) and 億 (10^8).
+    const units: [number, string][] =
+      getLang() === 'zh-TW'
+        ? [
+            [1e8, '億'],
+            [1e4, '萬'],
+          ]
+        : [
+            [1e9, 'B'],
+            [1e6, 'M'],
+            [1e3, 'K'],
+          ];
     for (const [size, suffix] of units) {
       if (abs >= size) {
         const scaled = abs / size;

@@ -15,6 +15,7 @@ import { Input, Select } from '@/components/ui/input';
 import { Badge, EmptyState, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
 import { TransactionImport } from '@/features/import/CsvImport';
 import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { t } from '@/i18n';
 
 const VISIBLE_MONTHS = 6;
 
@@ -86,42 +87,47 @@ function Entries({ month, categories, mode }: { month: string; categories: Categ
       <CardHeader
         title={
           mode === 'transactions'
-            ? `Transactions · ${monthLabel(month)}`
-            : `Other entries · ${monthLabel(month)}`
+            ? t('Transactions · {month}', { month: monthLabel(month) })
+            : t('Other entries · {month}', { month: monthLabel(month) })
         }
         description={
           mode === 'transactions'
-            ? `${rows.length} entries, net ${twd(total)}. Tag year-end bonuses and large one-off costs as lump sums so they do not distort trends.`
-            : 'Lump sums, foreign-currency amounts and imported transactions. Tag year-end bonuses and large one-off costs as lump sums so they do not distort monthly trends.'
+            ? t(
+                '{length} entries, net {total}. Tag year-end bonuses and large one-off costs as lump sums so they do not distort trends.',
+                { length: rows.length, total: twd(total) },
+              )
+            : t(
+                'Lump sums, foreign-currency amounts and imported transactions. Tag year-end bonuses and large one-off costs as lump sums so they do not distort monthly trends.',
+              )
         }
       />
       <CardContent>
         <Table>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Category</th>
-              <th>Description</th>
-              <th className="text-right">Amount</th>
-              <th className="text-right">TWD</th>
-              <th>Tag</th>
+              <th>{t('Date')}</th>
+              <th>{t('Category')}</th>
+              <th>{t('Description')}</th>
+              <th className="text-right">{t('Amount')}</th>
+              <th className="text-right">{t('TWD')}</th>
+              <th>{t('Tag')}</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {rows.map((f) => (
               <tr key={f.id}>
-                <td className="whitespace-nowrap text-muted-foreground">{f.date ?? 'month'}</td>
+                <td className="whitespace-nowrap text-muted-foreground">{f.date ?? t('month')}</td>
                 <td>
                   <Select
-                    aria-label="Category"
+                    aria-label={t('Category')}
                     className="h-8 min-w-36"
                     value={f.categoryId}
                     onChange={(e) => void patch(db.cashFlows, f.id, { categoryId: e.target.value })}
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} ({c.kind})
+                        {c.name} ({c.kind === 'income' ? t('income') : t('expense')})
                       </option>
                     ))}
                   </Select>
@@ -137,16 +143,20 @@ function Entries({ month, categories, mode }: { month: string; categories: Categ
                 <td>
                   <button
                     onClick={() => void patch(db.cashFlows, f.id, { lumpSum: !f.lumpSum })}
-                    aria-label="Toggle lump sum"
+                    aria-label={t('Toggle lump sum')}
                   >
-                    {f.lumpSum ? <Badge tone="primary">Lump sum</Badge> : <Badge>Regular</Badge>}
+                    {f.lumpSum ? (
+                      <Badge tone="primary">{t('Lump sum')}</Badge>
+                    ) : (
+                      <Badge>{t('Regular')}</Badge>
+                    )}
                   </button>
                 </td>
                 <td className="text-right">
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label="Delete entry"
+                    aria-label={t('Delete entry')}
                     onClick={() => void db.cashFlows.delete(f.id)}
                   >
                     <Trash2 />
@@ -157,7 +167,7 @@ function Entries({ month, categories, mode }: { month: string; categories: Categ
             <tr>
               <td>
                 <Input
-                  aria-label="Date"
+                  aria-label={t('Date')}
                   type="date"
                   className="h-8 w-36"
                   value={draft.date}
@@ -168,38 +178,38 @@ function Entries({ month, categories, mode }: { month: string; categories: Categ
               </td>
               <td>
                 <Select
-                  aria-label="New entry category"
+                  aria-label={t('New entry category')}
                   className="h-8"
                   value={draft.categoryId}
                   onChange={(e) => setDraft({ ...draft, categoryId: e.target.value })}
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.kind})
+                      {c.name} ({c.kind === 'income' ? t('income') : t('expense')})
                     </option>
                   ))}
                 </Select>
               </td>
               <td>
                 <Input
-                  aria-label="Description"
+                  aria-label={t('Description')}
                   className="h-8"
                   value={draft.note}
                   onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-                  placeholder={mode === 'transactions' ? 'Supermarket' : 'Year-end bonus'}
+                  placeholder={mode === 'transactions' ? t('Supermarket') : t('Year-end bonus')}
                 />
               </td>
               <td>
                 <div className="flex gap-1">
                   <Input
-                    aria-label="Currency"
+                    aria-label={t('Currency')}
                     className="h-8 w-16"
                     maxLength={3}
                     value={draft.currency}
                     onChange={(e) => setDraft({ ...draft, currency: e.target.value.toUpperCase() })}
                   />
                   <Input
-                    aria-label="Amount"
+                    aria-label={t('Amount')}
                     className="h-8 text-right"
                     inputMode="decimal"
                     value={draft.amount}
@@ -215,7 +225,7 @@ function Entries({ month, categories, mode }: { month: string; categories: Categ
                     checked={draft.lumpSum}
                     onChange={(e) => setDraft({ ...draft, lumpSum: e.target.checked })}
                   />{' '}
-                  Lump sum
+                  {t('Lump sum')}
                 </label>
               </td>
               <td className="text-right">
@@ -243,14 +253,14 @@ function Entries({ month, categories, mode }: { month: string; categories: Categ
                     setDraft({ ...draft, amount: '', note: '' });
                   }}
                 >
-                  <Plus aria-hidden /> Add
+                  <Plus aria-hidden /> {t('Add')}
                 </Button>
               </td>
             </tr>
           </tbody>
         </Table>
         {mode === 'monthly' && (
-          <p className="mt-2 text-xs text-subtle">Leave the date empty for a monthly total.</p>
+          <p className="mt-2 text-xs text-subtle">{t('Leave the date empty for a monthly total.')}</p>
         )}
       </CardContent>
     </Card>
@@ -302,8 +312,8 @@ export function CashFlowPage() {
   if (categories.length === 0) {
     return (
       <>
-        <PageHeader title="Cash flow" />
-        <EmptyState title="No categories" to="/settings#categories" action="Add categories" />
+        <PageHeader title={t('Cash flow')} />
+        <EmptyState title={t('No categories')} to="/settings#categories" action={t('Add categories')} />
       </>
     );
   }
@@ -323,7 +333,7 @@ export function CashFlowPage() {
           <td className="sticky left-0 z-10 max-w-32 bg-surface sm:max-w-none sm:min-w-44">
             {c.name}
             {c.kind === 'expense' && c.essential && (
-              <span className="ml-1 text-xs text-subtle">essential</span>
+              <span className="ml-1 text-xs text-subtle">{t('essential')}</span>
             )}
           </td>
           {shown.map((m) => {
@@ -336,7 +346,7 @@ export function CashFlowPage() {
                   <button
                     className="block w-full py-1 text-right hover:text-primary"
                     onClick={() => setSelected(m)}
-                    aria-label={`${c.name} ${m}: show transactions`}
+                    aria-label={t('{name} {m}: show transactions', { name: c.name, m })}
                   >
                     {extra ? twd(extra) : <span className="text-subtle">—</span>}
                   </button>
@@ -351,7 +361,7 @@ export function CashFlowPage() {
                 )}
                 {mode === 'monthly' && Math.abs(others) > 0.5 && (
                   <div className="mt-0.5 text-right text-[11px] text-subtle">
-                    + {twdCompact(others)} other
+                    {t('+ {others} other', { others: twdCompact(others) })}
                   </div>
                 )}
               </td>
@@ -365,32 +375,36 @@ export function CashFlowPage() {
   return (
     <>
       <PageHeader
-        title="Cash flow"
+        title={t('Cash flow')}
         description={
           mode === 'monthly'
-            ? 'Monthly totals per category (net income after tax and deductions). Lump sums, foreign-currency and imported entries go below the grid.'
-            : 'Individual dated transactions, entered or imported from CSV. The grid sums them per category and month.'
+            ? t(
+                'Monthly totals per category (net income after tax and deductions). Lump sums, foreign-currency and imported entries go below the grid.',
+              )
+            : t(
+                'Individual dated transactions, entered or imported from CSV. The grid sums them per category and month.',
+              )
         }
         actions={
           <>
             <Segmented
-              label="Cash-flow mode"
+              label={t('Cash-flow mode')}
               value={mode}
               onChange={(m) => void patch(db.settings, 'singleton', { cashFlowMode: m })}
               options={[
-                { value: 'monthly', label: 'Monthly totals' },
-                { value: 'transactions', label: 'Transactions' },
+                { value: 'monthly', label: t('Monthly totals') },
+                { value: 'transactions', label: t('Transactions') },
               ]}
             />
             <Button variant="outline" onClick={() => setImporting(true)}>
-              <Upload aria-hidden /> Import CSV
+              <Upload aria-hidden /> {t('Import CSV')}
             </Button>
             <Button variant="outline" onClick={() => void addMonth(false)}>
-              <Plus aria-hidden /> Add month
+              <Plus aria-hidden /> {t('Add month')}
             </Button>
             {mode === 'monthly' && (
               <Button onClick={() => void addMonth(true)} disabled={months.length === 0}>
-                <Copy aria-hidden /> Copy last month
+                <Copy aria-hidden /> {t('Copy last month')}
               </Button>
             )}
           </>
@@ -399,32 +413,41 @@ export function CashFlowPage() {
       {importing && <TransactionImport onClose={() => setImporting(false)} />}
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat
-          label="Trailing 12 months income"
+          label={t('Trailing 12 months income')}
           value={twdCompact(t12.income)}
-          sub={`${t12.monthsWithData} month${t12.monthsWithData === 1 ? '' : 's'} of data`}
+          sub={t('{monthsWithData} month{v} of data', {
+            monthsWithData: t12.monthsWithData,
+            v: t12.monthsWithData === 1 ? '' : 's',
+          })}
         />
         <Stat
-          label="Trailing 12 months spending"
+          label={t('Trailing 12 months spending')}
           value={twdCompact(t12.expense)}
-          sub={`Annualised ${twdCompact(t12.annualExpense)} — the reality check for your FI budget`}
+          sub={t('Annualised {annualExpense} — the reality check for your FI budget', {
+            annualExpense: twdCompact(t12.annualExpense),
+          })}
         />
         <Stat
-          label="Trailing 12 months savings rate"
+          label={t('Trailing 12 months savings rate')}
           value={Number.isFinite(t12.savingsRate) ? pct(t12.savingsRate) : '—'}
-          sub={`Saved ${twdCompact(t12.savings)}`}
+          sub={t('Saved {savings}', { savings: twdCompact(t12.savings) })}
         />
       </div>
 
       {months.length === 0 ? (
-        <EmptyState title="No months yet">Press “Add month” to start with the current month.</EmptyState>
+        <EmptyState title={t('No months yet')}>
+          {t('Press “Add month” to start with the current month.')}
+        </EmptyState>
       ) : (
         <Card>
           <CardHeader
-            title="Monthly totals"
+            title={t('Monthly totals')}
             actions={
               months.length > VISIBLE_MONTHS && (
                 <Button size="sm" variant="outline" onClick={() => setShowAll(!showAll)}>
-                  {showAll ? `Show last ${VISIBLE_MONTHS}` : `Show all ${months.length} months`}
+                  {showAll
+                    ? t('Show last {VISIBLE_MONTHS}', { VISIBLE_MONTHS })
+                    : t('Show all {length} months', { length: months.length })}
                 </Button>
               )
             }
@@ -433,7 +456,7 @@ export function CashFlowPage() {
             <Table className="w-auto">
               <thead>
                 <tr>
-                  <th className="sticky left-0 bg-surface">Category</th>
+                  <th className="sticky left-0 bg-surface">{t('Category')}</th>
                   {shown.map((m) => (
                     <th key={m} className="w-36 text-right">
                       <button
@@ -449,10 +472,10 @@ export function CashFlowPage() {
                 </tr>
               </thead>
               <tbody>
-                {section('Income', income)}
-                {section('Expenses', expense)}
+                {section(t('Income'), income)}
+                {section(t('Expenses'), expense)}
                 <tr className="font-medium">
-                  <td className="sticky left-0 bg-surface">Savings</td>
+                  <td className="sticky left-0 bg-surface">{t('Savings')}</td>
                   {shown.map((m) => (
                     <td key={m} className="text-right">
                       {twd(byMonth.get(m)?.savings ?? 0)}
@@ -461,7 +484,7 @@ export function CashFlowPage() {
                 </tr>
                 <tr>
                   <td className="sticky left-0 bg-surface text-muted-foreground">
-                    Savings rate (excl. lump sums)
+                    {t('Savings rate (excl. lump sums)')}
                   </td>
                   {shown.map((m) => {
                     const t = byMonth.get(m);
@@ -486,12 +509,12 @@ export function CashFlowPage() {
       {totals.length > 1 && (
         <Card className="mt-4">
           <CardHeader
-            title="Savings rate trend"
-            description="Regular months exclude lump sums, so bonuses do not distort the trend."
+            title={t('Savings rate trend')}
+            description={t('Regular months exclude lump sums, so bonuses do not distort the trend.')}
           />
           <CardContent>
             <LineChart
-              ariaLabel="Savings rate by month"
+              ariaLabel={t('Savings rate by month')}
               data={totals.map((t) => ({
                 month: t.month,
                 all: t.savingsRate,
@@ -501,8 +524,8 @@ export function CashFlowPage() {
               xFormat={(v) => monthLabel(String(v))}
               yFormat={(v) => pct(v, 0)}
               series={[
-                { key: 'regular', label: 'Excl. lump sums', slot: 0 },
-                { key: 'all', label: 'Incl. lump sums', slot: 1, dashed: true },
+                { key: 'regular', label: t('Excl. lump sums'), slot: 0 },
+                { key: 'all', label: t('Incl. lump sums'), slot: 1, dashed: true },
               ]}
               height={240}
             />

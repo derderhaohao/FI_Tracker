@@ -19,6 +19,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { EmptyState, Notice, PageHeader, Stat } from '@/components/ui/misc';
 import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { t } from '@/i18n';
 
 export function DashboardPage() {
   const data = useAppData();
@@ -36,9 +37,9 @@ export function DashboardPage() {
   if (snapshots.length === 0) {
     return (
       <>
-        <PageHeader title="Dashboard" />
-        <EmptyState title="Enter your first snapshot" to="/snapshots" action="Go to Snapshots">
-          One balance per account, in its own currency, plus the USD/TWD rate for the date.
+        <PageHeader title={t('Dashboard')} />
+        <EmptyState title={t('Enter your first snapshot')} to="/snapshots" action={t('Go to Snapshots')}>
+          {t('One balance per account, in its own currency, plus the USD/TWD rate for the date.')}
         </EmptyState>
       </>
     );
@@ -64,7 +65,15 @@ export function DashboardPage() {
     alerts.push({
       id: 'reconcile',
       level: 'warning',
-      message: `Net worth changed by ${twdCompact(lastChange.change)} from ${lastChange.from} to ${lastChange.to}, which recorded savings (${twdCompact(lastChange.contributions)}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.`,
+      message: t(
+        'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.',
+        {
+          change: twdCompact(lastChange.change),
+          from: lastChange.from,
+          to: lastChange.to,
+          contributions: twdCompact(lastChange.contributions),
+        },
+      ),
     });
   }
   const targetSum = Object.values(settings.targetAllocation).reduce((a, b) => a + (b ?? 0), 0);
@@ -88,12 +97,12 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description={`As of the snapshot on ${ctx.asOfDate}. All amounts in TWD.`}
+        title={t('Dashboard')}
+        description={t('As of the snapshot on {asOfDate}. All amounts in TWD.', { asOfDate: ctx.asOfDate })}
         actions={
           <>
             <Link to="/update" className={buttonVariants({ size: 'sm' })}>
-              <RefreshCw aria-hidden /> Monthly update
+              <RefreshCw aria-hidden /> {t('Monthly update')}
             </Link>
             <AssumptionBadge set={data.activeAssumptions} />
           </>
@@ -113,8 +122,10 @@ export function DashboardPage() {
       <PlanHealthCard
         note={
           baseline.fiAge === undefined
-            ? 'Add cash flow and an FI budget, or try a scenario in the Strategy Lab.'
-            : 'The age is the typical path, where markets return their typical amount every year; the status counts how often the money lasts across 1,000 simulated futures.'
+            ? t('Add cash flow and an FI budget, or try a scenario in the Strategy Lab.')
+            : t(
+                'The age is the typical path, where markets return their typical amount every year; the status counts how often the money lasts across 1,000 simulated futures.',
+              )
         }
       />
 
@@ -122,29 +133,36 @@ export function DashboardPage() {
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat
-          label="Total net worth"
+          label={t('Total net worth')}
           value={twdCompact(nw.total)}
-          sub={`Assets ${twdCompact(nw.total + nw.liabilities)} · debt ${twdCompact(nw.liabilities)}`}
+          sub={t('Assets {twdCompact} · debt {liabilities}', {
+            twdCompact: twdCompact(nw.total + nw.liabilities),
+            liabilities: twdCompact(nw.liabilities),
+          })}
         />
         <Stat
-          label="Investable net worth"
+          label={t('Investable net worth')}
           value={twdCompact(nw.investable)}
-          sub={nw.locked > 0 ? `Plus ${twdCompact(nw.locked)} locked until access age` : 'Usable now'}
+          sub={
+            nw.locked > 0
+              ? t('Plus {locked} locked until access age', { locked: twdCompact(nw.locked) })
+              : t('Usable now')
+          }
         />
         <Stat
-          label="FI progress"
+          label={t('FI progress')}
           value={pct(progress, 1)}
           sub={
             <>
-              of FI number {twdCompact(fiNumberNow)} ·{' '}
+              {t('of FI number {fiNumberNow} ·', { fiNumberNow: twdCompact(fiNumberNow) })}{' '}
               <Link className="text-primary hover:underline" to="/goal">
-                Goal
+                {t('Goal')}
               </Link>
             </>
           }
         />
         <Stat
-          label="Savings rate"
+          label={t('Savings rate')}
           value={
             lastMonth && Number.isFinite(lastMonth.regularSavingsRate)
               ? pct(lastMonth.regularSavingsRate)
@@ -152,8 +170,11 @@ export function DashboardPage() {
           }
           sub={
             lastMonth
-              ? `${monthLabel(lastMonth.month)} excl. lump sums · trailing 12 months ${Number.isFinite(ctx.t12.savingsRate) ? pct(ctx.t12.savingsRate) : '—'}`
-              : 'No cash flow yet'
+              ? t('{month} excl. lump sums · trailing 12 months {v}', {
+                  month: monthLabel(lastMonth.month),
+                  v: Number.isFinite(ctx.t12.savingsRate) ? pct(ctx.t12.savingsRate) : '—',
+                })
+              : t('No cash flow yet')
           }
         />
       </div>
@@ -171,12 +192,12 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader
-            title="Net worth over time"
-            description="Total and investable (incl. locked pension), TWD at each snapshot's FX rate"
+            title={t('Net worth over time')}
+            description={t("Total and investable (incl. locked pension), TWD at each snapshot's FX rate")}
           />
           <CardContent>
             <LineChart
-              ariaLabel="Net worth over time"
+              ariaLabel={t('Net worth over time')}
               data={series.map((s) => ({
                 date: s.date,
                 total: s.total,
@@ -185,8 +206,8 @@ export function DashboardPage() {
               xKey="date"
               xFormat={(v) => monthLabel(String(v).slice(0, 7))}
               series={[
-                { key: 'total', label: 'Total net worth', slot: 0 },
-                { key: 'investable', label: 'Investable + locked', slot: 2 },
+                { key: 'total', label: t('Total net worth'), slot: 0 },
+                { key: 'investable', label: t('Investable + locked'), slot: 2 },
               ]}
             />
           </CardContent>
@@ -194,31 +215,37 @@ export function DashboardPage() {
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader
-              title="Allocation"
-              description="Liquid investable assets by class; ticks mark the target"
+              title={t('Allocation')}
+              description={t('Liquid investable assets by class; ticks mark the target')}
             />
             <CardContent>
-              <ShareBars rows={byClass} ariaLabel="Allocation by asset class" />
+              <ShareBars rows={byClass} ariaLabel={t('Allocation by asset class')} />
               <p className="mt-3 text-xs text-subtle">
-                Total {twd(nw.investable)}
-                {nw.locked > 0 && ` · ${twdCompact(nw.locked)} locked until access age not shown`}
+                {t('Total {investable}{v}', {
+                  investable: twd(nw.investable),
+                  v:
+                    nw.locked > 0 &&
+                    t(' · {locked} locked until access age not shown', { locked: twdCompact(nw.locked) }),
+                })}
               </p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader title="By currency" description="All assets, converted to TWD" />
+            <CardHeader title={t('By currency')} description={t('All assets, converted to TWD')} />
             <CardContent>
-              <ShareBars rows={byCurrency} ariaLabel="Assets by currency" />
+              <ShareBars rows={byCurrency} ariaLabel={t('Assets by currency')} />
             </CardContent>
           </Card>
           <Card>
-            <CardHeader title="Backup" />
+            <CardHeader title={t('Backup')} />
             <CardContent className="pt-2 text-sm text-muted-foreground">
               {backupAge === undefined
-                ? 'Never backed up.'
-                : `Last backup ${backupAge === 0 ? 'today' : `${backupAge} days ago`}.`}{' '}
+                ? t('Never backed up.')
+                : backupAge === 0
+                  ? t('Last backup today.')
+                  : t('Last backup {backupAge} days ago.', { backupAge })}{' '}
               <Link to="/settings#backup" className="text-primary hover:underline">
-                Backup & restore
+                {t('Backup & restore')}
               </Link>
             </CardContent>
           </Card>

@@ -1,7 +1,8 @@
 import type { ScenarioEvent, ScenarioLevers } from '@/domain/entities';
-import { toMinor } from '@/domain/money';
+import { formatMoney, toMinor } from '@/domain/money';
 import type { ProjectionInput } from '@/domain/projection';
 import { spendingNow, stopAge, type LabRow } from './model';
+import { getLang, t } from '@/i18n';
 
 /**
  * What-if templates (PRD R2): each pre-fills overrides relative to today's plan and names
@@ -35,9 +36,10 @@ export interface Template {
 /** "NT$10k", "NT$1.5M": short amounts for scenario names. */
 export function shortMoney(v: number): string {
   const abs = Math.abs(v);
+  if (getLang() === 'zh-TW') return formatMoney(abs, 'TWD', { compact: true });
   const trim = (x: number) => (Math.round(x * 10) / 10).toString();
-  if (abs >= 1e6) return `NT$${trim(abs / 1e6)}M`;
-  if (abs >= 1e3) return `NT$${trim(abs / 1e3)}k`;
+  if (abs >= 1e6) return t('NT${trim}M', { trim: trim(abs / 1e6) });
+  if (abs >= 1e3) return t('NT${trim}k', { trim: trim(abs / 1e3) });
   return `NT$${Math.round(abs)}`;
 }
 
@@ -52,74 +54,86 @@ function round(v: number, step: number): number {
 export const TEMPLATES: Template[] = [
   {
     kind: 'retire_at',
-    label: 'Retire earlier or later',
-    fields: [{ key: 'age', label: 'Stop working at age', kind: 'age' }],
-    defaults: (t) => ({ age: Math.max(t.input.startAge + 1, todayStop(t) - 3) }),
-    build: ({ age }) => ({ name: `Retire at ${age}`, overrides: { targetFiAge: age }, events: [] }),
+    label: t('Retire earlier or later'),
+    fields: [{ key: 'age', label: t('Stop working at age'), kind: 'age' }],
+    defaults: (ctx) => ({ age: Math.max(ctx.input.startAge + 1, todayStop(ctx) - 3) }),
+    build: ({ age }) => ({
+      name: t('Retire at {age}', { age }),
+      overrides: { targetFiAge: age },
+      events: [],
+    }),
   },
   {
     kind: 'save_more',
-    label: 'Save more or less per month',
+    label: t('Save more or less per month'),
     fields: [
-      { key: 'monthly', label: 'Extra saving per month', kind: 'money', hint: 'Negative = save less' },
+      { key: 'monthly', label: t('Extra saving per month'), kind: 'money', hint: t('Negative = save less') },
     ],
     defaults: () => ({ monthly: 10_000 }),
-    build: ({ monthly }, t) => ({
-      name: `Save ${shortMoney(monthly)} ${monthly >= 0 ? 'more' : 'less'} a month`,
-      overrides: { currentSpendingMinor: toMinor(Math.max(0, spendingNow(t.input) - monthly * 12)) },
+    build: ({ monthly }, ctx) => ({
+      name:
+        monthly >= 0
+          ? t('Save {monthly} more a month', { monthly: shortMoney(monthly) })
+          : t('Save {monthly} less a month', { monthly: shortMoney(monthly) }),
+      overrides: { currentSpendingMinor: toMinor(Math.max(0, spendingNow(ctx.input) - monthly * 12)) },
       events: [],
     }),
   },
   {
     kind: 'spend_less',
-    label: 'Spend less after you stop',
-    fields: [{ key: 'percent', label: 'Spend less by', kind: 'percent' }],
+    label: t('Spend less after you stop'),
+    fields: [{ key: 'percent', label: t('Spend less by'), kind: 'percent' }],
     defaults: () => ({ percent: 10 }),
-    build: ({ percent }, t) => ({
-      name: `Spend ${percent}% less after you stop`,
-      overrides: { fiSpendingMinor: toMinor(round(t.input.fiSpending * (1 - percent / 100), 1)) },
+    build: ({ percent }, ctx) => ({
+      name: t('Spend {percent}% less after you stop', { percent }),
+      overrides: { fiSpendingMinor: toMinor(round(ctx.input.fiSpending * (1 - percent / 100), 1)) },
       events: [],
     }),
   },
   {
     kind: 'part_time',
-    label: 'Part-time income after FI',
+    label: t('Part-time income after FI'),
     fields: [
-      { key: 'monthly', label: 'Part-time income per month', kind: 'money' },
-      { key: 'untilAge', label: 'Until age', kind: 'age' },
+      { key: 'monthly', label: t('Part-time income per month'), kind: 'money' },
+      { key: 'untilAge', label: t('Until age'), kind: 'age' },
     ],
-    defaults: (t) => ({ monthly: 30_000, untilAge: Math.max(60, todayStop(t) + 5) }),
+    defaults: (ctx) => ({ monthly: 30_000, untilAge: Math.max(60, todayStop(ctx) + 5) }),
     build: ({ monthly, untilAge }) => ({
-      name: `Part-time ${shortMoney(monthly)} a month to ${untilAge}`,
+      name: t('Part-time {monthly} a month to {untilAge}', { monthly: shortMoney(monthly), untilAge }),
       overrides: { baristaIncome: { annualMinor: toMinor(monthly * 12), untilAge } },
       events: [],
     }),
   },
   {
     kind: 'big_expense',
-    label: 'A one-off big expense',
+    label: t('A one-off big expense'),
     fields: [
-      { key: 'amount', label: 'Cost', kind: 'money', hint: 'E.g. a home down payment' },
-      { key: 'year', label: 'In year', kind: 'year' },
+      { key: 'amount', label: t('Cost'), kind: 'money', hint: t('E.g. a home down payment') },
+      { key: 'year', label: t('In year'), kind: 'year' },
     ],
-    defaults: (t) => ({ amount: 3_000_000, year: t.input.startYear + 3 }),
+    defaults: (ctx) => ({ amount: 3_000_000, year: ctx.input.startYear + 3 }),
     build: ({ amount, year }) => ({
-      name: `Spend ${shortMoney(amount)} in ${year}`,
+      name: t('Spend {amount} in {year}', { amount: shortMoney(amount), year }),
       overrides: {},
       events: [
-        { date: `${year}-01-01`, amountMinor: -toMinor(Math.abs(amount)), description: 'One-off cost' },
+        { date: `${year}-01-01`, amountMinor: -toMinor(Math.abs(amount)), description: t('One-off cost') },
       ],
     }),
   },
   {
     kind: 'crash',
-    label: 'A market crash just after you stop',
+    label: t('A market crash just after you stop'),
     fields: [
-      { key: 'percent', label: 'Shares fall by', kind: 'percent', hint: 'Spread over the first 2 years' },
+      {
+        key: 'percent',
+        label: t('Shares fall by'),
+        kind: 'percent',
+        hint: t('Spread over the first 2 years'),
+      },
     ],
     defaults: () => ({ percent: 30 }),
     build: ({ percent }) => ({
-      name: `Markets fall ${percent}% just after you stop`,
+      name: t('Markets fall {percent}% just after you stop', { percent }),
       overrides: { crash: { drop: percent / 100, years: 2 } },
       events: [],
     }),
@@ -134,16 +148,17 @@ export function checkTemplateValues(
 ): string | undefined {
   for (const f of template.fields) {
     const v = values[f.key];
-    if (v === undefined || !Number.isFinite(v)) return `Enter ${f.label.toLowerCase()}.`;
+    if (v === undefined || !Number.isFinite(v))
+      return t('Enter {toLowerCase}.', { toLowerCase: f.label.toLowerCase() });
     if (f.kind === 'age' && (v <= input.startAge || v >= input.horizonAge || !Number.isInteger(v)))
-      return `Use an age between ${input.startAge + 1} and ${input.horizonAge - 1}.`;
-    if (f.kind === 'percent' && (v <= 0 || v >= 90)) return 'Use a percentage between 1 and 89.';
+      return t('Use an age between {v} and {v2}.', { v: input.startAge + 1, v2: input.horizonAge - 1 });
+    if (f.kind === 'percent' && (v <= 0 || v >= 90)) return t('Use a percentage between 1 and 89.');
     if (
       f.kind === 'year' &&
       (v < input.startYear || v > input.startYear + (input.horizonAge - input.startAge))
     )
-      return `Use a year from ${input.startYear}.`;
-    if (f.kind === 'money' && template.kind !== 'save_more' && v <= 0) return 'Use an amount above zero.';
+      return t('Use a year from {startYear}.', { startYear: input.startYear });
+    if (f.kind === 'money' && template.kind !== 'save_more' && v <= 0) return t('Use an amount above zero.');
   }
   return undefined;
 }

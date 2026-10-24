@@ -11,11 +11,12 @@ import { usePlanHealth } from '@/app/planHealth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table } from '@/components/ui/misc';
 import { pct, twdCompact } from '@/lib/format';
+import { t } from '@/i18n';
 
 const BEHAVIOURS: { b: Behaviour; label: string }[] = [
-  { b: { kind: 'keep' }, label: 'Keep investing' },
-  { b: { kind: 'pause' }, label: 'Pause new investing' },
-  { b: { kind: 'sell', fall: 0.2 }, label: 'Sell after a 20% fall' },
+  { b: { kind: 'keep' }, label: t('Keep investing') },
+  { b: { kind: 'pause' }, label: t('Pause new investing') },
+  { b: { kind: 'sell', fall: 0.2 }, label: t('Sell after a 20% fall') },
 ];
 
 /** The end card (PB-23, SC-10, EN-7, LE-15, SC-6). */
@@ -71,76 +72,91 @@ export function EndCard({
   const nameOf = (id: string) => path.events.find((e) => e.def.id === id)?.def.name ?? id;
 
   return (
-    <Card className="mt-3 border-primary" aria-label="End of the story">
+    <Card className="mt-3 border-primary" aria-label={t('End of the story')}>
       <CardContent className="flex flex-col gap-3 p-5 text-sm">
         <div>
-          <h3 className="text-lg font-semibold">End of the story, age {path.setup.input.horizonAge}</h3>
-          <p className="text-xs text-muted-foreground">One possible story, not a forecast.</p>
+          <h3 className="text-lg font-semibold">
+            {t('End of the story, age {horizonAge}', { horizonAge: path.setup.input.horizonAge })}
+          </h3>
+          <p className="text-xs text-muted-foreground">{t('One possible story, not a forecast.')}</p>
         </div>
         <dl className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
           <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Investments at the end</dt>
+            <dt className="text-muted-foreground">{t('Investments at the end')}</dt>
             <dd className="font-medium">{twdCompact(s.finalInvestable)}</dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Total net worth at the end</dt>
+            <dt className="text-muted-foreground">{t('Total net worth at the end')}</dt>
             <dd className="font-medium">{twdCompact(s.finalTotal)}</dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Lowest point</dt>
+            <dt className="text-muted-foreground">{t('Lowest point')}</dt>
             <dd>
-              {twdCompact(s.lowest)} at age {age(s.lowestMonth)}
+              {t('{lowest} at age {lowestMonth}', {
+                lowest: twdCompact(s.lowest),
+                lowestMonth: age(s.lowestMonth),
+              })}
             </dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Worst market fall</dt>
+            <dt className="text-muted-foreground">{t('Worst market fall')}</dt>
             <dd>
-              {s.drawdown > 0.005 ? `−${pct(s.drawdown, 0)} at age ${age(s.drawdownTroughMonth)}` : 'none'}
+              {s.drawdown > 0.005
+                ? t('−{drawdown} at age {drawdownTroughMonth}', {
+                    drawdown: pct(s.drawdown, 0),
+                    drawdownTroughMonth: age(s.drawdownTroughMonth),
+                  })
+                : t('none')}
             </dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Time to recover</dt>
+            <dt className="text-muted-foreground">{t('Time to recover')}</dt>
             <dd>
               {s.drawdown <= 0.005
                 ? '—'
                 : s.recoveryMonths !== undefined
                   ? spanText(s.recoveryMonths)
-                  : 'not within the story'}
+                  : t('not within the story')}
             </dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Compared with Normal</dt>
+            <dt className="text-muted-foreground">{t('Compared with Normal')}</dt>
             <dd className={vsNormal < 0 ? 'text-critical' : 'text-good'}>
-              {vsNormal >= 0 ? '+' : '−'}
-              {twdCompact(Math.abs(vsNormal))} at {path.setup.input.horizonAge}
+              {t('{v}{vsNormal} at {horizonAge}', {
+                v: vsNormal >= 0 ? '+' : '−',
+                vsNormal: twdCompact(Math.abs(vsNormal)),
+                horizonAge: path.setup.input.horizonAge,
+              })}
             </dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Money lasts</dt>
+            <dt className="text-muted-foreground">{t('Money lasts')}</dt>
             <dd>
               {path.depletionMonth === undefined
-                ? `to ${path.setup.input.horizonAge}`
-                : `runs out at ${age(path.depletionMonth)}`}
+                ? t('to {age}', { age: path.setup.input.horizonAge })
+                : t('runs out at {depletionMonth}', { depletionMonth: age(path.depletionMonth) })}
             </dd>
           </div>
         </dl>
         {rankEnd !== undefined && summary && (
           <p>
-            This story ends better than <strong>{rankEnd} of 100</strong> simulated futures for your plan, and
-            its lowest point is above {rankLow} of 100. For context, the Strategy Lab gives your plan a{' '}
-            {pct(summary.successRate, 0)} chance of the money lasting.
+            {t('This story ends better than')} <strong>{t('{rankEnd} of 100', { rankEnd })}</strong>{' '}
+            {t(
+              'simulated futures for your plan, and its lowest point is above {rankLow} of 100. For context, the Strategy Lab gives your plan a {successRate} chance of the money lasting.',
+              { rankLow, successRate: pct(summary.successRate, 0) },
+            )}
           </p>
         )}
         {path.events.filter((e) => e.source !== 'backdrop').length > 0 && (
           <div>
-            <h4 className="mb-1 font-medium">Events in this story</h4>
+            <h4 className="mb-1 font-medium">{t('Events in this story')}</h4>
             <Table>
               <thead>
                 <tr>
-                  <th>Event</th>
-                  <th className="text-right">Starts at</th>
-                  <th className="text-right">Effect at the end</th>
-                  <th className="text-right">Investments back to pre-event level</th>
+                  <th>{t('Event')}</th>
+                  <th className="text-right">{t('Starts at')}</th>
+                  <th className="text-right">{t('Effect at the end')}</th>
+                  <th className="text-right">{t('Investments back to pre-event level')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -151,7 +167,9 @@ export function EndCard({
                     <tr key={e.uid}>
                       <td>
                         {nameOf(e.eventId)}
-                        {e.source === 'live' && <span className="ml-1 text-xs text-subtle">fired live</span>}
+                        {e.source === 'live' && (
+                          <span className="ml-1 text-xs text-subtle">{t('fired live')}</span>
+                        )}
                       </td>
                       <td className="text-right">{age(e.start)}</td>
                       <td className="text-right">
@@ -159,7 +177,7 @@ export function EndCard({
                         {twdCompact(Math.abs(delta))}
                       </td>
                       <td className="text-right">
-                        {rec !== undefined ? `after ${spanText(rec - e.start)}` : '—'}
+                        {rec !== undefined ? t('after {span}', { span: spanText(rec - e.start) }) : '—'}
                       </td>
                     </tr>
                   );
@@ -167,26 +185,28 @@ export function EndCard({
               </tbody>
             </Table>
             <p className="mt-1 text-xs text-subtle">
-              Each effect reruns the story without that one event, so they need not add up.
+              {t('Each effect reruns the story without that one event, so they need not add up.')}
             </p>
           </div>
         )}
         {behaviours.length > 0 && (
           <div>
-            <h4 className="mb-1 font-medium">What reacting would have cost</h4>
+            <h4 className="mb-1 font-medium">{t('What reacting would have cost')}</h4>
             <ul className="flex flex-col gap-0.5">
               {behaviours.map((b) => (
                 <li key={b.label} className="flex justify-between gap-2">
                   <span>
                     {b.label}
-                    {b.current && <span className="ml-1 text-xs text-subtle">(this story)</span>}
+                    {b.current && <span className="ml-1 text-xs text-subtle">{t('(this story)')}</span>}
                   </span>
                   <span>
                     {b.runOut !== undefined
-                      ? `runs out at ${age(b.runOut)}`
-                      : `${twdCompact(b.value)} at the end`}
+                      ? t('runs out at {runOut}', { runOut: age(b.runOut) })
+                      : t('{value} at the end', { value: twdCompact(b.value) })}
                     {b.stop !== undefined && b.stop !== path.retireAge && (
-                      <span className="ml-1 text-xs text-muted-foreground">(stops work at {b.stop})</span>
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        {t('(stops work at {stop})', { stop: b.stop })}
+                      </span>
                     )}
                   </span>
                 </li>

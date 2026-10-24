@@ -5,15 +5,16 @@
 import type { Account, CashFlow, Category, Snapshot } from '@/domain/entities';
 import { monthOf } from '@/domain/dates';
 import { toMinor } from '@/domain/money';
+import { t } from '@/i18n';
 
 export type DateFormat = 'auto' | 'ymd' | 'roc' | 'dmy' | 'mdy';
 
 export const DATE_FORMAT_LABELS: Record<DateFormat, string> = {
-  auto: 'Detect',
-  ymd: 'Year-month-day (2026/10/22)',
+  auto: t('Detect'),
+  ymd: t('Year-month-day (2026/10/22)'),
   roc: '民國 year (115/10/22)',
-  dmy: 'Day/month/year (22/10/2026)',
-  mdy: 'Month/day/year (10/22/2026)',
+  dmy: t('Day/month/year (22/10/2026)'),
+  mdy: t('Month/day/year (10/22/2026)'),
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -182,7 +183,8 @@ export function previewTransactions(
     const line = i + (map.hasHeader ? 2 : 1);
     if (row.every((c) => c.trim() === '')) return;
     const date = parseDate(cellAt(row, map.date), format);
-    if (!date) return out.errors.push({ line, message: `Unreadable date “${cellAt(row, map.date)}”` });
+    if (!date)
+      return out.errors.push({ line, message: t('Unreadable date “{row}”', { row: cellAt(row, map.date) }) });
     let signed: number | null;
     if (map.amount !== undefined) {
       const v = parseAmount(cellAt(row, map.amount));
@@ -192,7 +194,7 @@ export function previewTransactions(
       const in_ = parseAmount(cellAt(row, map.credit)) ?? 0;
       signed = out_ === 0 && in_ === 0 ? null : Math.abs(in_) - Math.abs(out_);
     }
-    if (signed === null) return out.errors.push({ line, message: 'No amount' });
+    if (signed === null) return out.errors.push({ line, message: t('No amount') });
     if (signed === 0) return;
     const kind: 'income' | 'expense' = signed > 0 ? 'income' : 'expense';
     const named = byName.get(cellAt(row, map.category).toLowerCase());
@@ -204,7 +206,7 @@ export function previewTransactions(
           : map.defaultExpenseCategoryId;
     const currency = (cellAt(row, map.currency) || map.defaultCurrency).toUpperCase();
     if (!/^[A-Z]{3}$/.test(currency))
-      return out.errors.push({ line, message: `Unknown currency “${currency}”` });
+      return out.errors.push({ line, message: t('Unknown currency “{currency}”', { currency }) });
     const amountMinor = toMinor(Math.abs(signed));
     const note = cellAt(row, map.description).slice(0, 500) || undefined;
     const key = transactionKey(date, amountMinor, kind, note);
@@ -298,9 +300,10 @@ export function previewBalances(
       return;
     }
     const date = parseDate(cellAt(row, map.date), format);
-    if (!date) return out.errors.push({ line, message: `Unreadable date “${cellAt(row, map.date)}”` });
+    if (!date)
+      return out.errors.push({ line, message: t('Unreadable date “{row}”', { row: cellAt(row, map.date) }) });
     const balance = parseAmount(cellAt(row, map.balance));
-    if (balance === null) return out.errors.push({ line, message: 'No balance' });
+    if (balance === null) return out.errors.push({ line, message: t('No balance') });
     const replaces = existing.some((s) => s.accountId === accountId && s.date === date);
     byKey.set(`${accountId}|${date}`, { line, date, accountId, balanceMinor: toMinor(balance), replaces });
   });

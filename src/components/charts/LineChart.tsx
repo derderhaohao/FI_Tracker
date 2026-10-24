@@ -12,6 +12,7 @@ import {
 import { twdCompact } from '@/lib/format';
 import { ChartLegend, TooltipBox } from './ChartParts';
 import { axisTick, useChartTheme } from './theme';
+import { getLang } from '@/i18n';
 
 export interface SeriesSpec {
   key: string;
@@ -72,7 +73,7 @@ export function LineChart<T extends object>({
               stroke={theme.axis}
               tickLine={false}
               axisLine={false}
-              width={64}
+              width={getLang() === 'zh-TW' ? 76 : 64}
             />
             <Tooltip
               cursor={{ stroke: theme.axis, strokeWidth: 1 }}

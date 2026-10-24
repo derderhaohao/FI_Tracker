@@ -19,6 +19,7 @@ import {
   recordUpdateTime,
   type UpdateItem,
 } from './updateModel';
+import { t } from '@/i18n';
 
 type Step =
   | { kind: 'date' }
@@ -83,11 +84,11 @@ export function UpdatePage() {
   if (accounts.length === 0) {
     return (
       <>
-        <PageHeader title="Monthly update" />
+        <PageHeader title={t('Monthly update')} />
         <Notice>
-          Add accounts first, or run the{' '}
+          {t('Add accounts first, or run the')}{' '}
           <Link to="/setup" className="text-primary hover:underline">
-            setup
+            {t('setup')}
           </Link>
           .
         </Notice>
@@ -100,7 +101,7 @@ export function UpdatePage() {
     const items = [...plan.changing, ...plan.steady];
     const missing = items.filter((it) => valueOf(it) === undefined);
     if (missing.length) {
-      setError(`Enter a balance for ${missing.map((m) => m.account.nickname).join(', ')}.`);
+      setError(t('Enter a balance for {join}.', { join: missing.map((m) => m.account.nickname).join(', ') }));
       return;
     }
     const now = new Date().toISOString();
@@ -140,21 +141,21 @@ export function UpdatePage() {
   if (done) {
     return (
       <div className="mx-auto max-w-md">
-        <PageHeader title="Monthly update" />
+        <PageHeader title={t('Monthly update')} />
         <Card>
           <CardContent className="flex flex-col gap-3 p-6 text-sm">
             <Check className="size-8 text-good" aria-hidden />
             <h2 className="text-lg font-semibold">
-              Saved {done.count} balances for {date}
+              {t('Saved {count} balances for {date}', { count: done.count, date })}
             </h2>
-            <p className="text-muted-foreground">Done in {durationText(done.ms)}.</p>
-            <p>Last step: add last month's pay and spending, so savings and the FI date stay right.</p>
+            <p className="text-muted-foreground">{t('Done in {ms}.', { ms: durationText(done.ms) })}</p>
+            <p>{t("Last step: add last month's pay and spending, so savings and the FI date stay right.")}</p>
             <div className="flex flex-wrap gap-2">
               <Link to="/cashflow" className={buttonVariants()}>
-                Cash flow
+                {t('Cash flow')}
               </Link>
               <Link to="/" className={buttonVariants({ variant: 'outline' })}>
-                See what moved
+                {t('See what moved')}
               </Link>
             </div>
             <button
@@ -162,7 +163,7 @@ export function UpdatePage() {
               className="self-start text-primary hover:underline"
               onClick={() => downloadMonthlyReminder(today())}
             >
-              Add a monthly reminder to your calendar
+              {t('Add a monthly reminder to your calendar')}
             </button>
           </CardContent>
         </Card>
@@ -174,7 +175,10 @@ export function UpdatePage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <PageHeader title="Monthly update" description="One card per account, pre-filled with last month." />
+      <PageHeader
+        title={t('Monthly update')}
+        description={t('One card per account, pre-filled with last month.')}
+      />
       <div className="mb-3 h-1.5 rounded bg-surface-2" aria-hidden>
         <div className="h-1.5 rounded bg-primary" style={{ width: `${progress}%` }} />
       </div>
@@ -182,8 +186,11 @@ export function UpdatePage() {
         <CardContent className="flex flex-col gap-4 p-5">
           {step.kind === 'date' && (
             <>
-              <h2 className="text-lg font-semibold">Which date are these balances for?</h2>
-              <Field label="Snapshot date" hint="Month-end works well; use the date on your statements.">
+              <h2 className="text-lg font-semibold">{t('Which date are these balances for?')}</h2>
+              <Field
+                label={t('Snapshot date')}
+                hint={t('Month-end works well; use the date on your statements.')}
+              >
                 {(id) => (
                   <Input
                     id={id}
@@ -194,27 +201,37 @@ export function UpdatePage() {
                 )}
               </Field>
               <p className="text-sm text-muted-foreground">
-                {plan.changing.length} account{plan.changing.length === 1 ? '' : 's'} to check
-                {plan.steady.length ? `, plus ${plan.steady.length} that usually stay the same` : ''}.
+                {t('{length} account{v} to check{v2}.', {
+                  length: plan.changing.length,
+                  v: plan.changing.length === 1 ? '' : 's',
+                  v2: plan.steady.length
+                    ? t(', plus {length} that usually stay the same', { length: plan.steady.length })
+                    : '',
+                })}
               </p>
-              <Button onClick={next}>Start</Button>
+              <Button onClick={next}>{t('Start')}</Button>
             </>
           )}
 
           {step.kind === 'account' && (
             <>
               <div className="text-xs text-subtle">
-                Account {step.n} of {step.of}
+                {t('Account {n} of {of}', { n: step.n, of: step.of })}
               </div>
               <h2 className="text-lg font-semibold">{step.item.account.nickname}</h2>
               <p className="text-sm text-muted-foreground">
-                Last: {money(step.item.lastMinor, step.item.account.currency)}
-                {step.item.lastDate ? ` on ${step.item.lastDate}` : ''}
-                {step.item.account.type === 'liability' ? ' owed' : ''}
+                {t('Last: {lastMinor}{v}', {
+                  lastMinor: money(step.item.lastMinor, step.item.account.currency),
+                  v: step.item.lastDate ? t(' on {lastDate}', { lastDate: step.item.lastDate }) : '',
+                })}
+                {step.item.account.type === 'liability' ? t(' owed') : ''}
                 {step.item.savedMinor !== undefined &&
-                  `. Already saved for ${date}: ${money(step.item.savedMinor, step.item.account.currency)}`}
+                  t('. Already saved for {date}: {savedMinor}', {
+                    date,
+                    savedMinor: money(step.item.savedMinor, step.item.account.currency),
+                  })}
               </p>
-              <Field label={step.item.account.type === 'liability' ? 'Amount owed now' : 'Balance now'}>
+              <Field label={step.item.account.type === 'liability' ? t('Amount owed now') : t('Balance now')}>
                 {(id) => (
                   <MoneyInput
                     key={step.item.account.id}
@@ -235,22 +252,24 @@ export function UpdatePage() {
                       next();
                     }}
                   >
-                    Same as last month
+                    {t('Same as last month')}
                   </Button>
                 )}
                 <Button onClick={next} disabled={valueOf(step.item) === undefined}>
-                  Next
+                  {t('Next')}
                 </Button>
               </div>
-              <p className="text-xs text-subtle">Tip: swipe right for “same as last month”.</p>
+              <p className="text-xs text-subtle">{t('Tip: swipe right for “same as last month”.')}</p>
             </>
           )}
 
           {step.kind === 'steady' && (
             <>
-              <h2 className="text-lg font-semibold">Usually unchanged</h2>
+              <h2 className="text-lg font-semibold">{t('Usually unchanged')}</h2>
               <p className="text-sm text-muted-foreground">
-                These have not moved for three snapshots. Confirm them together, or change any that did.
+                {t(
+                  'These have not moved for three snapshots. Confirm them together, or change any that did.',
+                )}
               </p>
               <ul className="flex flex-col gap-2">
                 {step.items.map((it) => (
@@ -258,7 +277,7 @@ export function UpdatePage() {
                     <span>{it.account.nickname}</span>
                     <div className="w-40">
                       <MoneyInput
-                        aria-label={`${it.account.nickname} balance`}
+                        aria-label={t('{nickname} balance', { nickname: it.account.nickname })}
                         value={valueOf(it)}
                         currency={it.account.currency}
                         allowNegative
@@ -268,19 +287,23 @@ export function UpdatePage() {
                   </li>
                 ))}
               </ul>
-              <Button onClick={next}>All correct</Button>
+              <Button onClick={next}>{t('All correct')}</Button>
             </>
           )}
 
           {step.kind === 'fx' && (
             <>
-              <h2 className="text-lg font-semibold">{step.currency}/TWD rate</h2>
+              <h2 className="text-lg font-semibold">
+                {t('{currency}/TWD rate', { currency: step.currency })}
+              </h2>
               <p className="text-sm text-muted-foreground">
-                TWD per 1 {step.currency} on {date}
-                {step.last !== undefined ? `; last time ${step.last}` : ''}. Your bank's or a public rate is
-                fine.
+                {t("TWD per 1 {currency} on {date}{v}. Your bank's or a public rate is fine.", {
+                  currency: step.currency,
+                  date,
+                  v: step.last !== undefined ? t('; last time {last}', { last: step.last }) : '',
+                })}
               </p>
-              <Field label={`${step.currency}/TWD`}>
+              <Field label={t('{currency}/TWD', { currency: step.currency })}>
                 {(id) => (
                   <Input
                     id={id}
@@ -291,14 +314,14 @@ export function UpdatePage() {
                 )}
               </Field>
               <Button onClick={next} disabled={!(Number(rateOf(step)) > 0)}>
-                Next
+                {t('Next')}
               </Button>
             </>
           )}
 
           {step.kind === 'save' && (
             <>
-              <h2 className="text-lg font-semibold">Save {date}</h2>
+              <h2 className="text-lg font-semibold">{t('Save {date}', { date })}</h2>
               <ul className="flex flex-col gap-1 text-sm">
                 {[...plan.changing, ...plan.steady].map((it) => (
                   <li key={it.account.id} className="flex justify-between gap-2">
@@ -308,7 +331,7 @@ export function UpdatePage() {
                 ))}
               </ul>
               {error && <Notice tone="warning">{error}</Notice>}
-              <Button onClick={() => void save()}>Save balances</Button>
+              <Button onClick={() => void save()}>{t('Save balances')}</Button>
             </>
           )}
 
@@ -318,7 +341,7 @@ export function UpdatePage() {
               className="flex items-center gap-1 self-start text-sm text-muted-foreground"
               onClick={back}
             >
-              <ChevronLeft className="size-4" aria-hidden /> Back
+              <ChevronLeft className="size-4" aria-hidden /> {t('Back')}
             </button>
           )}
         </CardContent>

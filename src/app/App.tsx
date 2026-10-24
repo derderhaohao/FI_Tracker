@@ -24,6 +24,7 @@ import { UpdatePrompt } from './UpdatePrompt';
 import { initAutosave } from '@/lib/autosave';
 import { Layout } from './Layout';
 import { NotFound } from './NotFound';
+import { t } from '@/i18n';
 
 /** `npm run demo` opens `#/settings?demo=1`: load the demo data when the database is empty. */
 async function loadDemoIfRequested(): Promise<void> {
@@ -35,7 +36,7 @@ async function loadDemoIfRequested(): Promise<void> {
 function Loading({ error }: { error?: string }) {
   return (
     <div className="grid min-h-screen place-items-center p-6 text-sm text-muted-foreground">
-      {error ?? 'Loading…'}
+      {error ?? t('Loading…')}
     </div>
   );
 }
@@ -50,7 +51,9 @@ export function App() {
       .then(() => setReady(true))
       .catch((e: unknown) =>
         setError(
-          `Could not open the local database (${e instanceof Error ? e.message : String(e)}). Private browsing may block storage.`,
+          t('Could not open the local database ({v}). Private browsing may block storage.', {
+            v: e instanceof Error ? e.message : String(e),
+          }),
         ),
       );
     void initAutosave();

@@ -14,6 +14,7 @@ import { Field, Input } from '@/components/ui/input';
 import { Notice, Stat, Table } from '@/components/ui/misc';
 import { twd, twdCompact } from '@/lib/format';
 import { newScenarioDraft } from './actions';
+import { t } from '@/i18n';
 
 const STORAGE_KEY = 'fi-tracker-buy-vs-rent';
 
@@ -73,16 +74,22 @@ export function BuyVsRentPanel() {
   const createScenario = async () => {
     const draft = newScenarioDraft(
       data,
-      `Buy a ${twdCompact(inputs.homePrice)} home in ${purchaseDate.slice(0, 4)}`,
+      t('Buy a {homePrice} home in {slice}', {
+        homePrice: twdCompact(inputs.homePrice),
+        slice: purchaseDate.slice(0, 4),
+      }),
     );
     draft.events = [
       {
         date: purchaseDate,
         amountMinor: -toMinor(result.upfront),
-        description: 'Down payment and buying costs',
+        description: t('Down payment and buying costs'),
       },
     ];
-    draft.notes = `From Buy vs. rent: monthly mortgage ${twd(result.monthlyPayment)} plus holding costs, against rent of ${twd(inputs.monthlyRent)}. Adjust spending while working to reflect the change in housing cost.`;
+    draft.notes = t(
+      'From Buy vs. rent: monthly mortgage {monthlyPayment} plus holding costs, against rent of {monthlyRent}. Adjust spending while working to reflect the change in housing cost.',
+      { monthlyPayment: twd(result.monthlyPayment), monthlyRent: twd(inputs.monthlyRent) },
+    );
     await save(db.scenarios, draft);
     selectScenario(draft.id);
     setCreated(draft.name);
@@ -93,13 +100,16 @@ export function BuyVsRentPanel() {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
       <Card>
-        <CardHeader title="Inputs" description="Nominal rates per year. Results are in today's TWD." />
+        <CardHeader
+          title={t('Inputs')}
+          description={t("Nominal rates per year. Results are in today's TWD.")}
+        />
         <CardContent className="grid grid-cols-2 gap-3">
-          {moneyField('Home price', 'homePrice')}
-          {moneyField('Comparable rent / month', 'monthlyRent')}
-          {pctField('Down payment', 'downPaymentRate', undefined, 1)}
-          {pctField('Mortgage rate', 'mortgageRate', undefined, 0.05)}
-          <Field label="Mortgage term (years)">
+          {moneyField(t('Home price'), 'homePrice')}
+          {moneyField(t('Comparable rent / month'), 'monthlyRent')}
+          {pctField(t('Down payment'), 'downPaymentRate', undefined, 1)}
+          {pctField(t('Mortgage rate'), 'mortgageRate', undefined, 0.05)}
+          <Field label={t('Mortgage term (years)')}>
             {(id) => (
               <NumberInput
                 id={id}
@@ -110,7 +120,7 @@ export function BuyVsRentPanel() {
               />
             )}
           </Field>
-          <Field label="Compare over (years)">
+          <Field label={t('Compare over (years)')}>
             {(id) => (
               <NumberInput
                 id={id}
@@ -121,16 +131,16 @@ export function BuyVsRentPanel() {
               />
             )}
           </Field>
-          {pctField('Buying costs', 'buyingCostRate', '契稅, 代書, agent')}
-          {pctField('Selling costs', 'sellingCostRate', 'Agent, 土增稅 estimate')}
-          {pctField('Holding costs / year', 'holdingCostRate', '房屋稅, 地價稅, upkeep', 0.05)}
-          {pctField('Home price growth', 'homeAppreciation')}
-          {pctField('Rent growth', 'rentGrowth')}
-          {pctField('Investment return', 'investmentReturn', 'After fees')}
-          {pctField('Inflation', 'inflation')}
+          {pctField(t('Buying costs'), 'buyingCostRate', t('契稅, 代書, agent'))}
+          {pctField(t('Selling costs'), 'sellingCostRate', t('Agent, 土增稅 estimate'))}
+          {pctField(t('Holding costs / year'), 'holdingCostRate', t('房屋稅, 地價稅, upkeep'), 0.05)}
+          {pctField(t('Home price growth'), 'homeAppreciation')}
+          {pctField(t('Rent growth'), 'rentGrowth')}
+          {pctField(t('Investment return'), 'investmentReturn', t('After fees'))}
+          {pctField(t('Inflation'), 'inflation')}
           <div className="col-span-2">
             <Button size="sm" variant="ghost" onClick={() => set(DEFAULT_BUY_VS_RENT)}>
-              Reset to defaults
+              {t('Reset to defaults')}
             </Button>
           </div>
         </CardContent>
@@ -139,56 +149,72 @@ export function BuyVsRentPanel() {
       <div className="flex flex-col gap-4 xl:col-span-2">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Stat
-            label="Break-even"
+            label={t('Break-even')}
             value={
-              result.breakEvenYear !== undefined ? `Year ${result.breakEvenYear}` : 'Renting stays ahead'
+              result.breakEvenYear !== undefined
+                ? t('Year {year}', { year: result.breakEvenYear })
+                : t('Renting stays ahead')
             }
             sub={
-              result.breakEvenYear !== undefined ? 'First year buying is ahead' : `Over ${inputs.years} years`
+              result.breakEvenYear !== undefined
+                ? t('First year buying is ahead')
+                : t('Over {years} years', { years: inputs.years })
             }
           />
           <Stat
-            label={`After ${inputs.years} years`}
-            value={`${result.finalDifference >= 0 ? 'Buy' : 'Rent'} +${twdCompact(Math.abs(result.finalDifference))}`}
-            sub={`Buy ${twdCompact(last.buyerNetWorth)} · rent ${twdCompact(last.renterNetWorth)}`}
+            label={t('After {years} years', { years: inputs.years })}
+            value={
+              result.finalDifference >= 0
+                ? t('Buy +{amount}', { amount: twdCompact(Math.abs(result.finalDifference)) })
+                : t('Rent +{amount}', { amount: twdCompact(Math.abs(result.finalDifference)) })
+            }
+            sub={t('Buy {buyerNetWorth} · rent {renterNetWorth}', {
+              buyerNetWorth: twdCompact(last.buyerNetWorth),
+              renterNetWorth: twdCompact(last.renterNetWorth),
+            })}
           />
           <Stat
-            label="Cash needed up front"
+            label={t('Cash needed up front')}
             value={twdCompact(result.upfront)}
-            sub={`Mortgage ${twd(result.monthlyPayment)}/mo · rent ${twd(inputs.monthlyRent)}/mo`}
+            sub={t('Mortgage {monthlyPayment}/mo · rent {monthlyRent}/mo', {
+              monthlyPayment: twd(result.monthlyPayment),
+              monthlyRent: twd(inputs.monthlyRent),
+            })}
           />
         </div>
         <Card>
           <CardHeader
-            title="Net worth: buy vs. rent"
-            description="Home value after selling costs, minus mortgage, plus investments; the renter invests the down payment and any monthly saving."
+            title={t('Net worth: buy vs. rent')}
+            description={t(
+              'Home value after selling costs, minus mortgage, plus investments; the renter invests the down payment and any monthly saving.',
+            )}
           />
           <CardContent>
             <LineChart
-              ariaLabel="Net worth when buying and when renting"
+              ariaLabel={t('Net worth when buying and when renting')}
               data={result.rows}
               xKey="year"
-              xFormat={(v) => `Yr ${v}`}
-              tooltipTitle={(r) => `Year ${r.year}`}
+              xFormat={(v) => t('Yr {v}', { v })}
+              tooltipTitle={(r) => t('Year {year}', { year: r.year })}
               referenceX={
                 result.breakEvenYear !== undefined
-                  ? { x: result.breakEvenYear, label: 'Break-even' }
+                  ? { x: result.breakEvenYear, label: t('Break-even') }
                   : undefined
               }
               series={[
-                { key: 'buyerNetWorth', label: 'Buy', slot: 0 },
-                { key: 'renterNetWorth', label: 'Rent and invest', slot: 1 },
+                { key: 'buyerNetWorth', label: t('Buy'), slot: 0 },
+                { key: 'renterNetWorth', label: t('Rent and invest'), slot: 1 },
               ]}
             />
             <Table className="mt-3">
               <thead>
                 <tr>
-                  <th>Year</th>
-                  <th className="text-right">Owning cost / yr</th>
-                  <th className="text-right">Rent / yr</th>
-                  <th className="text-right">Mortgage left</th>
-                  <th className="text-right">Buy</th>
-                  <th className="text-right">Rent</th>
+                  <th>{t('Year')}</th>
+                  <th className="text-right">{t('Owning cost / yr')}</th>
+                  <th className="text-right">{t('Rent / yr')}</th>
+                  <th className="text-right">{t('Mortgage left')}</th>
+                  <th className="text-right">{t('Buy')}</th>
+                  <th className="text-right">{t('Rent')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -207,19 +233,22 @@ export function BuyVsRentPanel() {
               </tbody>
             </Table>
             <p className="mt-2 text-xs text-subtle">
-              Year 1 owning costs {twd(first?.ownerCost ?? 0)} against rent {twd(first?.rentCost ?? 0)}, in
-              today's TWD. Not modelled: 房貸 interest deduction, 自住 tax rates, moving costs, and the
-              non-financial value of owning.
+              {t(
+                "Year 1 owning costs {twd} against rent {twd2}, in today's TWD. Not modelled: 房貸 interest deduction, 自住 tax rates, moving costs, and the non-financial value of owning.",
+                { twd: twd(first?.ownerCost ?? 0), twd2: twd(first?.rentCost ?? 0) },
+              )}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader
-            title="Test it on your plan"
-            description="Creates a scenario with the down payment and buying costs as a one-off event, so the Strategy Lab can show the effect on your FI date."
+            title={t('Test it on your plan')}
+            description={t(
+              'Creates a scenario with the down payment and buying costs as a one-off event, so the Strategy Lab can show the effect on your FI date.',
+            )}
           />
           <CardContent className="flex flex-wrap items-end gap-3">
-            <Field label="Purchase date">
+            <Field label={t('Purchase date')}>
               {(id) => (
                 <Input
                   id={id}
@@ -234,10 +263,12 @@ export function BuyVsRentPanel() {
               onClick={() => void createScenario()}
               disabled={!/^\d{4}-\d{2}-\d{2}$/.test(purchaseDate)}
             >
-              <Plus aria-hidden /> Create scenario
+              <Plus aria-hidden /> {t('Create scenario')}
             </Button>
             {created && (
-              <Notice className="w-full">Created “{created}”. Switch to Scenarios to compare it.</Notice>
+              <Notice className="w-full">
+                {t('Created “{created}”. Switch to Scenarios to compare it.', { created })}
+              </Notice>
             )}
           </CardContent>
         </Card>

@@ -3,6 +3,7 @@ import type { MonthTotals } from './cashflow';
 import type { NetWorth } from './networth';
 import { allocationShares } from './networth';
 import { ASSET_CLASS_LABELS } from './entities';
+import { t } from '@/i18n';
 
 export interface Alert {
   id: string;
@@ -28,7 +29,11 @@ export function computeAlerts(
     alerts.push({
       id: 'savings-rate',
       level: 'warning',
-      message: `Savings rate in ${last.month} was ${(last.regularSavingsRate * 100).toFixed(1)}%, below the ${(settings.targetSavingsRate * 100).toFixed(0)}% target.`,
+      message: t('Savings rate in {month} was {toFixed}%, below the {toFixed2}% target.', {
+        month: last.month,
+        toFixed: (last.regularSavingsRate * 100).toFixed(1),
+        toFixed2: (settings.targetSavingsRate * 100).toFixed(0),
+      }),
     });
   }
   if (nw) {
@@ -43,7 +48,14 @@ export function computeAlerts(
           alerts.push({
             id: `drift-${c}`,
             level: 'warning',
-            message: `${ASSET_CLASS_LABELS[c]} is ${(actual * 100).toFixed(0)}% of investable assets against a ${(target * 100).toFixed(0)}% target.`,
+            message: t(
+              '{ASSET_CLASS_LABELS} is {toFixed}% of investable assets against a {toFixed2}% target.',
+              {
+                ASSET_CLASS_LABELS: ASSET_CLASS_LABELS[c],
+                toFixed: (actual * 100).toFixed(0),
+                toFixed2: (target * 100).toFixed(0),
+              },
+            ),
           });
         }
       }
@@ -55,7 +67,10 @@ export function computeAlerts(
       alerts.push({
         id: 'emergency-fund',
         level: 'warning',
-        message: `Cash covers ${(cash / monthlySpending).toFixed(1)} months of spending, below the ${settings.emergencyFundMonths}-month emergency fund.`,
+        message: t(
+          'Cash covers {toFixed} months of spending, below the {emergencyFundMonths}-month emergency fund.',
+          { toFixed: (cash / monthlySpending).toFixed(1), emergencyFundMonths: settings.emergencyFundMonths },
+        ),
       });
     }
   }

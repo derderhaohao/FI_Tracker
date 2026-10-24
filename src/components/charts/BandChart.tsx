@@ -15,6 +15,7 @@ import { twdCompact } from '@/lib/format';
 import { ChartLegend, TooltipBox } from './ChartParts';
 import { axisTick, useChartTheme } from './theme';
 import { TECHNICAL_BAND_LABELS, type BandLabels } from './bandLabels';
+import { getLang, t } from '@/i18n';
 
 export interface BandRow {
   age: number;
@@ -67,7 +68,7 @@ export function BandChart({
   const lastAge = data.at(-1)?.age;
 
   return (
-    <figure aria-label="Range of outcomes by age" className="m-0">
+    <figure aria-label={t('Range of outcomes by age')} className="m-0">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <ChartLegend
           items={[
@@ -76,7 +77,7 @@ export function BandChart({
             ...(hasTypical ? [{ label: labels.typical, color: theme.axis, dashed: true }] : []),
             { label: labels.target, color: target, dashed: true },
             ...(firstOut !== undefined
-              ? [{ label: 'Money has run out in 1 in 10 futures', color: theme.critical, band: true }]
+              ? [{ label: t('Money has run out in 1 in 10 futures'), color: theme.critical, band: true }]
               : []),
           ]}
         />
@@ -86,7 +87,7 @@ export function BandChart({
             className="text-xs text-primary hover:underline"
             onClick={() => setShowAll((v) => !v)}
           >
-            {showAll ? `Zoom to age ${capAge}` : 'Show all'}
+            {showAll ? t('Zoom to age {capAge}', { capAge }) : t('Show all')}
           </button>
         )}
       </div>
@@ -109,7 +110,7 @@ export function BandChart({
               stroke={theme.axis}
               tickLine={false}
               axisLine={false}
-              width={64}
+              width={getLang() === 'zh-TW' ? 76 : 64}
               domain={capped ? [0, cap] : [0, 'auto']}
               allowDataOverflow={capped}
             />
@@ -147,7 +148,7 @@ export function BandChart({
                 const r = payload[0].payload as BandRow;
                 return (
                   <TooltipBox
-                    title={`Age ${r.age}`}
+                    title={t('Age {age}', { age: r.age })}
                     rows={[
                       { label: labels.high, value: twdCompact(r.p90) },
                       { label: labels.median, value: twdCompact(r.p50), color: c },

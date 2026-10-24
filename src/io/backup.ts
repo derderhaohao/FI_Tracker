@@ -17,6 +17,7 @@ import {
 import { today } from '@/domain/dates';
 import { db, SCHEMA_VERSION, STORE_NAMES, type FiDatabase, type StoreName } from '@/db/db';
 import { migrateBackup } from './migrations';
+import { t } from '@/i18n';
 
 /** Zod schema of the current backup file: `{ schemaVersion, exportedAt, data: { …all stores } }`. */
 export const backupDataSchema = z.object({
@@ -77,7 +78,7 @@ export function parseBackup(raw: unknown): ParseResult {
       .slice(0, 5)
       .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
       .join('; ');
-    return { ok: false, error: `The file is not a valid FI Tracker backup. ${issues}` };
+    return { ok: false, error: t('The file is not a valid FI Tracker backup. {issues}', { issues }) };
   }
   return { ok: true, file: result.data };
 }
@@ -86,7 +87,7 @@ export function parseBackupText(text: string): ParseResult {
   try {
     return parseBackup(JSON.parse(text));
   } catch {
-    return { ok: false, error: 'The file is not valid JSON.' };
+    return { ok: false, error: t('The file is not valid JSON.') };
   }
 }
 

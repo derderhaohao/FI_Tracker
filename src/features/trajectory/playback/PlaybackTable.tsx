@@ -10,6 +10,7 @@ import { toCsv } from '@/io/csv';
 import { downloadText } from '@/lib/download';
 import { twdCompact } from '@/lib/format';
 import { cn } from '@/lib/cn';
+import { t } from '@/i18n';
 
 function Change({ now, then, flash = false }: { now: number; then: number | undefined; flash?: boolean }) {
   if (then === undefined) return <span className="text-subtle">—</span>;
@@ -85,7 +86,7 @@ export const PlaybackTable = memo(function PlaybackTable({
       <div>
         <div className="mb-2 flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={() => setHistory(false)}>
-            Show the playhead month
+            {t('Show the playhead month')}
           </Button>
           <Button
             size="sm"
@@ -104,15 +105,15 @@ export const PlaybackTable = memo(function PlaybackTable({
               )
             }
           >
-            <Download aria-hidden /> Export CSV
+            <Download aria-hidden /> {t('Export CSV')}
           </Button>
         </div>
         <Table>
           <thead>
             <tr>
-              <th className="sticky left-0 bg-surface">Age</th>
-              <th className="text-right">Total</th>
-              <th className="text-right">Investments</th>
+              <th className="sticky left-0 bg-surface">{t('Age')}</th>
+              <th className="text-right">{t('Total')}</th>
+              <th className="text-right">{t('Investments')}</th>
               {keys.map((kk) => (
                 <th key={kk} className="text-right">
                   {kk.split('|')[1]}
@@ -144,17 +145,17 @@ export const PlaybackTable = memo(function PlaybackTable({
     <div>
       <div className="mb-2 flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={() => setHistory(true)}>
-          Show history
+          {t('Show history')}
         </Button>
       </div>
-      <Table aria-label="Asset groups at the playhead">
+      <Table aria-label={t('Asset groups at the playhead')}>
         <thead>
           <tr>
-            <th className="sticky left-0 bg-surface">Group</th>
-            <th className="text-right">Value now</th>
-            <th className="text-right">This month</th>
-            <th className="text-right">Since this event began</th>
-            <th className="text-right">Since today</th>
+            <th className="sticky left-0 bg-surface">{t('Group')}</th>
+            <th className="text-right">{t('Value now')}</th>
+            <th className="text-right">{t('This month')}</th>
+            <th className="text-right">{t('Since this event began')}</th>
+            <th className="text-right">{t('Since today')}</th>
           </tr>
         </thead>
         <tbody>
@@ -221,7 +222,7 @@ export const PlaybackTable = memo(function PlaybackTable({
             );
           })}
           <tr className="font-semibold">
-            <td className="sticky left-0 bg-surface">Total net worth</td>
+            <td className="sticky left-0 bg-surface">{t('Total net worth')}</td>
             <td className="text-right">{twdCompact(total)}</td>
             <td className="text-right">
               <Change flash now={total} then={m > 0 ? path.total[m - 1] * k(m - 1) : undefined} />
@@ -243,8 +244,9 @@ export const PlaybackTable = memo(function PlaybackTable({
         </tbody>
       </Table>
       <p className="mt-1 text-xs text-subtle">
-        ▲ ▼ mark the direction; bold marks a move over 5% in a month. Amounts in TWD; foreign holdings also
-        show their own currency.
+        {t(
+          '▲ ▼ mark the direction; bold marks a move over 5% in a month. Amounts in TWD; foreign holdings also show their own currency.',
+        )}
       </p>
     </div>
   );

@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/input';
 import { Notice } from '@/components/ui/misc';
 import { downloadText } from '@/lib/download';
+import { t } from '@/i18n';
 
 type TimingChoice = 'default' | 'next' | 'beforeStop' | 'afterStop' | 'at60' | 'year';
 
@@ -40,11 +41,12 @@ function timingFor(choice: TimingChoice, def: Timing, year: number): Timing {
   return def;
 }
 
-function timingLabel(t: Timing): string {
-  if (t.kind === 'inYears') return t.years <= 1 ? 'next year' : `in year ${t.years}`;
-  if (t.kind === 'afterStop') return 'just after you stop work';
-  if (t.kind === 'beforeStop') return 'a year before you stop work';
-  return `at ${t.age}`;
+function timingLabel(tm: Timing): string {
+  if (tm.kind === 'inYears')
+    return tm.years <= 1 ? t('next year') : t('in year {years}', { years: tm.years });
+  if (tm.kind === 'afterStop') return t('just after you stop work');
+  if (tm.kind === 'beforeStop') return t('a year before you stop work');
+  return t('at {age}', { age: tm.age });
 }
 
 async function saveSettings(changes: Parameters<typeof patch>[2]) {
@@ -81,9 +83,9 @@ export function StoryPicker({
   const at = (t: Timing) => resolveTiming(t, normal.startAge, normal.retireMonth, normal.months);
   const ageAt = (m: number) => Math.floor(normal.startAge + m / 12);
 
-  const addEvent = (id: string, t: Timing, sev: Severity) => {
+  const addEvent = (id: string, timing: Timing, sev: Severity) => {
     if (story.events.filter((e) => e.source === 'scheduled').length >= 3) {
-      setMessage('Up to 3 scheduled events; fire more live while it plays.');
+      setMessage(t('Up to 3 scheduled events; fire more live while it plays.'));
       return;
     }
     setMessage(undefined);
@@ -91,7 +93,7 @@ export function StoryPicker({
       ...story,
       events: [
         ...story.events,
-        { uid: newId(), eventId: id, start: at(t), severity: sev, source: 'scheduled' },
+        { uid: newId(), eventId: id, start: at(timing), severity: sev, source: 'scheduled' },
       ],
     });
   };
@@ -108,13 +110,13 @@ export function StoryPicker({
     };
     await saveSettings({ stories: [...stories, s] });
     setName('');
-    setMessage(`Saved “${s.name}”.`);
+    setMessage(t('Saved “{name}”.', { name: s.name }));
   };
 
   return (
     <div className="flex flex-col gap-4 text-sm">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Field label="Market backdrop">
+        <Field label={t('Market backdrop')}>
           {(id) => (
             <Select
               id={id}
@@ -129,7 +131,7 @@ export function StoryPicker({
             </Select>
           )}
         </Field>
-        <Field label="During events" hint="End card shows what each choice costs">
+        <Field label={t('During events')} hint={t('End card shows what each choice costs')}>
           {(id) => (
             <Select
               id={id}
@@ -147,14 +149,17 @@ export function StoryPicker({
                 });
               }}
             >
-              <option value="keep">Keep investing</option>
-              <option value="pause">Pause new investing</option>
-              <option value="sell0.2">Sell shares after a 20% fall, buy back on recovery</option>
-              <option value="sell0.3">Sell shares after a 30% fall, buy back on recovery</option>
+              <option value="keep">{t('Keep investing')}</option>
+              <option value="pause">{t('Pause new investing')}</option>
+              <option value="sell0.2">{t('Sell shares after a 20% fall, buy back on recovery')}</option>
+              <option value="sell0.3">{t('Sell shares after a 30% fall, buy back on recovery')}</option>
             </Select>
           )}
         </Field>
-        <Field label="Market noise" hint="Random monthly ups and downs; the same ID replays the same story">
+        <Field
+          label={t('Market noise')}
+          hint={t('Random monthly ups and downs; the same ID replays the same story')}
+        >
           {(id) => (
             <div className="flex items-center gap-2">
               <input
@@ -170,7 +175,7 @@ export function StoryPicker({
               />
               {story.noiseSeed !== undefined && (
                 <Input
-                  aria-label="Story ID"
+                  aria-label={t('Story ID')}
                   className="h-8 w-28"
                   inputMode="numeric"
                   value={story.noiseSeed}
@@ -187,9 +192,9 @@ export function StoryPicker({
       <p className="text-xs text-muted-foreground">{BACKDROPS.find((b) => b.id === story.backdrop)?.story}</p>
 
       <div>
-        <div className="mb-1 font-medium">Scheduled events (up to 3)</div>
+        <div className="mb-1 font-medium">{t('Scheduled events (up to 3)')}</div>
         {story.events.length === 0 ? (
-          <p className="text-xs text-muted-foreground">None yet: the story follows the backdrop.</p>
+          <p className="text-xs text-muted-foreground">{t('None yet: the story follows the backdrop.')}</p>
         ) : (
           <ul className="flex flex-col gap-1">
             {story.events.map((e) => {
@@ -198,10 +203,13 @@ export function StoryPicker({
                 <li key={e.uid} className="flex flex-wrap items-center gap-2 rounded-md border px-2 py-1">
                   <span className="font-medium">{d?.name ?? e.eventId}</span>
                   <span className="text-muted-foreground">
-                    starts at {ageAt(e.start)} · {SEVERITY_LABELS[e.severity]}
+                    {t('starts at {start} · {SEVERITY_LABELS}', {
+                      start: ageAt(e.start),
+                      SEVERITY_LABELS: SEVERITY_LABELS[e.severity],
+                    })}
                   </span>
                   <Input
-                    aria-label={`${d?.name} start month`}
+                    aria-label={t('{name} start month', { name: d?.name })}
                     className="h-7 w-24"
                     type="number"
                     min={0}
@@ -221,11 +229,11 @@ export function StoryPicker({
                       })
                     }
                   />
-                  <span className="text-xs text-subtle">months from now</span>
+                  <span className="text-xs text-subtle">{t('months from now')}</span>
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label={`Remove ${d?.name}`}
+                    aria-label={t('Remove {name}', { name: d?.name })}
                     className="ml-auto"
                     onClick={() =>
                       onChange({ ...story, events: story.events.filter((x) => x.uid !== e.uid) })
@@ -239,7 +247,7 @@ export function StoryPicker({
           </ul>
         )}
         <div className="mt-2 flex flex-wrap items-end gap-2">
-          <Field label="Event">
+          <Field label={t('Event')}>
             {(id) => (
               <Select id={id} className="w-60" value={eventId} onChange={(e) => setEventId(e.target.value)}>
                 {all.map((e) => (
@@ -251,20 +259,22 @@ export function StoryPicker({
               </Select>
             )}
           </Field>
-          <Field label="When">
+          <Field label={t('When')}>
             {(id) => (
               <Select id={id} value={choice} onChange={(e) => setChoice(e.target.value as TimingChoice)}>
-                <option value="default">Default ({def ? timingLabel(def.defaultStart) : ''})</option>
-                <option value="next">Next year</option>
-                <option value="year">In a chosen year</option>
-                <option value="beforeStop">A year before I stop work</option>
-                <option value="afterStop">Just after I stop work</option>
-                <option value="at60">At 60</option>
+                <option value="default">
+                  {t('Default ({v})', { v: def ? timingLabel(def.defaultStart) : '' })}
+                </option>
+                <option value="next">{t('Next year')}</option>
+                <option value="year">{t('In a chosen year')}</option>
+                <option value="beforeStop">{t('A year before I stop work')}</option>
+                <option value="afterStop">{t('Just after I stop work')}</option>
+                <option value="at60">{t('At 60')}</option>
               </Select>
             )}
           </Field>
           {choice === 'year' && (
-            <Field label="Year">
+            <Field label={t('Year')}>
               {(id) => (
                 <Input
                   id={id}
@@ -278,7 +288,7 @@ export function StoryPicker({
               )}
             </Field>
           )}
-          <Field label="Severity">
+          <Field label={t('Severity')}>
             {(id) => (
               <Select id={id} value={severity} onChange={(e) => setSeverity(e.target.value as Severity)}>
                 {(['mild', 'typical', 'severe'] as Severity[]).map((s) => (
@@ -294,18 +304,23 @@ export function StoryPicker({
             variant="outline"
             onClick={() => def && addEvent(def.id, timingFor(choice, def.defaultStart, year), severity)}
           >
-            <Plus aria-hidden /> Add
+            <Plus aria-hidden /> {t('Add')}
           </Button>
         </div>
         {def && (
           <p className="mt-1 text-xs text-muted-foreground">
-            {def.story} Hits: {impactText(def, severity)}.
-            {def.analogue ? ` Roughly like: ${def.analogue}.` : ''} A hypothetical stress story with
-            indicative numbers, not a forecast or probability.
+            {t(
+              '{story} Hits: {def}.{v} A hypothetical stress story with indicative numbers, not a forecast or probability.',
+              {
+                story: def.story,
+                def: impactText(def, severity),
+                v: def.analogue ? t(' Roughly like: {analogue}.', { analogue: def.analogue }) : '',
+              },
+            )}
           </p>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">One-tap stories:</span>
+          <span className="text-xs text-muted-foreground">{t('One-tap stories:')}</span>
           {COMBOS.map((c) => (
             <Button
               key={c.id}
@@ -332,12 +347,16 @@ export function StoryPicker({
       </div>
 
       <details>
-        <summary className="cursor-pointer font-medium">Saved stories ({stories.length})</summary>
+        <summary className="cursor-pointer font-medium">
+          {t('Saved stories ({length})', { length: stories.length })}
+        </summary>
         <div className="mt-2 flex flex-col gap-2">
           {stories.map((s) => (
             <div key={s.id} className="flex flex-wrap items-center gap-2">
               <span className="font-medium">{s.name}</span>
-              <span className="text-xs text-muted-foreground">{s.events.length} events</span>
+              <span className="text-xs text-muted-foreground">
+                {t('{length} events', { length: s.events.length })}
+              </span>
               <Button
                 size="sm"
                 variant="outline"
@@ -350,12 +369,12 @@ export function StoryPicker({
                   })
                 }
               >
-                Load
+                {t('Load')}
               </Button>
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label={`Share ${s.name}`}
+                aria-label={t('Share {name}', { name: s.name })}
                 onClick={() =>
                   downloadText(
                     `${s.name.replace(/[^\w-]+/g, '-')}.story.json`,
@@ -368,7 +387,7 @@ export function StoryPicker({
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label={`Delete ${s.name}`}
+                aria-label={t('Delete {name}', { name: s.name })}
                 onClick={() => void saveSettings({ stories: stories.filter((x) => x.id !== s.id) })}
               >
                 <Trash2 />
@@ -376,19 +395,19 @@ export function StoryPicker({
             </div>
           ))}
           <div className="flex flex-wrap items-end gap-2">
-            <Field label="Name">
+            <Field label={t('Name')}>
               {(id) => (
                 <Input
                   id={id}
                   className="h-8 w-56"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="My blockade test"
+                  placeholder={t('My blockade test')}
                 />
               )}
             </Field>
             <Button size="sm" disabled={!name.trim()} onClick={() => void save(story.events, name)}>
-              Save this story
+              {t('Save this story')}
             </Button>
             <Button
               size="sm"
@@ -396,17 +415,17 @@ export function StoryPicker({
               disabled={!name.trim() || liveEvents.length === 0}
               onClick={() => void save([...story.events, ...liveEvents], name)}
             >
-              Save this run (with live events)
+              {t('Save this run (with live events)')}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => fileRef.current?.click()}>
-              <Upload aria-hidden /> Import a story
+              <Upload aria-hidden /> {t('Import a story')}
             </Button>
             <input
               ref={fileRef}
               type="file"
               accept=".json,application/json"
               className="hidden"
-              aria-label="Story file"
+              aria-label={t('Story file')}
               onChange={async (e) => {
                 const f = e.target.files?.[0];
                 e.target.value = '';
@@ -414,23 +433,27 @@ export function StoryPicker({
                 try {
                   const raw = JSON.parse(await f.text()) as { story?: unknown };
                   const parsed = storySchema.safeParse(raw.story ?? raw);
-                  if (!parsed.success) throw new Error('not a story file');
+                  if (!parsed.success) throw new Error(t('not a story file'));
                   await saveSettings({ stories: [...stories, { ...parsed.data, id: newId() }] });
-                  setMessage(`Imported “${parsed.data.name}”.`);
+                  setMessage(t('Imported “{name}”.', { name: parsed.data.name }));
                 } catch (err) {
-                  setMessage(`Could not import: ${err instanceof Error ? err.message : String(err)}`);
+                  setMessage(
+                    t('Could not import: {v}', { v: err instanceof Error ? err.message : String(err) }),
+                  );
                 }
               }}
             />
           </div>
-          <p className="text-xs text-subtle">Story files hold events and timing only, never balances.</p>
+          <p className="text-xs text-subtle">
+            {t('Story files hold events and timing only, never balances.')}
+          </p>
         </div>
       </details>
 
       <CustomEventBuilder custom={custom} />
 
       <details>
-        <summary className="cursor-pointer font-medium">Playback settings</summary>
+        <summary className="cursor-pointer font-medium">{t('Playback settings')}</summary>
         <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className="flex items-center gap-2">
             <input
@@ -438,7 +461,7 @@ export function StoryPicker({
               checked={playback.autoPause}
               onChange={(e) => void saveSettings({ playback: { ...playback, autoPause: e.target.checked } })}
             />
-            Pause 3 s at each event
+            {t('Pause 3 s at each event')}
           </label>
           <label className="flex items-center gap-2">
             <input
@@ -448,9 +471,9 @@ export function StoryPicker({
                 void saveSettings({ playback: { ...playback, pauseOnFire: e.target.checked } })
               }
             />
-            Pause when I fire an event
+            {t('Pause when I fire an event')}
           </label>
-          <Field label="勞退 guaranteed minimum / year" hint="Applied when the balance unlocks">
+          <Field label={t('勞退 guaranteed minimum / year')} hint={t('Applied when the balance unlocks')}>
             {(id) => (
               <Input
                 id={id}
@@ -465,7 +488,7 @@ export function StoryPicker({
               />
             )}
           </Field>
-          <Field label="勞退 fund mix (TW shares / global shares / bonds, %)">
+          <Field label={t('勞退 fund mix (TW shares / global shares / bonds, %)')}>
             {(id) => (
               <Input
                 id={id}
@@ -512,7 +535,9 @@ function CustomEventBuilder({ custom }: { custom: readonly CustomEvent[] }) {
     num('p') <= 100;
   return (
     <details>
-      <summary className="cursor-pointer font-medium">Build your own event ({custom.length})</summary>
+      <summary className="cursor-pointer font-medium">
+        {t('Build your own event ({length})', { length: custom.length })}
+      </summary>
       <div className="mt-2 flex flex-col gap-2">
         {custom.map((c) => (
           <div key={c.id} className="flex items-center gap-2">
@@ -521,7 +546,7 @@ function CustomEventBuilder({ custom }: { custom: readonly CustomEvent[] }) {
             <Button
               size="icon"
               variant="ghost"
-              aria-label={`Delete ${c.name}`}
+              aria-label={t('Delete {name}', { name: c.name })}
               onClick={() => void saveSettings({ customEvents: custom.filter((x) => x.id !== c.id) })}
             >
               <Trash2 />
@@ -529,13 +554,13 @@ function CustomEventBuilder({ custom }: { custom: readonly CustomEvent[] }) {
           </div>
         ))}
         <div className="flex flex-wrap items-end gap-2">
-          <Field label="Market">
+          <Field label={t('Market')}>
             {(id) => (
               <Select id={id} value={factor} onChange={(e) => setFactor(e.target.value as Factor)}>
                 {FACTORS.map((f) => (
                   <option key={f} value={f}>
                     {FACTOR_LABELS[f]}
-                    {f === 'usd' || f === 'jpy' ? ' (vs TWD)' : ''}
+                    {f === 'usd' || f === 'jpy' ? t(' (vs TWD)') : ''}
                   </option>
                 ))}
               </Select>
@@ -543,11 +568,11 @@ function CustomEventBuilder({ custom }: { custom: readonly CustomEvent[] }) {
           </Field>
           {(
             [
-              ['d', 'Fall % (− = rise)'],
-              ['a', 'Over months'],
-              ['h', 'Stays low, months'],
-              ['r', 'Recovers over, months'],
-              ['p', 'Never comes back, %'],
+              ['d', t('Fall % (− = rise)')],
+              ['a', t('Over months')],
+              ['h', t('Stays low, months')],
+              ['r', t('Recovers over, months')],
+              ['p', t('Never comes back, %')],
             ] as const
           ).map(([k, label]) => (
             <Field key={k} label={label}>
@@ -573,7 +598,7 @@ function CustomEventBuilder({ custom }: { custom: readonly CustomEvent[] }) {
               ])
             }
           >
-            <Plus aria-hidden /> Add market
+            <Plus aria-hidden /> {t('Add market')}
           </Button>
         </div>
         {shocks.length > 0 && (
@@ -582,7 +607,7 @@ function CustomEventBuilder({ custom }: { custom: readonly CustomEvent[] }) {
           </p>
         )}
         <div className="flex flex-wrap items-end gap-2">
-          <Field label="Event name">
+          <Field label={t('Event name')}>
             {(id) => (
               <Input id={id} className="h-8 w-56" value={name} onChange={(e) => setName(e.target.value)} />
             )}
@@ -594,14 +619,14 @@ function CustomEventBuilder({ custom }: { custom: readonly CustomEvent[] }) {
               void saveSettings({
                 customEvents: [
                   ...custom,
-                  { id: `custom:${newId()}`, name: name.trim(), story: 'Your own event.', shocks },
+                  { id: `custom:${newId()}`, name: name.trim(), story: t('Your own event.'), shocks },
                 ],
               });
               setName('');
               setShocks([]);
             }}
           >
-            Save event
+            {t('Save event')}
           </Button>
         </div>
       </div>

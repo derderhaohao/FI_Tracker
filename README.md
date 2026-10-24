@@ -26,6 +26,13 @@ built in as editable settings.
 | `#/reviews`    | Reviews      | Checklists, plan vs. actual, review log                                                                                                                                 |
 | `#/settings`   | Settings     | Assumptions, Taiwan settings, categories, backup / restore, encrypted export, auto-save, demo data                                                                      |
 
+### Language
+
+The app is in English or Taiwan Traditional Chinese (繁體中文). Pick one with the **Language · 語言**
+switch in the sidebar, the phone's More menu, Settings, or the welcome screen. The choice is kept in
+this browser; the first visit follows the browser language. In Chinese, large amounts are shown in
+萬 and 億 and dates as 2037年11月.
+
 ## Getting started
 
 Requires Node 22.
@@ -82,6 +89,7 @@ src/
   db/           Dexie schema (v1), repositories, first-run defaults
   io/           JSON backup + migrations, CSV export, demo data
   workers/      Monte Carlo Web Worker (Comlink)
+  i18n/         t() / tn(), the language switch state, and the zh-TW catalog
   components/   shared UI, money inputs, charts
 tests/e2e/      Playwright specs
 sample-data/    fictional demo data
@@ -92,6 +100,11 @@ The deterministic projection (the "typical path") and Monte Carlo share one year
 median (compounded) return, so it runs through the middle of the simulated futures; with volatility
 set to zero the two are identical, and Monte Carlo reproduces the typical path exactly (tested, and
 shown as a reference check in the Strategy Lab).
+
+Text is written in English inside `t('…')` (or `tn()` for singular/plural), with `{name}`
+placeholders, and translated through `src/i18n/zh-TW.ts`. A unit test fails when a `t()` text in the
+code has no Traditional Chinese entry, so add one alongside any new text. Switching language reloads
+the page so every label, chart and memoised result is rebuilt.
 
 ## Deployment (GitHub Pages)
 

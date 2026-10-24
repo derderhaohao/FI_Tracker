@@ -47,6 +47,7 @@ import type { CustomEvent } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/cn';
+import { t } from '@/i18n';
 
 export const ICONS: Record<string, LucideIcon> = {
   Activity,
@@ -83,9 +84,9 @@ export const ICONS: Record<string, LucideIcon> = {
 };
 
 const SECTIONS: { key: 'good' | 'bad' | 'personal'; label: string }[] = [
-  { key: 'bad', label: 'Bad' },
-  { key: 'good', label: 'Good' },
-  { key: 'personal', label: 'Personal' },
+  { key: 'bad', label: t('Bad') },
+  { key: 'good', label: t('Good') },
+  { key: 'personal', label: t('Personal') },
 ];
 
 /** The live event palette (LE-1 to LE-9, LE-13, LE-14). */
@@ -123,8 +124,12 @@ export function EventPalette({
         <button
           type="button"
           disabled={disabled || left > 0}
-          aria-label={`Fire ${e.name}${n ? ` (key ${n})` : ''}: ${impactText(e)}`}
-          title="Tap to fire at the playhead. Right-click or hold for severity."
+          aria-label={t('Fire {name}{v}: {e}', {
+            name: e.name,
+            v: n ? t(' (key {n})', { n }) : '',
+            e: impactText(e),
+          })}
+          title={t('Tap to fire at the playhead. Right-click or hold for severity.')}
           className={cn(
             'flex h-full w-full flex-col gap-0.5 rounded-md border p-2 pr-6 text-left text-xs hover:bg-surface-2 disabled:opacity-50',
             e.palette === 'good'
@@ -150,12 +155,12 @@ export function EventPalette({
             {n && <kbd className="ml-auto rounded border px-1 text-[10px] text-subtle">{n}</kbd>}
           </span>
           <span className="text-muted-foreground">
-            {left > 0 ? `Active · ${left} months left` : impactText(e)}
+            {left > 0 ? t('Active · {left} months left', { left }) : impactText(e)}
           </span>
         </button>
         <button
           type="button"
-          aria-label={fav ? `Unpin ${e.name}` : `Pin ${e.name}`}
+          aria-label={fav ? t('Unpin {name}', { name: e.name }) : t('Pin {name}', { name: e.name })}
           aria-pressed={fav}
           className="absolute top-1 right-1 rounded p-0.5 text-subtle hover:text-primary"
           onClick={() => onToggleFavourite(e.id)}
@@ -186,7 +191,7 @@ export function EventPalette({
               className="block w-full px-2 py-1 text-left text-xs text-subtle"
               onClick={() => setMenu(undefined)}
             >
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
         )}
@@ -195,17 +200,17 @@ export function EventPalette({
   };
 
   return (
-    <section aria-label="Event palette" className="flex flex-col gap-3">
+    <section aria-label={t('Event palette')} className="flex flex-col gap-3">
       <Input
-        aria-label="Search events"
-        placeholder="Search events"
+        aria-label={t('Search events')}
+        placeholder={t('Search events')}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         className="h-8"
       />
       {favs.length > 0 && !q && (
         <div>
-          <h3 className="mb-1 text-xs font-semibold text-muted-foreground uppercase">Pinned</h3>
+          <h3 className="mb-1 text-xs font-semibold text-muted-foreground uppercase">{t('Pinned')}</h3>
           <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">{favs.map((e, i) => tile(e, i + 1))}</div>
         </div>
       )}
@@ -222,9 +227,9 @@ export function EventPalette({
       <div className="flex flex-wrap items-end gap-2 rounded-md border p-2 text-xs">
         <Banknote className="size-4" aria-hidden />
         <label className="flex flex-col gap-0.5">
-          {LUMP_EVENT.name} (− = cost)
+          {t('{name} (− = cost)', { name: LUMP_EVENT.name })}
           <Input
-            aria-label="One-off amount"
+            aria-label={t('One-off amount')}
             inputMode="decimal"
             className="h-8 w-32 text-right"
             value={lump}
@@ -241,11 +246,11 @@ export function EventPalette({
           }
           onClick={() => onFire('lump', 'typical', Number(lump.replace(/,/g, '')))}
         >
-          Add at the playhead
+          {t('Add at the playhead')}
         </Button>
       </div>
       <p className="text-[11px] text-subtle">
-        Hypothetical stress stories with indicative numbers, not forecasts or probabilities.
+        {t('Hypothetical stress stories with indicative numbers, not forecasts or probabilities.')}
       </p>
     </section>
   );

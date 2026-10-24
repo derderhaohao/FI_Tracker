@@ -7,6 +7,7 @@ import { prepare, runProjection, type ProjectionInput, type ProjectionResult } f
 import { assumptionSetFor, type AppData } from '@/app/data';
 import { dateAfterYears } from '@/lib/format';
 import { chanceDots, lastsSentence, planStatus, STATUS_LABELS, type PlanStatus } from '@/domain/planStatus';
+import { t, tn } from '@/i18n';
 
 /**
  * Pure helpers behind the Strategy Lab's plain-language view (PRD R3–R6): the verdict,
@@ -16,7 +17,7 @@ import { chanceDots, lastsSentence, planStatus, STATUS_LABELS, type PlanStatus }
 
 /** Id of the built-in row that always mirrors live data. */
 export const TODAY_ID = '__today';
-export const TODAY_NAME = 'Your plan today';
+export const TODAY_NAME = t('Your plan today');
 
 export interface LabRow {
   id: string;
@@ -103,10 +104,12 @@ export function verdict(
   const date = stopDate(input, result, asOfDate);
   const stop =
     age === undefined
-      ? `On the typical path your investments do not reach your target before ${input.horizonAge}.`
+      ? t('On the typical path your investments do not reach your target before {horizonAge}.', {
+          horizonAge: input.horizonAge,
+        })
       : input.retireAtAge !== undefined
-        ? `You plan to stop working at ${age} (${date}).`
-        : `You could stop working at ${age} (${date}).`;
+        ? t('You plan to stop working at {age} ({date}).', { age, date })
+        : t('You could stop working at {age} ({date}).', { age, date });
   if (!mc) return { stop };
   const lasts = lastsSentence(mc.successRate, input.horizonAge, mc.depletionAgeP50);
   let reach: string | undefined;
@@ -114,14 +117,12 @@ export function verdict(
     if (mc.fiRate >= 0.95)
       reach =
         mc.successRate < 0.95
-          ? 'You reach your target in nearly every simulation; the risk comes after you stop.'
-          : 'You reach your target in nearly every simulation.';
-    else reach = `You reach your target in ${chanceDots(mc.fiRate)} of 10 simulations.`;
+          ? t('You reach your target in nearly every simulation; the risk comes after you stop.')
+          : t('You reach your target in nearly every simulation.');
+    else reach = t('You reach your target in {fiRate} of 10 simulations.', { fiRate: chanceDots(mc.fiRate) });
   }
   return { stop, lasts, reach, tier: planStatus(mc.successRate) };
 }
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 export interface Difference {
   /** "+4 yrs work · +6 pts" */
@@ -145,7 +146,19 @@ function drivers(base: LabRow, other: LabRow): Driver[] {
     const more = b > a;
     out.push({
       direction: more ? 1 : -1,
-      text: `you ${more ? `work ${plural(b - a, 'more year')}` : `stop ${plural(a - b, 'year')} earlier`}, so the money must last ${h - b} years instead of ${h - a}`,
+      text: more
+        ? tn(
+            b - a,
+            'you work 1 more year, so the money must last {last} years instead of {was}',
+            'you work {n} more years, so the money must last {last} years instead of {was}',
+            { last: h - b, was: h - a },
+          )
+        : tn(
+            a - b,
+            'you stop 1 year earlier, so the money must last {last} years instead of {was}',
+            'you stop {n} years earlier, so the money must last {last} years instead of {was}',
+            { last: h - b, was: h - a },
+          ),
     });
   }
   const fa = base.input.fiSpending;
@@ -154,19 +167,24 @@ function drivers(base: LabRow, other: LabRow): Driver[] {
     const p = Math.round((Math.abs(fb - fa) / fa) * 100);
     out.push({
       direction: fb < fa ? 1 : -1,
-      text: `you spend ${p}% ${fb < fa ? 'less' : 'more'} each year after you stop`,
+      text:
+        fb < fa
+          ? t('you spend {p}% less each year after you stop', { p })
+          : t('you spend {p}% more each year after you stop', { p }),
     });
   }
   for (const st of other.input.stress ?? [])
     if (!(base.input.stress ?? []).some((b) => b.name === st.name))
       out.push({
         direction: st.shocks.some((x) => x.d > 0) || (st.lump ?? 0) < 0 || (st.pay?.factor ?? 1) < 1 ? -1 : 1,
-        text: `of the “${st.name}” story`,
+        text: t('of the “{name}” story', { name: st.name }),
       });
   if (other.input.crash && !base.input.crash)
     out.push({
       direction: -1,
-      text: `markets fall ${Math.round(other.input.crash.drop * 100)}% just after you stop, when your savings are largest`,
+      text: t('markets fall {round}% just after you stop, when your savings are largest', {
+        round: Math.round(other.input.crash.drop * 100),
+      }),
     });
   const pa = base.input.barista?.annual ?? 0;
   const pb = other.input.barista?.annual ?? 0;
@@ -175,37 +193,43 @@ function drivers(base: LabRow, other: LabRow): Driver[] {
       direction: pb > pa ? 1 : -1,
       text:
         pb > pa
-          ? 'part-time income covers part of your spending after you stop'
-          : 'there is less part-time income after you stop',
+          ? t('part-time income covers part of your spending after you stop')
+          : t('there is less part-time income after you stop'),
     });
   const ea = base.input.events.reduce((s, e) => s + e.amount, 0);
   const eb = other.input.events.reduce((s, e) => s + e.amount, 0);
   if (ea !== eb)
     out.push({
       direction: eb > ea ? 1 : -1,
-      text: eb < ea ? 'of the one-off costs' : 'of the one-off money coming in',
+      text: eb < ea ? t('of the one-off costs') : t('of the one-off money coming in'),
     });
   const sa = annualSavings(base.input);
   const sb = annualSavings(other.input);
   if (Math.abs(sb - sa) >= 12_000)
     out.push({
       direction: sb > sa ? 1 : -1,
-      text: `you save ${sb > sa ? 'more' : 'less'} each year while working`,
+      text: sb > sa ? t('you save more each year while working') : t('you save less each year while working'),
     });
   if (other.input.swr !== base.input.swr)
     out.push({
       direction: other.input.swr < base.input.swr ? 1 : -1,
-      text: `your yearly draw rate is ${(other.input.swr * 100).toFixed(1)}% instead of ${(base.input.swr * 100).toFixed(1)}%`,
+      text: t('your yearly draw rate is {toFixed}% instead of {toFixed2}%', {
+        toFixed: (other.input.swr * 100).toFixed(1),
+        toFixed2: (base.input.swr * 100).toFixed(1),
+      }),
     });
   if (other.input.returnShift !== base.input.returnShift)
     out.push({
       direction: other.input.returnShift > base.input.returnShift ? 1 : -1,
-      text: `the scenario assumes ${other.input.returnShift > base.input.returnShift ? 'higher' : 'lower'} market returns`,
+      text:
+        other.input.returnShift > base.input.returnShift
+          ? t('the scenario assumes higher market returns')
+          : t('the scenario assumes lower market returns'),
     });
   if (other.input.withdrawalRule.kind !== base.input.withdrawalRule.kind)
-    out.push({ direction: 1, text: 'spending adjusts to markets after you stop' });
+    out.push({ direction: 1, text: t('spending adjusts to markets after you stop') });
   if (JSON.stringify(other.input.allocation) !== JSON.stringify(base.input.allocation))
-    out.push({ direction: 1, text: 'your investment mix is different' });
+    out.push({ direction: 1, text: t('your investment mix is different') });
   return out;
 }
 
@@ -223,21 +247,28 @@ export function explainDifference(
   const a = stopAge(base.result);
   const b = stopAge(other.result);
   if (a !== undefined && b !== undefined && a !== b)
-    parts.push(`${b > a ? '+' : '−'}${plural(Math.abs(b - a), 'yr')} work`);
+    parts.push(tn(Math.abs(b - a), '{sign}1 yr work', '{sign}{n} yrs work', { sign: b > a ? '+' : '−' }));
   let points: number | undefined;
   if (baseChance !== undefined && otherChance !== undefined) {
     points = Math.round((otherChance - baseChance) * 100);
-    if (points !== 0) parts.push(`${points > 0 ? '+' : '−'}${Math.abs(points)} pts`);
+    if (points !== 0) parts.push(t('{sign}{n} pts', { sign: points > 0 ? '+' : '−', n: Math.abs(points) }));
   }
-  const short = parts.length ? parts.join(' · ') : 'Same';
+  const short = parts.length ? parts.join(' · ') : t('Same');
   if (points === undefined || Math.abs(points) < 5) return { short };
   const direction = points > 0 ? 1 : -1;
   const all = drivers(base, other);
   const main = all.find((d) => d.direction === direction);
-  const word = direction > 0 ? 'Safer' : 'Riskier';
-  if (!main) return { short, cause: `${word} because of the combined changes.` };
+  const word = direction > 0 ? t('Safer') : t('Riskier');
+  if (!main) return { short, cause: t('{word} because of the combined changes.', { word }) };
   const against = all.find((d) => d.direction !== direction);
-  const cause = `${word} mainly because ${main.text}${against && all.indexOf(against) < all.indexOf(main) ? `, even though ${against.text}` : ''}.`;
+  const cause = t('{word} mainly because {text}{v}.', {
+    word,
+    text: main.text,
+    v:
+      against && all.indexOf(against) < all.indexOf(main)
+        ? t(', even though {text}', { text: against.text })
+        : '',
+  });
   return { short, cause };
 }
 
@@ -297,16 +328,23 @@ export function whyLensesDiffer(
   const fmt = (v: number) => `${(v * 100).toFixed(1)}%`;
   const years = `${history[0].year}–${history.at(-1)!.year}`;
   if (Math.abs(historical - assumed) >= 0.005) {
-    const kinder = historical > assumed ? 'Past markets look kinder' : 'Simulated futures look kinder';
+    const kinder = historical > assumed ? t('Past markets look kinder') : t('Simulated futures look kinder');
     const cause =
       historical > assumed
-        ? 'Simulated futures use your assumptions, so they grow less.'
-        : 'Your assumptions are more optimistic than history.';
-    return `${kinder} because of returns: over ${years} your mix grew about ${fmt(historical)} a year after inflation, while your assumptions give it about ${fmt(assumed)} in a typical year. ${cause}`;
+        ? t('Simulated futures use your assumptions, so they grow less.')
+        : t('Your assumptions are more optimistic than history.');
+    return t(
+      '{kinder} because of returns: over {years} your mix grew about {historical} a year after inflation, while your assumptions give it about {assumed} in a typical year. {cause}',
+      { kinder, years, historical: fmt(historical), assumed: fmt(assumed), cause },
+    );
   }
   return gap > 0
-    ? 'Returns are similar in both, but the random sequences in the simulations include more long bad stretches than past markets had.'
-    : 'Returns are similar in both, but past markets had longer bad stretches (such as the 1960s–70s) than most simulated futures.';
+    ? t(
+        'Returns are similar in both, but the random sequences in the simulations include more long bad stretches than past markets had.',
+      )
+    : t(
+        'Returns are similar in both, but past markets had longer bad stretches (such as the 1960s–70s) than most simulated futures.',
+      );
 }
 
 /**
@@ -318,21 +356,30 @@ export function nameCheck(name: string, today: LabRow, row: LabRow): string | un
   const todayRate = savingsRateOf(today.input);
   const pctText = (v: number) => `${(v * 100).toFixed(1).replace(/\.0$/, '')}%`;
   if (o?.savingsRate !== undefined && todayRate !== undefined && o.savingsRate < todayRate - 0.0005)
-    return `${pctText(o.savingsRate)} is less than you save today (${pctText(todayRate)}), so this scenario saves less, not more.`;
+    return t(
+      '{savingsRate} is less than you save today ({todayRate}), so this scenario saves less, not more.',
+      { savingsRate: pctText(o.savingsRate), todayRate: pctText(todayRate) },
+    );
   const n = name.toLowerCase();
   const sa = annualSavings(today.input);
   const sb = annualSavings(row.input);
   if (/sav/.test(n) && /more|higher|increase|raise|extra|boost/.test(n) && sb < sa - 1)
-    return 'The name says save more, but this scenario saves less than you do today.';
+    return t('The name says save more, but this scenario saves less than you do today.');
   if (/sav/.test(n) && /less|lower|cut|reduce/.test(n) && sb > sa + 1)
-    return 'The name says save less, but this scenario saves more than you do today.';
+    return t('The name says save less, but this scenario saves more than you do today.');
   const a = stopAge(today.result);
   const b = stopAge(row.result);
   if (a !== undefined && b !== undefined) {
     if (/(retire|stop).*(earl)/.test(n) && b > a)
-      return `The name says stop earlier, but this scenario stops at ${b}, later than today's ${a}.`;
+      return t("The name says stop earlier, but this scenario stops at {b}, later than today's {a}.", {
+        b,
+        a,
+      });
     if (/(retire|stop).*(later|late)/.test(n) && b < a)
-      return `The name says stop later, but this scenario stops at ${b}, earlier than today's ${a}.`;
+      return t("The name says stop later, but this scenario stops at {b}, earlier than today's {a}.", {
+        b,
+        a,
+      });
   }
   return undefined;
 }

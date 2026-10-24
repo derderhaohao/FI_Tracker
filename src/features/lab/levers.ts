@@ -2,6 +2,7 @@ import type { ScenarioLevers } from '@/domain/entities';
 import { toMinor } from '@/domain/money';
 import { stopAge, type LabRow } from './model';
 import { shortMoney } from './templates';
+import { t } from '@/i18n';
 
 /**
  * "What would make it safer" (PRD R13): quick variants of one scenario, each a single
@@ -26,13 +27,18 @@ export function saferVariants(row: LabRow): Variant[] {
   if (age !== undefined) {
     for (const extra of [1, 2]) {
       if (age + extra >= row.input.horizonAge) continue;
-      const years = `${extra} more year${extra > 1 ? 's' : ''}`;
+      const years = t('{extra} more year{v}', { extra, v: extra > 1 ? 's' : '' });
       out.push({
         key: `work${extra}`,
         label: adaptive
-          ? `Keep working ${years} after reaching your target (typically stop at ${age + extra})`
-          : `Work ${years} (stop at ${age + extra})`,
-        name: named(adaptive ? `work ${years} after the target` : `stop at ${age + extra}`),
+          ? t('Keep working {years} after reaching your target (typically stop at {v})', {
+              years,
+              v: age + extra,
+            })
+          : t('Work {years} (stop at {v})', { years, v: age + extra }),
+        name: named(
+          adaptive ? t('work {years} after the target', { years }) : t('stop at {v}', { v: age + extra }),
+        ),
         overrides: adaptive
           ? { ...base, workExtraYears: (base.workExtraYears ?? 0) + extra }
           : { ...base, targetFiAge: age + extra },
@@ -43,8 +49,8 @@ export function saferVariants(row: LabRow): Variant[] {
   for (const cut of [5, 10]) {
     out.push({
       key: `spend${cut}`,
-      label: `Spend ${cut}% less after you stop${adaptive ? ' (same stop date)' : ''}`,
-      name: named(`spend ${cut}% less after stopping`),
+      label: t('Spend {cut}% less after you stop{v}', { cut, v: adaptive ? t(' (same stop date)') : '' }),
+      name: named(t('spend {cut}% less after stopping', { cut })),
       overrides: {
         ...base,
         fiSpendingMinor: toMinor(Math.round(row.input.fiSpending * (1 - cut / 100))),
@@ -57,16 +63,20 @@ export function saferVariants(row: LabRow): Variant[] {
   if (!row.input.barista && (age === undefined || age < untilAge)) {
     out.push({
       key: 'parttime',
-      label: `Part-time income of ${shortMoney(annual / 12)} a month until ${untilAge}${adaptive ? ' (same stop date)' : ''}`,
-      name: named(`part-time to ${untilAge}`),
+      label: t('Part-time income of {shortMoney} a month until {untilAge}{v}', {
+        shortMoney: shortMoney(annual / 12),
+        untilAge,
+        v: adaptive ? t(' (same stop date)') : '',
+      }),
+      name: named(t('part-time to {untilAge}', { untilAge })),
       overrides: { ...base, baristaIncome: { annualMinor: toMinor(annual), untilAge, inTarget: false } },
     });
   }
   if (row.input.swr > 0.035 + 1e-9) {
     out.push({
       key: 'swr',
-      label: 'Use a 3.5% yearly draw rate (a bigger target)',
-      name: named(`3.5% draw rate`),
+      label: t('Use a 3.5% yearly draw rate (a bigger target)'),
+      name: named(t('3.5% draw rate')),
       overrides: { ...base, swr: 0.035 },
     });
   }

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Select } from '@/components/ui/input';
 import { Badge, Notice, Table } from '@/components/ui/misc';
+import { t } from '@/i18n';
 
 interface LoadedFile {
   name: string;
@@ -64,7 +65,7 @@ function FilePicker({ onLoad, label }: { onLoad: (f: LoadedFile) => void; label:
           type="file"
           accept=".csv,text/csv,text/plain"
           className="sr-only"
-          aria-label="CSV file"
+          aria-label={t('CSV file')}
           onChange={async (e) => {
             const file = e.target.files?.[0];
             e.target.value = '';
@@ -72,7 +73,7 @@ function FilePicker({ onLoad, label }: { onLoad: (f: LoadedFile) => void; label:
             let text = await file.text();
             if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
             const rows = parseCsv(text);
-            if (rows.length === 0) setError('The file has no rows.');
+            if (rows.length === 0) setError(t('The file has no rows.'));
             else {
               setError(undefined);
               onLoad({ name: file.name, rows });
@@ -82,8 +83,9 @@ function FilePicker({ onLoad, label }: { onLoad: (f: LoadedFile) => void; label:
       </label>
       {error && <p className="mt-2 text-sm text-critical">{error}</p>}
       <p className="mt-2 text-xs text-subtle">
-        Export a CSV from your bank or broker. Files stay in this browser. Big5-encoded files must be saved as
-        UTF-8 first.
+        {t(
+          'Export a CSV from your bank or broker. Files stay in this browser. Big5-encoded files must be saved as UTF-8 first.',
+        )}
       </p>
     </div>
   );
@@ -110,10 +112,10 @@ function ColumnSelect({
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
         >
-          <option value="">{optional ? '— none —' : '— choose —'}</option>
+          <option value="">{optional ? t('— none —') : t('— choose —')}</option>
           {headers.map((h, i) => (
             <option key={i} value={i}>
-              {h || `Column ${i + 1}`}
+              {h || t('Column {v}', { v: i + 1 })}
             </option>
           ))}
         </Select>
@@ -139,7 +141,7 @@ function Shell({
         title={title}
         description={description}
         actions={
-          <Button size="icon" variant="ghost" aria-label="Close import" onClick={onClose}>
+          <Button size="icon" variant="ghost" aria-label={t('Close import')} onClick={onClose}>
             <X />
           </Button>
         }
@@ -152,7 +154,7 @@ function Shell({
 function headersOf(file: LoadedFile, hasHeader: boolean): string[] {
   const width = Math.max(...file.rows.slice(0, 20).map((r) => r.length));
   return Array.from({ length: width }, (_, i) =>
-    hasHeader ? (file.rows[0][i] ?? '').trim() : `Column ${i + 1}`,
+    hasHeader ? (file.rows[0][i] ?? '').trim() : t('Column {v}', { v: i + 1 }),
   );
 }
 
@@ -194,14 +196,14 @@ export function TransactionImport({ onClose }: { onClose: () => void }) {
   const [file, setFile] = useState<LoadedFile>();
   return (
     <Shell
-      title="Import transactions from CSV"
-      description="Each row becomes a dated cash-flow entry. Rows already imported are skipped."
+      title={t('Import transactions from CSV')}
+      description={t('Each row becomes a dated cash-flow entry. Rows already imported are skipped.')}
       onClose={onClose}
     >
       {file ? (
         <TransactionMapper file={file} onReset={() => setFile(undefined)} onClose={onClose} />
       ) : (
-        <FilePicker label="Choose CSV file" onLoad={setFile} />
+        <FilePicker label={t('Choose CSV file')} onLoad={setFile} />
       )}
     </Shell>
   );
@@ -281,13 +283,19 @@ function TransactionMapper({
         note: r.note,
       })),
     );
-    setDone(`Imported ${fresh.length} transaction${fresh.length === 1 ? '' : 's'} from ${file.name}.`);
+    setDone(
+      t('Imported {length} transaction{v} from {name}.', {
+        length: fresh.length,
+        v: fresh.length === 1 ? '' : 's',
+        name: file.name,
+      }),
+    );
   };
 
   if (done) {
     return (
       <>
-        <Notice>{done} Recategorise them in the transaction list below.</Notice>
+        <Notice>{t('{done} Recategorise them in the transaction list below.', { done })}</Notice>
         <div className="flex gap-2">
           {settings.cashFlowMode === 'monthly' && (
             <Button
@@ -295,14 +303,14 @@ function TransactionMapper({
                 void patch(db.settings, 'singleton', { cashFlowMode: 'transactions' }).then(onClose)
               }
             >
-              Switch to transaction view
+              {t('Switch to transaction view')}
             </Button>
           )}
           <Button variant="outline" onClick={onReset}>
-            Import another file
+            {t('Import another file')}
           </Button>
           <Button variant="ghost" onClick={onClose}>
-            Close
+            {t('Close')}
           </Button>
         </div>
       </>
@@ -313,24 +321,24 @@ function TransactionMapper({
     <>
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge>{file.name}</Badge>
-        <span className="text-muted-foreground">{file.rows.length} rows</span>
+        <span className="text-muted-foreground">{t('{length} rows', { length: file.rows.length })}</span>
         <Checkbox
-          label="First row is a header"
+          label={t('First row is a header')}
           checked={map.hasHeader}
           onChange={(e) => setMap({ ...map, hasHeader: e.target.checked })}
         />
         <Button size="sm" variant="ghost" onClick={onReset}>
-          Choose another file
+          {t('Choose another file')}
         </Button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ColumnSelect
-          label="Date"
+          label={t('Date')}
           headers={headers}
           value={map.date}
           onChange={(v) => setMap({ ...map, date: v })}
         />
-        <Field label="Date format">
+        <Field label={t('Date format')}>
           {(id) => (
             <Select
               id={id}
@@ -346,42 +354,42 @@ function TransactionMapper({
           )}
         </Field>
         <ColumnSelect
-          label="Description"
+          label={t('Description')}
           headers={headers}
           value={map.description}
           onChange={(v) => setMap({ ...map, description: v })}
           optional
         />
         <ColumnSelect
-          label="Category (matched by name)"
+          label={t('Category (matched by name)')}
           headers={headers}
           value={map.category}
           onChange={(v) => setMap({ ...map, category: v })}
           optional
         />
-        <Field label="Amounts">
+        <Field label={t('Amounts')}>
           {(id) => (
             <Select
               id={id}
               value={map.mode}
               onChange={(e) => setMap({ ...map, mode: e.target.value as TxnMap['mode'] })}
             >
-              <option value="signed">One column, signed</option>
-              <option value="split">Separate out / in columns</option>
+              <option value="signed">{t('One column, signed')}</option>
+              <option value="split">{t('Separate out / in columns')}</option>
             </Select>
           )}
         </Field>
         {map.mode === 'signed' ? (
           <>
             <ColumnSelect
-              label="Amount"
+              label={t('Amount')}
               headers={headers}
               value={map.amount}
               onChange={(v) => setMap({ ...map, amount: v })}
             />
             <div className="flex items-end pb-2">
               <Checkbox
-                label="Positive amounts are spending (credit card)"
+                label={t('Positive amounts are spending (credit card)')}
                 checked={map.positiveIsExpense}
                 onChange={(e) => setMap({ ...map, positiveIsExpense: e.target.checked })}
               />
@@ -390,14 +398,14 @@ function TransactionMapper({
         ) : (
           <>
             <ColumnSelect
-              label="Money out (支出)"
+              label={t('Money out (支出)')}
               headers={headers}
               value={map.debit}
               onChange={(v) => setMap({ ...map, debit: v })}
               optional
             />
             <ColumnSelect
-              label="Money in (存入)"
+              label={t('Money in (存入)')}
               headers={headers}
               value={map.credit}
               onChange={(v) => setMap({ ...map, credit: v })}
@@ -406,13 +414,13 @@ function TransactionMapper({
           </>
         )}
         <ColumnSelect
-          label="Currency"
+          label={t('Currency')}
           headers={headers}
           value={map.currency}
           onChange={(v) => setMap({ ...map, currency: v })}
           optional
         />
-        <Field label="Income without a category">
+        <Field label={t('Income without a category')}>
           {(id) => (
             <Select id={id} value={incomeCat} onChange={(e) => setIncomeCat(e.target.value)}>
               {income.map((c) => (
@@ -423,7 +431,7 @@ function TransactionMapper({
             </Select>
           )}
         </Field>
-        <Field label="Spending without a category">
+        <Field label={t('Spending without a category')}>
           {(id) => (
             <Select id={id} value={expenseCat} onChange={(e) => setExpenseCat(e.target.value)}>
               {expense.map((c) => (
@@ -436,28 +444,30 @@ function TransactionMapper({
         </Field>
         <div className="flex items-end pb-2">
           <Checkbox
-            label="Tag all as lump sums"
+            label={t('Tag all as lump sums')}
             checked={lumpSum}
             onChange={(e) => setLumpSum(e.target.checked)}
           />
         </div>
       </div>
 
-      {!ready && <Notice tone="warning">Choose the date and amount columns to see a preview.</Notice>}
+      {!ready && <Notice tone="warning">{t('Choose the date and amount columns to see a preview.')}</Notice>}
       {preview && (
         <>
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <Badge tone="good">{fresh.length} to import</Badge>
+            <Badge tone="good">{t('{length} to import', { length: fresh.length })}</Badge>
             {preview.rows.length - fresh.length > 0 && (
-              <Badge>{preview.rows.length - fresh.length} already imported</Badge>
+              <Badge>{t('{v} already imported', { v: preview.rows.length - fresh.length })}</Badge>
             )}
-            {preview.errors.length > 0 && <Badge tone="warning">{preview.errors.length} rows skipped</Badge>}
+            {preview.errors.length > 0 && (
+              <Badge tone="warning">{t('{length} rows skipped', { length: preview.errors.length })}</Badge>
+            )}
           </div>
           {preview.errors.length > 0 && (
             <p className="text-xs text-muted-foreground">
               {preview.errors
                 .slice(0, 5)
-                .map((e) => `Line ${e.line}: ${e.message}`)
+                .map((e) => t('Line {line}: {message}', { line: e.line, message: e.message }))
                 .join(' · ')}
               {preview.errors.length > 5 && ' …'}
             </p>
@@ -465,10 +475,10 @@ function TransactionMapper({
           <Table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th className="text-right">Amount</th>
+                <th>{t('Date')}</th>
+                <th>{t('Description')}</th>
+                <th>{t('Category')}</th>
+                <th className="text-right">{t('Amount')}</th>
                 <th />
               </tr>
             </thead>
@@ -482,17 +492,22 @@ function TransactionMapper({
                     {r.kind === 'expense' ? '−' : '+'}
                     {formatMinor(r.amountMinor, r.currency)}
                   </td>
-                  <td>{r.duplicate && <Badge>duplicate</Badge>}</td>
+                  <td>{r.duplicate && <Badge>{t('duplicate')}</Badge>}</td>
                 </tr>
               ))}
             </tbody>
           </Table>
           {preview.rows.length > 15 && (
-            <p className="text-xs text-subtle">Showing 15 of {preview.rows.length} rows.</p>
+            <p className="text-xs text-subtle">
+              {t('Showing 15 of {length} rows.', { length: preview.rows.length })}
+            </p>
           )}
           <div>
             <Button disabled={fresh.length === 0} onClick={() => void doImport()}>
-              Import {fresh.length} transaction{fresh.length === 1 ? '' : 's'}
+              {t('Import {length} transaction{v}', {
+                length: fresh.length,
+                v: fresh.length === 1 ? '' : 's',
+              })}
             </Button>
           </div>
         </>
@@ -515,14 +530,16 @@ export function BalanceImport({ onClose }: { onClose: () => void }) {
   const [file, setFile] = useState<LoadedFile>();
   return (
     <Shell
-      title="Import balances from CSV"
-      description="One row per account and date: date, account name, balance in the account's currency. Existing balances for the same date are replaced."
+      title={t('Import balances from CSV')}
+      description={t(
+        "One row per account and date: date, account name, balance in the account's currency. Existing balances for the same date are replaced.",
+      )}
       onClose={onClose}
     >
       {file ? (
         <BalanceMapper file={file} onReset={() => setFile(undefined)} onClose={onClose} />
       ) : (
-        <FilePicker label="Choose CSV file" onLoad={setFile} />
+        <FilePicker label={t('Choose CSV file')} onLoad={setFile} />
       )}
     </Shell>
   );
@@ -596,10 +613,10 @@ function BalanceMapper({
         <Notice>{done}</Notice>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onReset}>
-            Import another file
+            {t('Import another file')}
           </Button>
           <Button variant="ghost" onClick={onClose}>
-            Close
+            {t('Close')}
           </Button>
         </div>
       </>
@@ -611,22 +628,22 @@ function BalanceMapper({
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Badge>{file.name}</Badge>
         <Checkbox
-          label="First row is a header"
+          label={t('First row is a header')}
           checked={map.hasHeader}
           onChange={(e) => setMap({ ...map, hasHeader: e.target.checked })}
         />
         <Button size="sm" variant="ghost" onClick={onReset}>
-          Choose another file
+          {t('Choose another file')}
         </Button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ColumnSelect
-          label="Date"
+          label={t('Date')}
           headers={headers}
           value={map.date}
           onChange={(v) => setMap({ ...map, date: v })}
         />
-        <Field label="Date format">
+        <Field label={t('Date format')}>
           {(id) => (
             <Select
               id={id}
@@ -642,13 +659,13 @@ function BalanceMapper({
           )}
         </Field>
         <ColumnSelect
-          label="Account name"
+          label={t('Account name')}
           headers={headers}
           value={map.account}
           onChange={(v) => setMap({ ...map, account: v })}
         />
         <ColumnSelect
-          label="Balance"
+          label={t('Balance')}
           headers={headers}
           value={map.balance}
           onChange={(v) => setMap({ ...map, balance: v })}
@@ -656,7 +673,7 @@ function BalanceMapper({
       </div>
       {names.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold">Match accounts</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t('Match accounts')}</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {names.map((n) => (
               <Field key={n} label={n}>
@@ -668,7 +685,7 @@ function BalanceMapper({
                       setMap({ ...map, accountIds: { ...map.accountIds, [n.toLowerCase()]: e.target.value } })
                     }
                   >
-                    <option value="">Skip</option>
+                    <option value="">{t('Skip')}</option>
                     {active.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.nickname} ({a.currency})
@@ -684,21 +701,27 @@ function BalanceMapper({
       {preview && (
         <>
           <div className="flex flex-wrap gap-3 text-sm">
-            <Badge tone="good">{preview.rows.length} balances</Badge>
+            <Badge tone="good">{t('{length} balances', { length: preview.rows.length })}</Badge>
             {preview.rows.some((r) => r.replaces) && (
-              <Badge tone="warning">{preview.rows.filter((r) => r.replaces).length} replace existing</Badge>
+              <Badge tone="warning">
+                {preview.rows.filter((r) => r.replaces).length} {t('replace existing')}
+              </Badge>
             )}
-            {preview.unmatched.length > 0 && <Badge>{preview.unmatched.length} account names skipped</Badge>}
+            {preview.unmatched.length > 0 && (
+              <Badge>{t('{length} account names skipped', { length: preview.unmatched.length })}</Badge>
+            )}
             {preview.errors.length > 0 && (
-              <Badge tone="warning">{preview.errors.length} rows with errors</Badge>
+              <Badge tone="warning">
+                {t('{length} rows with errors', { length: preview.errors.length })}
+              </Badge>
             )}
           </div>
           <Table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Account</th>
-                <th className="text-right">Balance</th>
+                <th>{t('Date')}</th>
+                <th>{t('Account')}</th>
+                <th className="text-right">{t('Balance')}</th>
               </tr>
             </thead>
             <tbody>
@@ -706,7 +729,7 @@ function BalanceMapper({
                 <tr key={`${r.accountId}${r.date}`}>
                   <td>{r.date}</td>
                   <td>
-                    {nick(r.accountId)?.nickname} {r.replaces && <Badge>replaces</Badge>}
+                    {nick(r.accountId)?.nickname} {r.replaces && <Badge>{t('replaces')}</Badge>}
                   </td>
                   <td className="text-right">
                     {formatMinor(r.balanceMinor, nick(r.accountId)?.currency ?? 'TWD')}
@@ -717,7 +740,10 @@ function BalanceMapper({
           </Table>
           <div>
             <Button disabled={preview.rows.length === 0} onClick={() => void doImport()}>
-              Import {preview.rows.length} balance{preview.rows.length === 1 ? '' : 's'}
+              {t('Import {length} balance{v}', {
+                length: preview.rows.length,
+                v: preview.rows.length === 1 ? '' : 's',
+              })}
             </Button>
           </div>
         </>

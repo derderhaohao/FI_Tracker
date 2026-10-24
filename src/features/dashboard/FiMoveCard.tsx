@@ -3,13 +3,14 @@ import { fiDateMove, monthIndexLabel, MOVE_LABELS } from '@/domain/fiDateMove';
 import { useAppData } from '@/app/data';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
+import { t } from '@/i18n';
 
 function months(m: number): string {
   const a = Math.abs(m);
-  if (a < 0.05) return 'no change';
-  const text =
-    a >= 1.95 ? `${Math.round(a)} months` : `${a.toFixed(1)} month${a.toFixed(1) === '1.0' ? '' : 's'}`;
-  return `${text} ${m > 0 ? 'later' : 'earlier'}`;
+  if (a < 0.05) return t('no change');
+  const n = a >= 1.95 ? String(Math.round(a)) : a.toFixed(1);
+  if (n === '1.0') return m > 0 ? t('1.0 month later') : t('1.0 month earlier');
+  return m > 0 ? t('{n} months later', { n }) : t('{n} months earlier', { n });
 }
 
 /**
@@ -23,10 +24,16 @@ export function FiMoveCard() {
     return null;
   const max = Math.max(...(move.parts ?? []).map((p) => Math.abs(p.months)), 0.5);
   return (
-    <Card className="mb-4" aria-label="Why did my FI date move">
+    <Card className="mb-4" aria-label={t('Why did my FI date move')}>
       <CardHeader
-        title="Why did my FI date move?"
-        description={`Most likely FI date ${monthIndexLabel(move.fromFi)} on ${move.fromDate} → ${monthIndexLabel(move.toFi)} on ${move.toDate}: ${months(move.totalMonths)}.`}
+        title={t('Why did my FI date move?')}
+        description={t('Most likely FI date {fromFi} on {fromDate} → {toFi} on {toDate}: {totalMonths}.', {
+          fromFi: monthIndexLabel(move.fromFi),
+          fromDate: move.fromDate,
+          toFi: monthIndexLabel(move.toFi),
+          toDate: move.toDate,
+          totalMonths: months(move.totalMonths),
+        })}
       />
       <CardContent>
         {move.parts ? (
@@ -51,12 +58,13 @@ export function FiMoveCard() {
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
-            The FI date was not reached in one of the two months, so it cannot be split.
+            {t('The FI date was not reached in one of the two months, so it cannot be split.')}
           </p>
         )}
         <p className="mt-3 text-xs text-subtle">
-          Each month that passes moves the date one month later unless saving and markets make up for it. Both
-          dates use today's assumptions; changes to them are not tracked over time.
+          {t(
+            "Each month that passes moves the date one month later unless saving and markets make up for it. Both dates use today's assumptions; changes to them are not tracked over time.",
+          )}
         </p>
       </CardContent>
     </Card>

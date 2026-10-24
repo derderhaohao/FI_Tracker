@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/input';
 import { checkTemplateValues, TEMPLATES, type Template, type TemplateResult } from './templates';
 import type { LabRow } from './model';
+import { t } from '@/i18n';
 
 /** What-if template chips with a small form for the one or two numbers each needs (R2). */
 export function TemplatePicker({
@@ -23,7 +24,7 @@ export function TemplatePicker({
   const preview = open && !error ? open.build(parsed, today) : undefined;
   return (
     <div>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="What-if templates">
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t('What-if templates')}>
         {TEMPLATES.map((t) => (
           <Button
             key={t.kind}
@@ -66,7 +67,7 @@ export function TemplatePicker({
           ))}
           <div className="flex flex-col gap-1">
             <Button type="submit" size="sm" disabled={!preview}>
-              Create “{preview?.name ?? '…'}”
+              {t('Create “{v}”', { v: preview?.name ?? '…' })}
             </Button>
             {error && <span className="text-xs text-critical">{error}</span>}
           </div>
@@ -89,36 +90,37 @@ export function StarterCard({
   onDismiss: () => void;
 }) {
   return (
-    <Card className="mb-4" aria-label="How Strategy Lab works">
+    <Card className="mb-4" aria-label={t('How Strategy Lab works')}>
       <CardContent className="relative p-5">
         <button
           type="button"
           className="absolute top-3 right-3 rounded p-1 text-muted-foreground hover:bg-surface-2"
-          aria-label="Dismiss the starter guide"
+          aria-label={t('Dismiss the starter guide')}
           onClick={onDismiss}
         >
           <X className="size-4" />
         </button>
         <ol className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <li>
-            <div className="text-xs font-semibold text-primary uppercase">Step 1</div>
-            <div className="font-semibold">Your plan today</div>
+            <div className="text-xs font-semibold text-primary uppercase">{t('Step 1')}</div>
+            <div className="font-semibold">{t('Your plan today')}</div>
             <p className="mt-1 text-sm text-muted-foreground">{todaySentence}</p>
           </li>
           <li className="md:col-span-2">
-            <div className="text-xs font-semibold text-primary uppercase">Step 2</div>
-            <div className="font-semibold">Try a what-if</div>
+            <div className="text-xs font-semibold text-primary uppercase">{t('Step 2')}</div>
+            <div className="font-semibold">{t('Try a what-if')}</div>
             <p className="mt-1 mb-2 text-sm text-muted-foreground">
-              Pick a change; it starts from your numbers today and names itself after what it does.
+              {t('Pick a change; it starts from your numbers today and names itself after what it does.')}
             </p>
             <TemplatePicker today={today} onCreate={onCreate} />
           </li>
           <li className="md:col-span-3">
-            <div className="text-xs font-semibold text-primary uppercase">Step 3</div>
-            <div className="font-semibold">See if it holds up</div>
+            <div className="text-xs font-semibold text-primary uppercase">{t('Step 3')}</div>
+            <div className="font-semibold">{t('See if it holds up')}</div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Each what-if gets the same plain verdict, side by side with your plan, plus the changes that
-              would make it safer.
+              {t(
+                'Each what-if gets the same plain verdict, side by side with your plan, plus the changes that would make it safer.',
+              )}
             </p>
           </li>
         </ol>

@@ -11,7 +11,7 @@ import {
   spanText,
   type Grouping,
 } from '@/domain/playback/analysis';
-import { impactText, SEVERITY_LABELS } from '@/domain/playback/library';
+import { findEvent, impactText, SEVERITY_LABELS } from '@/domain/playback/library';
 import { db } from '@/db/db';
 import { patch } from '@/db/repo';
 import { useAppData } from '@/app/data';
@@ -28,14 +28,15 @@ import { PlaybackChart, type ChartView } from './PlaybackChart';
 import { PlaybackTable } from './PlaybackTable';
 import { StoryPicker } from './StoryPicker';
 import { usePlayback } from './usePlayback';
+import { t } from '@/i18n';
 
 type Speed = 'smart' | '1' | '6' | '12' | '60';
 const SPEEDS: { value: Speed; label: string }[] = [
-  { value: 'smart', label: 'Smart' },
-  { value: '1', label: '1 month/s' },
-  { value: '6', label: '6 months/s' },
-  { value: '12', label: '1 year/s' },
-  { value: '60', label: '5 years/s' },
+  { value: 'smart', label: t('Smart') },
+  { value: '1', label: t('1 month/s') },
+  { value: '6', label: t('6 months/s') },
+  { value: '12', label: t('1 year/s') },
+  { value: '60', label: t('5 years/s') },
 ];
 
 function useReducedMotion(): boolean {
@@ -110,9 +111,18 @@ export function PlaybackView() {
         key: `${e.uid}-${m}`,
         title: e.def.name,
         text: e.def.story,
-        detail: `${impactText(e.def, e.severity, e.lump !== undefined && e.source === 'live' ? e.lump : undefined)} · ${SEVERITY_LABELS[e.severity]} · a hypothetical story, not a forecast`,
+        detail: t('{def} · {SEVERITY_LABELS} · a hypothetical story, not a forecast', {
+          def: impactText(
+            e.def,
+            e.severity,
+            e.lump !== undefined && e.source === 'live' ? e.lump : undefined,
+          ),
+          SEVERITY_LABELS: SEVERITY_LABELS[e.severity],
+        }),
       });
-      setAnnounce(`Event: ${e.def.name}, age ${Math.floor(path.startAge + m / 12)}`);
+      setAnnounce(
+        t('Event: {name}, age {floor}', { name: e.def.name, floor: Math.floor(path.startAge + m / 12) }),
+      );
       return true;
     },
     [path],
@@ -144,18 +154,24 @@ export function PlaybackView() {
           if (rec)
             setBanner({
               key: `rec-${rec.e.uid}`,
-              title: 'Recovered',
-              text: `Investments are back to where they were before “${rec.e.def.name}”, after ${spanText(rec.at - rec.e.start)}.`,
+              title: t('Recovered'),
+              text: t('Investments are back to where they were before “{name}”, after {spanText}.', {
+                name: rec.e.def.name,
+                spanText: spanText(rec.at - rec.e.start),
+              }),
             });
           const mil = ms.find((x) => x.month === m && x.kind !== 'eventStart' && x.kind !== 'eventEnd');
-          if (mil) setAnnounce(`${mil.label}, age ${Math.floor(path.startAge + m / 12)}`);
+          if (mil)
+            setAnnounce(
+              t('{label}, age {floor}', { label: mil.label, floor: Math.floor(path.startAge + m / 12) }),
+            );
         }
         monthRef.current = next;
         if (next >= path.months) {
           setMonth(path.months);
           setTableMonth(path.months);
           setPlaying(false);
-          setAnnounce('End of the story');
+          setAnnounce(t('End of the story'));
           return;
         }
       }
@@ -194,12 +210,15 @@ export function PlaybackView() {
       if (!err) {
         if (pb.playback.pauseOnFire) setPlaying(false);
         setAnnounce(
-          `Event fired: ${id === 'lump' ? 'one-off amount' : (path.events.find((e) => e.def.id === id)?.def.name ?? id)}, ${dateAfterYears(data.ctx.asOfDate, m / 12)}`,
+          t('Event fired: {v}, {asOfDate}', {
+            v: id === 'lump' ? t('one-off amount') : (findEvent(id, pb.custom)?.name ?? id),
+            asOfDate: dateAfterYears(data.ctx.asOfDate, m / 12),
+          }),
         );
         setSheet(false);
       }
     },
-    [pb, data.ctx.asOfDate, path.events],
+    [pb, data.ctx.asOfDate],
   );
 
   // Keyboard (PB-1, PB-4, LE-6, LE-14).
@@ -266,13 +285,15 @@ export function PlaybackView() {
   return (
     <div className="flex flex-col gap-4">
       <Notice>
-        <strong>One possible story, not a forecast.</strong> Markets follow the story you pick; the Strategy
-        Lab's simulated futures show the odds.
+        <strong>{t('One possible story, not a forecast.')}</strong>{' '}
+        {t("Markets follow the story you pick; the Strategy Lab's simulated futures show the odds.")}
       </Notice>
       <Card>
         <CardHeader
-          title="Story"
-          description="Pick a backdrop and up to 3 events, then press Play. Fire more events live from the palette."
+          title={t('Story')}
+          description={t(
+            'Pick a backdrop and up to 3 events, then press Play. Fire more events live from the palette.',
+          )}
         />
         <CardContent>
           <StoryPicker
@@ -293,33 +314,33 @@ export function PlaybackView() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardContent className="flex flex-col gap-3 p-4">
-            <div aria-label="Counters" className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
+            <div aria-label={t('Counters')} className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
               <div>
-                <div className="text-xs text-muted-foreground">Date</div>
+                <div className="text-xs text-muted-foreground">{t('Date')}</div>
                 <div data-testid="counter-Date" className="font-semibold tabular">
                   {dateAfterYears(data.ctx.asOfDate, m / 12)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Age</div>
+                <div className="text-xs text-muted-foreground">{t('Age')}</div>
                 <div data-testid="counter-Age" className="font-semibold tabular">
-                  {Math.floor(path.startAge + m / 12)} y {m % 12} m
+                  {t('{y} y {m} m', { y: Math.floor(path.startAge + m / 12), m: m % 12 })}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Total net worth</div>
+                <div className="text-xs text-muted-foreground">{t('Total net worth')}</div>
                 <div data-testid="counter-Total net worth" className="font-semibold tabular">
                   {twdCompact(path.total[m] * k(m))}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Investments</div>
+                <div className="text-xs text-muted-foreground">{t('Investments')}</div>
                 <div data-testid="counter-Investments" className="font-semibold tabular">
                   {twdCompact(path.investable[m] * k(m))}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">This month</div>
+                <div className="text-xs text-muted-foreground">{t('This month')}</div>
                 <div
                   data-testid="counter-This month"
                   className={cn(
@@ -347,7 +368,7 @@ export function PlaybackView() {
                 </div>
                 <button
                   type="button"
-                  aria-label="Close the banner"
+                  aria-label={t('Close the banner')}
                   onClick={() => {
                     setBanner(undefined);
                     pausedUntil.current = 0;
@@ -360,22 +381,22 @@ export function PlaybackView() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Segmented
-                label="Chart view"
+                label={t('Chart view')}
                 value={view}
                 onChange={setView}
                 options={[
-                  { value: 'total', label: 'Total' },
-                  { value: 'breakdown', label: 'Breakdown' },
+                  { value: 'total', label: t('Total') },
+                  { value: 'breakdown', label: t('Breakdown') },
                 ]}
               />
               <Segmented
-                label="Group by"
+                label={t('Group by')}
                 value={grouping}
                 onChange={setGrouping}
                 options={[
-                  { value: 'class', label: 'Class' },
-                  { value: 'region', label: 'Region' },
-                  { value: 'currency', label: 'Currency' },
+                  { value: 'class', label: t('Class') },
+                  { value: 'region', label: t('Region') },
+                  { value: 'currency', label: t('Currency') },
                 ]}
               />
             </div>
@@ -395,7 +416,7 @@ export function PlaybackView() {
 
             <input
               type="range"
-              aria-label="Playhead month"
+              aria-label={t('Playhead month')}
               min={0}
               max={path.months}
               step={1}
@@ -407,7 +428,7 @@ export function PlaybackView() {
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label="Restart"
+                aria-label={t('Restart')}
                 onClick={() => {
                   jump(0);
                   setBanner(undefined);
@@ -415,26 +436,41 @@ export function PlaybackView() {
               >
                 <RotateCcw />
               </Button>
-              <Button size="icon" variant="ghost" aria-label="Back one year" onClick={() => jump(m - 12)}>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={t('Back one year')}
+                onClick={() => jump(m - 12)}
+              >
                 <StepBack />
               </Button>
-              <Button size="sm" variant="ghost" aria-label="Back one month" onClick={() => jump(m - 1)}>
+              <Button size="sm" variant="ghost" aria-label={t('Back one month')} onClick={() => jump(m - 1)}>
                 −1 m
               </Button>
               <Button
-                aria-label={playing ? 'Pause' : 'Play'}
+                aria-label={playing ? t('Pause') : t('Play')}
                 disabled={reduced}
                 onClick={() => {
                   if (monthRef.current >= path.months) jump(0);
                   setPlaying((p) => !p);
                 }}
               >
-                {playing ? <Pause aria-hidden /> : <Play aria-hidden />} {playing ? 'Pause' : 'Play'}
+                {playing ? <Pause aria-hidden /> : <Play aria-hidden />} {playing ? t('Pause') : t('Play')}
               </Button>
-              <Button size="sm" variant="ghost" aria-label="Forward one month" onClick={() => jump(m + 1)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label={t('Forward one month')}
+                onClick={() => jump(m + 1)}
+              >
                 +1 m
               </Button>
-              <Button size="icon" variant="ghost" aria-label="Forward one year" onClick={() => jump(m + 12)}>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={t('Forward one year')}
+                onClick={() => jump(m + 12)}
+              >
                 <StepForward />
               </Button>
               <Button
@@ -445,10 +481,10 @@ export function PlaybackView() {
                   jump(path.months);
                 }}
               >
-                <SkipForward aria-hidden /> Skip to end
+                <SkipForward aria-hidden /> {t('Skip to end')}
               </Button>
               <Select
-                aria-label="Speed"
+                aria-label={t('Speed')}
                 className="h-8 w-32"
                 value={speed}
                 onChange={(e) => setSpeed(e.target.value as Speed)}
@@ -464,27 +500,28 @@ export function PlaybackView() {
                 variant="ghost"
                 disabled={!pb.canUndo}
                 onClick={pb.undo}
-                aria-label="Undo last event"
+                aria-label={t('Undo last event')}
               >
-                <Undo2 aria-hidden /> Undo
+                <Undo2 aria-hidden /> {t('Undo')}
               </Button>
               {pb.live.length > 0 && (
                 <Button size="sm" variant="ghost" onClick={pb.clearLive}>
-                  Clear live events
+                  {t('Clear live events')}
                 </Button>
               )}
               <Button size="sm" variant="outline" className="xl:hidden" onClick={() => setSheet(true)}>
-                <Zap aria-hidden /> Events
+                <Zap aria-hidden /> {t('Events')}
               </Button>
             </div>
             {reduced && (
               <p className="text-xs text-muted-foreground">
-                Animation is off because your device asks for reduced motion; drag the slider to move through
-                time.
+                {t(
+                  'Animation is off because your device asks for reduced motion; drag the slider to move through time.',
+                )}
               </p>
             )}
 
-            <div className="flex flex-wrap gap-1.5" aria-label="Milestones">
+            <div className="flex flex-wrap gap-1.5" aria-label={t('Milestones')}>
               {ms.map((x) => (
                 <button
                   key={`${x.kind}-${x.month}-${x.label}`}
@@ -522,10 +559,10 @@ export function PlaybackView() {
                             setPin(undefined);
                           }}
                         >
-                          Remove
+                          {t('Remove')}
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => jump(l.month)}>
-                          Go there
+                          {t('Go there')}
                         </Button>
                       </span>
                     </span>
@@ -534,7 +571,7 @@ export function PlaybackView() {
               ))}
             </div>
             {lastLog && (
-              <p className="text-sm" aria-label="Impact of the last event">
+              <p className="text-sm" aria-label={t('Impact of the last event')}>
                 <span className="rounded-full bg-surface-2 px-2 py-0.5">
                   {lastLog.name}: {moveText(path, lastLog.impact, twdCompact)}
                 </span>
@@ -557,8 +594,8 @@ export function PlaybackView() {
         </Card>
         <Card className="hidden xl:block">
           <CardHeader
-            title="Fire an event"
-            description="It starts at the playhead month; everything already played stays as it was."
+            title={t('Fire an event')}
+            description={t('It starts at the playhead month; everything already played stays as it was.')}
           />
           <CardContent>{palette}</CardContent>
         </Card>
@@ -571,8 +608,13 @@ export function PlaybackView() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="font-semibold">Fire an event</h2>
-              <Button size="icon" variant="ghost" aria-label="Close events" onClick={() => setSheet(false)}>
+              <h2 className="font-semibold">{t('Fire an event')}</h2>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={t('Close events')}
+                onClick={() => setSheet(false)}
+              >
                 <X />
               </Button>
             </div>
@@ -583,8 +625,10 @@ export function PlaybackView() {
 
       <Card>
         <CardHeader
-          title={`At ${dateAfterYears(data.ctx.asOfDate, Math.round(tableMonth) / 12)}`}
-          description={current ? `During “${current.def.name}”` : undefined}
+          title={t('At {asOfDate}', {
+            asOfDate: dateAfterYears(data.ctx.asOfDate, Math.round(tableMonth) / 12),
+          })}
+          description={current ? t('During “{name}”', { name: current.def.name }) : undefined}
         />
         <CardContent>
           <PlaybackTable
@@ -600,16 +644,16 @@ export function PlaybackView() {
 
       {pb.log.length > 0 && (
         <Card>
-          <CardHeader title="Event log" />
+          <CardHeader title={t('Event log')} />
           <CardContent>
             <Table>
               <thead>
                 <tr>
-                  <th>When</th>
-                  <th className="text-right">Age</th>
-                  <th>Event</th>
-                  <th>Severity</th>
-                  <th>Impact when fired</th>
+                  <th>{t('When')}</th>
+                  <th className="text-right">{t('Age')}</th>
+                  <th>{t('Event')}</th>
+                  <th>{t('Severity')}</th>
+                  <th>{t('Impact when fired')}</th>
                 </tr>
               </thead>
               <tbody>

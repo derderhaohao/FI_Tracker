@@ -9,6 +9,7 @@ import { Term } from '@/components/ui/term';
 import { Dots } from '@/features/lab/Dots';
 import { pct } from '@/lib/format';
 import { cn } from '@/lib/cn';
+import { t } from '@/i18n';
 
 export const STATUS_TONE: Record<PlanStatus, 'good' | 'warning' | 'critical'> = {
   on_track: 'good',
@@ -27,44 +28,46 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
   const age = stopAge(baseline);
   const date = stopDate(baselineInput, baseline, ctx.asOfDate);
   const headline =
-    age !== undefined ? `Most likely age ${age} · ${date}` : `Not reached by ${baselineInput.horizonAge}`;
+    age !== undefined
+      ? t('Most likely age {age} · {date}', { age, date })
+      : t('Not reached by {horizonAge}', { horizonAge: baselineInput.horizonAge });
   // FI date as a range (product review, Next phase): 8 in 10 futures reach FI between these ages.
   const lo = summary?.fiAgeP10 !== undefined ? Math.round(summary.fiAgeP10) : undefined;
   const hi = summary?.fiAgeP90 !== undefined ? Math.round(summary.fiAgeP90) : undefined;
   const range =
     baselineInput.retireAtAge === undefined && lo !== undefined && hi !== undefined && summary!.fiRate >= 0.9
       ? lo === hi
-        ? `Reach your target at ${lo} in 8 of 10 futures`
-        : `Likely between age ${lo} and ${hi} (8 in 10 futures)`
+        ? t('Reach your target at {lo} in 8 of 10 futures', { lo })
+        : t('Likely between age {lo} and {hi} (8 in 10 futures)', { lo, hi })
       : undefined;
   const badge = status ? (
     <Badge tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>
   ) : (
-    <Badge>{pending ? 'Checking…' : '—'}</Badge>
+    <Badge>{pending ? t('Checking…') : '—'}</Badge>
   );
 
   if (compact) {
     return (
-      <section aria-label="Plan health" className="mb-4 rounded-lg border bg-surface px-4 py-3 text-sm">
+      <section aria-label={t('Plan health')} className="mb-4 rounded-lg border bg-surface px-4 py-3 text-sm">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-muted-foreground">Your plan</span>
+          <span className="text-muted-foreground">{t('Your plan')}</span>
           {badge}
           <span className="font-medium">
-            {age !== undefined ? `Stop work most likely at ${age} (${date})` : headline}
+            {age !== undefined ? t('Stop work most likely at {age} ({date})', { age, date }) : headline}
           </span>
           {lo !== undefined && hi !== undefined && lo !== hi && range && (
-            <span className="text-muted-foreground">
-              · range {lo}–{hi}
-            </span>
+            <span className="text-muted-foreground">{t('· range {lo}–{hi}', { lo, hi })}</span>
           )}
           {summary && (
             <span className="text-muted-foreground">
-              · money lasts to {baselineInput.horizonAge} in {chanceText(summary.successRate).toLowerCase()}{' '}
-              simulated futures
+              {t('· money lasts to {horizonAge} in {toLowerCase} simulated futures', {
+                horizonAge: baselineInput.horizonAge,
+                toLowerCase: chanceText(summary.successRate).toLowerCase(),
+              })}
             </span>
           )}
           <Link to="/lab" className="ml-auto text-primary hover:underline">
-            Details
+            {t('Details')}
           </Link>
         </div>
         {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
@@ -73,8 +76,10 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
   }
 
   return (
-    <section aria-label="Plan health" className="mb-4 rounded-lg border bg-surface p-5">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">Your plan {badge}</div>
+    <section aria-label={t('Plan health')} className="mb-4 rounded-lg border bg-surface p-5">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        {t('Your plan')} {badge}
+      </div>
       <div className={cn('mt-1 font-semibold tracking-tight', age !== undefined ? 'text-4xl' : 'text-3xl')}>
         {headline}
       </div>
@@ -85,23 +90,25 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
             <Dots
               filled={chanceDots(summary.successRate)}
-              label={`${chanceText(summary.successRate)} simulated futures last`}
+              label={t('{successRate} simulated futures last', {
+                successRate: chanceText(summary.successRate),
+              })}
             />
             <span>
-              <Term k="chanceLasts">Chance your money lasts</Term>: {pct(summary.successRate, 0)}
+              <Term k="chanceLasts">{t('Chance your money lasts')}</Term>: {pct(summary.successRate, 0)}
             </span>
           </div>
         </div>
       ) : (
-        <p className="mt-2 text-sm text-subtle">Running the simulated futures…</p>
+        <p className="mt-2 text-sm text-subtle">{t('Running the simulated futures…')}</p>
       )}
       {note && <p className="mt-2 text-xs text-muted-foreground">{note}</p>}
       <div className="mt-2 flex flex-wrap gap-x-4 text-sm">
         <Link className="text-primary hover:underline" to="/lab">
-          Why, and what would make it safer
+          {t('Why, and what would make it safer')}
         </Link>
         <Link className="text-primary hover:underline" to="/projection">
-          Year by year
+          {t('Year by year')}
         </Link>
       </div>
     </section>
