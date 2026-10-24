@@ -180,7 +180,9 @@ export function ProjectionPage() {
       <Card className="mt-4">
         <CardHeader
           title="Year by year"
-          description={valueMode === 'real' ? "Today's TWD" : 'Nominal TWD'}
+          description={
+            valueMode === 'real' ? "Today's money (inflation removed)" : 'Future money (with inflation)'
+          }
           actions={
             <Button size="sm" variant="outline" onClick={() => setShowTable(!showTable)}>
               {showTable ? 'Hide table' : 'Show table'}

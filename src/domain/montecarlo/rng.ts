@@ -51,3 +51,11 @@ export function lognormalReturn(mean: number, sd: number, z: number): number {
   const mu = Math.log(gross) - sigma2 / 2;
   return Math.exp(mu + Math.sqrt(sigma2) * z) - 1;
 }
+
+/**
+ * Median annual return of the lognormal above: what a typical year compounds at.
+ * Lower than the arithmetic mean by about sd²/2; equal to it when sd is 0.
+ */
+export function medianReturn(mean: number, sd: number): number {
+  return lognormalReturn(mean, sd, 0);
+}

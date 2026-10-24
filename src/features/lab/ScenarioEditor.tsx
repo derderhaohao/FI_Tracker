@@ -15,8 +15,35 @@ import { useAppData } from '@/app/data';
 import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/input';
-import { Table } from '@/components/ui/misc';
-import { twd } from '@/lib/format';
+import { Notice, Table } from '@/components/ui/misc';
+import { Term } from '@/components/ui/term';
+import type { GlossaryParams } from '@/lib/glossary';
+import { pct, twd } from '@/lib/format';
+import { nameCheck, savingsRateOf, spendingNow, stopAge, type LabRow } from './model';
+
+/** "Today: 23.2% · −3.2 pts vs today" (PRD R6). */
+function TodayHint({ today, change, extra }: { today: string; change?: string; extra?: string }) {
+  return (
+    <>
+      Today: {today}
+      {change && <span className="font-medium text-foreground"> · {change}</span>}
+      {extra && <span className="block">{extra}</span>}
+    </>
+  );
+}
+
+function moneyChange(now: number, today: number, unit = '/yr'): string | undefined {
+  const d = Math.round(now - today);
+  if (Math.abs(d) < 1) return undefined;
+  return `${d > 0 ? '+' : '−'}${twd(Math.abs(d))}${unit} vs today`;
+}
+
+function pointsChange(now: number | undefined, today: number | undefined): string | undefined {
+  if (now === undefined || today === undefined) return undefined;
+  const d = (now - today) * 100;
+  if (Math.abs(d) < 0.05) return 'same as today';
+  return `${d > 0 ? '+' : '−'}${Math.abs(d).toFixed(1)} pts vs today`;
+}
 
 function setLevers(s: Scenario, changes: Partial<ScenarioLevers>) {
   const overrides: Record<string, unknown> = { ...s.overrides, ...changes };
@@ -24,7 +51,15 @@ function setLevers(s: Scenario, changes: Partial<ScenarioLevers>) {
   return patch(db.scenarios, s.id, { overrides: overrides as ScenarioLevers });
 }
 
-function Section({ title, children, hint }: { title: string; hint?: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+  hint,
+}: {
+  title: string;
+  hint?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <fieldset className="rounded-md border p-3">
       <legend className="px-1 text-sm font-semibold">{title}</legend>
@@ -285,17 +320,35 @@ function AllocationEditor({ s }: { s: Scenario }) {
   );
 }
 
-export function ScenarioEditor({ s }: { s: Scenario }) {
+export function ScenarioEditor({
+  s,
+  today,
+  row,
+  advanced,
+  params,
+}: {
+  s: Scenario;
+  today: LabRow;
+  row: LabRow;
+  advanced: boolean;
+  params: GlossaryParams;
+}) {
   const data = useAppData();
-  const { baselineInput: base, assumptionSets } = data;
+  const { assumptionSets } = data;
+  const base = today.input;
   const o = s.overrides;
   const rule = s.withdrawalRule;
   const tw = assumptionSets.find((a) => a.id === s.assumptionSetId)?.taiwan ?? data.activeAssumptions.taiwan;
+  const todayRate = savingsRateOf(base);
+  const rowRate = savingsRateOf(row.input);
+  const todayStop = stopAge(today.result);
+  const rowStop = stopAge(row.result);
+  const warning = nameCheck(s.name, today, row);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Field label="Name">
+        <Field label="Name" className={advanced ? undefined : 'sm:col-span-3'}>
           {(id) => (
             <Input
               id={id}
@@ -307,56 +360,96 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
             />
           )}
         </Field>
-        <Field label="Assumption set">
-          {(id) => (
-            <Select
-              id={id}
-              value={s.assumptionSetId}
-              onChange={(e) => void patch(db.scenarios, s.id, { assumptionSetId: e.target.value })}
-            >
-              {assumptionSets.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label="Monte Carlo seed" hint="Stored so reruns are reproducible">
-          {(id) => (
-            <NumberInput
-              id={id}
-              value={s.seed}
-              onCommit={(v) => v !== undefined && void patch(db.scenarios, s.id, { seed: v })}
-            />
-          )}
-        </Field>
+        {advanced && (
+          <Field label="Assumption set">
+            {(id) => (
+              <Select
+                id={id}
+                value={s.assumptionSetId}
+                onChange={(e) => void patch(db.scenarios, s.id, { assumptionSetId: e.target.value })}
+              >
+                {assumptionSets.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        )}
+        {advanced && (
+          <Field label="Monte Carlo seed" hint="Stored so reruns are reproducible">
+            {(id) => (
+              <NumberInput
+                id={id}
+                value={s.seed}
+                onCommit={(v) => v !== undefined && void patch(db.scenarios, s.id, { seed: v })}
+              />
+            )}
+          </Field>
+        )}
       </div>
+      {warning && <Notice tone="warning">{warning}</Notice>}
 
-      <Section title="Work and saving" hint="Blank fields use the baseline from your data.">
-        <Field label="Net income / year" hint={`Baseline ${twd(base.annualIncome)}`}>
+      <Section title="Work and saving" hint="Blank fields keep today's value from your data.">
+        <Field
+          label="Take-home pay / year"
+          hint={
+            <TodayHint
+              today={twd(base.annualIncome)}
+              change={
+                o.annualIncomeMinor !== undefined
+                  ? moneyChange(row.input.annualIncome, base.annualIncome)
+                  : undefined
+              }
+            />
+          }
+        >
           {(id) => (
             <MoneyInput
               id={id}
               value={o.annualIncomeMinor}
               currency="TWD"
-              placeholder="baseline"
+              placeholder="today"
               onCommit={(v) => void setLevers(s, { annualIncomeMinor: v })}
             />
           )}
         </Field>
-        <Field label="Spending while working / year" hint={`Baseline ${twd(base.currentSpending)}`}>
+        <Field
+          label="Spending while working / year"
+          hint={
+            <TodayHint
+              today={twd(spendingNow(base))}
+              change={
+                o.currentSpendingMinor !== undefined ||
+                o.savingsRate !== undefined ||
+                o.spendingMultiplier !== undefined
+                  ? moneyChange(spendingNow(row.input), spendingNow(base))
+                  : undefined
+              }
+            />
+          }
+        >
           {(id) => (
             <MoneyInput
               id={id}
               value={o.currentSpendingMinor}
               currency="TWD"
-              placeholder="baseline"
+              placeholder="today"
               onCommit={(v) => void setLevers(s, { currentSpendingMinor: v })}
             />
           )}
         </Field>
-        <Field label="Savings rate" hint="Overrides spending: income × (1 − rate)">
+        <Field
+          label="Savings rate"
+          hint={
+            <TodayHint
+              today={todayRate !== undefined ? pct(todayRate, 1) : '—'}
+              change={o.savingsRate !== undefined ? pointsChange(rowRate, todayRate) : undefined}
+              extra="Sets spending to pay × (1 − rate)"
+            />
+          }
+        >
           {(id) => (
             <PercentInput
               id={id}
@@ -368,7 +461,24 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
             />
           )}
         </Field>
-        <Field label="Stop working at age" hint="Blank = as soon as FI is reached">
+        <Field
+          label="Stop working at age"
+          hint={
+            <TodayHint
+              today={
+                todayStop !== undefined ? `${todayStop} (as soon as you reach your target)` : 'not reached'
+              }
+              change={
+                o.targetFiAge !== undefined &&
+                todayStop !== undefined &&
+                rowStop !== undefined &&
+                rowStop !== todayStop
+                  ? `${rowStop > todayStop ? '+' : '−'}${Math.abs(rowStop - todayStop)} yrs vs today`
+                  : undefined
+              }
+            />
+          }
+        >
           {(id) => (
             <NumberInput
               id={id}
@@ -380,53 +490,91 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
             />
           )}
         </Field>
-        <Field
-          label="Voluntary 勞退 contribution"
-          hint={`Up to ${(tw.laborPension.maxVoluntaryRate * 100).toFixed(0)}%, tax-deductible`}
-        >
-          {(id) => (
-            <PercentInput
-              id={id}
-              value={o.laborPensionVoluntaryRate}
-              min={0}
-              max={tw.laborPension.maxVoluntaryRate}
-              step={1}
-              onCommit={(v) => void setLevers(s, { laborPensionVoluntaryRate: v })}
-            />
-          )}
-        </Field>
+        {o.targetFiAge === undefined && (
+          <Field
+            label="Keep working after reaching your target (years)"
+            hint="0 = stop as soon as investments reach the money needed"
+          >
+            {(id) => (
+              <NumberInput
+                id={id}
+                value={o.workExtraYears}
+                min={0}
+                max={30}
+                placeholder="0"
+                onCommit={(v) => void setLevers(s, { workExtraYears: v || undefined })}
+              />
+            )}
+          </Field>
+        )}
+        {advanced && (
+          <Field
+            label="Voluntary 勞退 contribution"
+            hint={`Up to ${(tw.laborPension.maxVoluntaryRate * 100).toFixed(0)}%, tax-deductible`}
+          >
+            {(id) => (
+              <PercentInput
+                id={id}
+                value={o.laborPensionVoluntaryRate}
+                min={0}
+                max={tw.laborPension.maxVoluntaryRate}
+                step={1}
+                onCommit={(v) => void setLevers(s, { laborPensionVoluntaryRate: v })}
+              />
+            )}
+          </Field>
+        )}
         <IncomeChanges s={s} />
       </Section>
 
-      <Section title="Spending in FI">
-        <Field label="FI tier">
-          {(id) => (
-            <Select
-              id={id}
-              value={o.fiTier ?? ''}
-              onChange={(e) =>
-                void setLevers(s, { fiTier: (e.target.value || undefined) as ScenarioLevers['fiTier'] })
+      <Section title="After you stop working">
+        {advanced && (
+          <Field label="FI tier">
+            {(id) => (
+              <Select
+                id={id}
+                value={o.fiTier ?? ''}
+                onChange={(e) =>
+                  void setLevers(s, { fiTier: (e.target.value || undefined) as ScenarioLevers['fiTier'] })
+                }
+              >
+                <option value="">Same as Goal</option>
+                <option value="lean">Lean</option>
+                <option value="full">Full</option>
+                <option value="fat">Fat</option>
+              </Select>
+            )}
+          </Field>
+        )}
+        <Field
+          label="Spending once you stop / year"
+          hint={
+            <TodayHint
+              today={twd(base.fiSpending)}
+              change={
+                o.fiSpendingMinor !== undefined ||
+                o.spendingMultiplier !== undefined ||
+                o.fiTier !== undefined
+                  ? moneyChange(row.input.fiSpending, base.fiSpending)
+                  : undefined
               }
-            >
-              <option value="">Same as Goal</option>
-              <option value="lean">Lean</option>
-              <option value="full">Full</option>
-              <option value="fat">Fat</option>
-            </Select>
-          )}
-        </Field>
-        <Field label="FI spending / year" hint={`Baseline ${twd(base.fiSpending)}`}>
+            />
+          }
+        >
           {(id) => (
             <MoneyInput
               id={id}
               value={o.fiSpendingMinor}
               currency="TWD"
-              placeholder="from tier"
+              placeholder="today"
               onCommit={(v) => void setLevers(s, { fiSpendingMinor: v })}
             />
           )}
         </Field>
-        <Field label="Spending change" hint="Applies to spending before and after FI">
+        <Field
+          label="Spending change (%)"
+          hint="−10% = spend less. Applies from today to spending both while working and after you stop."
+        >
           {(id) => (
             <PercentInput
               id={id}
@@ -438,7 +586,15 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
             />
           )}
         </Field>
-        <Field label="Part-time income after FI / year" hint="Barista FI">
+        <Field
+          label="Part-time income after you stop / year"
+          hint={
+            <TodayHint
+              today={base.barista ? twd(base.barista.annual) : 'none'}
+              extra="Also lowers the money you need"
+            />
+          }
+        >
           {(id) => (
             <MoneyInput
               id={id}
@@ -449,6 +605,7 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
                 void setLevers(s, {
                   baristaIncome: v
                     ? {
+                        ...o.baristaIncome,
                         annualMinor: v,
                         untilAge: o.baristaIncome?.untilAge ?? (o.targetFiAge ?? base.startAge) + 10,
                       }
@@ -473,7 +630,16 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
             />
           )}
         </Field>
-        <Field label="Safe withdrawal rate" hint={`Baseline ${(base.swr * 100).toFixed(2)}%`}>
+        <Field
+          label={<Term k="drawRate" params={params} advanced={advanced} />}
+          hint={
+            <TodayHint
+              today={pct(base.swr, 2)}
+              change={o.swr !== undefined ? pointsChange(row.input.swr, base.swr) : undefined}
+              extra="Lower = a bigger target, safer spending"
+            />
+          }
+        >
           {(id) => (
             <PercentInput
               id={id}
@@ -487,128 +653,186 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
         </Field>
       </Section>
 
-      <Section title="Withdrawal rule">
-        <Field label="Rule">
-          {(id) => (
-            <Select
-              id={id}
-              value={rule.kind}
-              onChange={(e) =>
-                void patch(db.scenarios, s.id, {
-                  withdrawalRule: defaultWithdrawalRule(e.target.value as WithdrawalRule['kind']),
-                })
-              }
-            >
-              {(Object.keys(WITHDRAWAL_RULE_LABELS) as WithdrawalRule['kind'][]).map((k) => (
-                <option key={k} value={k}>
-                  {WITHDRAWAL_RULE_LABELS[k]}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        {rule.kind === 'guardrails' && (
-          <>
-            <Field label="Guardrail band" hint="Cut or raise when the rate drifts this far from the SWR">
-              {(id) => (
-                <PercentInput
-                  id={id}
-                  value={rule.band}
-                  min={0}
-                  max={1}
-                  step={1}
-                  onCommit={(v) =>
-                    v !== undefined &&
-                    void patch(db.scenarios, s.id, { withdrawalRule: { ...rule, band: v } })
-                  }
-                />
-              )}
-            </Field>
-            <Field label="Adjustment step">
-              {(id) => (
-                <PercentInput
-                  id={id}
-                  value={rule.step}
-                  min={0}
-                  max={1}
-                  step={1}
-                  onCommit={(v) =>
-                    v !== undefined &&
-                    void patch(db.scenarios, s.id, { withdrawalRule: { ...rule, step: v } })
-                  }
-                />
-              )}
-            </Field>
-          </>
-        )}
-        {rule.kind === 'fixed_percentage' && (
-          <Field label="Withdraw each year">
+      {advanced && (
+        <Section title="Withdrawal rule">
+          <Field label="Rule">
             {(id) => (
-              <PercentInput
+              <Select
                 id={id}
-                value={rule.rate}
-                min={0}
-                max={0.2}
-                step={0.1}
-                onCommit={(v) =>
-                  v !== undefined && void patch(db.scenarios, s.id, { withdrawalRule: { ...rule, rate: v } })
+                value={rule.kind}
+                onChange={(e) =>
+                  void patch(db.scenarios, s.id, {
+                    withdrawalRule: defaultWithdrawalRule(e.target.value as WithdrawalRule['kind']),
+                  })
                 }
+              >
+                {(Object.keys(WITHDRAWAL_RULE_LABELS) as WithdrawalRule['kind'][]).map((k) => (
+                  <option key={k} value={k}>
+                    {WITHDRAWAL_RULE_LABELS[k]}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          {rule.kind === 'guardrails' && (
+            <>
+              <Field label="Guardrail band" hint="Cut or raise when the rate drifts this far from the SWR">
+                {(id) => (
+                  <PercentInput
+                    id={id}
+                    value={rule.band}
+                    min={0}
+                    max={1}
+                    step={1}
+                    onCommit={(v) =>
+                      v !== undefined &&
+                      void patch(db.scenarios, s.id, { withdrawalRule: { ...rule, band: v } })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label="Adjustment step">
+                {(id) => (
+                  <PercentInput
+                    id={id}
+                    value={rule.step}
+                    min={0}
+                    max={1}
+                    step={1}
+                    onCommit={(v) =>
+                      v !== undefined &&
+                      void patch(db.scenarios, s.id, { withdrawalRule: { ...rule, step: v } })
+                    }
+                  />
+                )}
+              </Field>
+            </>
+          )}
+          {rule.kind === 'fixed_percentage' && (
+            <Field label="Withdraw each year">
+              {(id) => (
+                <PercentInput
+                  id={id}
+                  value={rule.rate}
+                  min={0}
+                  max={0.2}
+                  step={0.1}
+                  onCommit={(v) =>
+                    v !== undefined &&
+                    void patch(db.scenarios, s.id, { withdrawalRule: { ...rule, rate: v } })
+                  }
+                />
+              )}
+            </Field>
+          )}
+          <p className="self-center text-xs text-muted-foreground sm:col-span-2 xl:col-span-2">
+            {rule.kind === 'fixed_swr' && 'Spend the FI budget every year, adjusted for inflation.'}
+            {rule.kind === 'guardrails' &&
+              'Start at the FI budget; cut 10% when the withdrawal rate rises 20% above the SWR, raise 10% when it falls 20% below.'}
+            {rule.kind === 'fixed_percentage' &&
+              'Spending follows the portfolio; it never runs out, but spending can fall.'}
+            {rule.kind === 'dividend' &&
+              'Spend only the dividends (yields from the assumption set) plus guaranteed income.'}
+          </p>
+        </Section>
+      )}
+
+      {advanced && (
+        <Section
+          title="How the target is sized"
+          hint="Leave blank to size the money-needed target on your spending once you stop."
+        >
+          <Field label="Size the target on spending of / year">
+            {(id) => (
+              <MoneyInput
+                id={id}
+                value={o.targetSpendingMinor}
+                currency="TWD"
+                placeholder="same as above"
+                onCommit={(v) => void setLevers(s, { targetSpendingMinor: v })}
               />
             )}
           </Field>
-        )}
-        <p className="self-center text-xs text-muted-foreground sm:col-span-2 xl:col-span-2">
-          {rule.kind === 'fixed_swr' && 'Spend the FI budget every year, adjusted for inflation.'}
-          {rule.kind === 'guardrails' &&
-            'Start at the FI budget; cut 10% when the withdrawal rate rises 20% above the SWR, raise 10% when it falls 20% below.'}
-          {rule.kind === 'fixed_percentage' &&
-            'Spending follows the portfolio; it never runs out, but spending can fall.'}
-          {rule.kind === 'dividend' &&
-            'Spend only the dividends (yields from the assumption set) plus guaranteed income.'}
-        </p>
-      </Section>
+          {o.baristaIncome && (
+            <label className="flex items-center gap-2 self-end pb-2 text-sm">
+              <input
+                type="checkbox"
+                checked={o.baristaIncome.inTarget !== false}
+                onChange={(e) =>
+                  void setLevers(s, {
+                    baristaIncome: { ...o.baristaIncome!, inTarget: e.target.checked ? undefined : false },
+                  })
+                }
+              />
+              Part-time income lowers the target (stop sooner)
+            </label>
+          )}
+        </Section>
+      )}
 
-      <Section title="Allocation">
+      <Section title="Investment mix">
         <AllocationEditor s={s} />
       </Section>
 
-      <Section title="Taiwan levers">
+      {advanced && (
+        <Section title="Taiwan levers">
+          <Field
+            label="勞保 claim age"
+            hint={`Normal ${tw.laborInsurance.claimAge}; −/+${(tw.laborInsurance.adjustmentPerYear * 100).toFixed(0)}% a year`}
+          >
+            {(id) => (
+              <NumberInput
+                id={id}
+                value={o.laborInsuranceClaimAge}
+                min={tw.laborInsurance.claimAge - tw.laborInsurance.maxYearsEarly}
+                max={tw.laborInsurance.claimAge + tw.laborInsurance.maxYearsDelay}
+                placeholder={String(tw.laborInsurance.claimAge)}
+                onCommit={(v) => void setLevers(s, { laborInsuranceClaimAge: v })}
+              />
+            )}
+          </Field>
+          <Field label="勞保 haircut" hint="Fund-solvency scenario">
+            {(id) => (
+              <PercentInput
+                id={id}
+                value={o.laborInsuranceHaircut}
+                min={0}
+                max={1}
+                step={5}
+                onCommit={(v) => void setLevers(s, { laborInsuranceHaircut: v })}
+              />
+            )}
+          </Field>
+          <Field label="Return shift" hint="Added to every asset class">
+            {(id) => (
+              <PercentInput
+                id={id}
+                value={o.returnShift}
+                min={-0.2}
+                max={0.2}
+                step={0.5}
+                onCommit={(v) => void setLevers(s, { returnShift: v })}
+              />
+            )}
+          </Field>
+        </Section>
+      )}
+
+      <Section title="Stress test">
         <Field
-          label="勞保 claim age"
-          hint={`Normal ${tw.laborInsurance.claimAge}; −/+${(tw.laborInsurance.adjustmentPerYear * 100).toFixed(0)}% a year`}
+          label="Shares fall just after you stop (%)"
+          hint="Spread over the first 2 years after stopping"
         >
           {(id) => (
-            <NumberInput
-              id={id}
-              value={o.laborInsuranceClaimAge}
-              min={tw.laborInsurance.claimAge - tw.laborInsurance.maxYearsEarly}
-              max={tw.laborInsurance.claimAge + tw.laborInsurance.maxYearsDelay}
-              placeholder={String(tw.laborInsurance.claimAge)}
-              onCommit={(v) => void setLevers(s, { laborInsuranceClaimAge: v })}
-            />
-          )}
-        </Field>
-        <Field label="勞保 haircut" hint="Fund-solvency scenario">
-          {(id) => (
             <PercentInput
               id={id}
-              value={o.laborInsuranceHaircut}
+              value={o.crash?.drop}
               min={0}
-              max={1}
+              max={0.9}
               step={5}
-              onCommit={(v) => void setLevers(s, { laborInsuranceHaircut: v })}
-            />
-          )}
-        </Field>
-        <Field label="Return shift" hint="Added to every asset class">
-          {(id) => (
-            <PercentInput
-              id={id}
-              value={o.returnShift}
-              min={-0.2}
-              max={0.2}
-              step={0.5}
-              onCommit={(v) => void setLevers(s, { returnShift: v })}
+              onCommit={(v) =>
+                void setLevers(s, { crash: v ? { drop: v, years: o.crash?.years ?? 2 } : undefined })
+              }
             />
           )}
         </Field>
@@ -631,7 +855,7 @@ export function ScenarioEditor({ s }: { s: Scenario }) {
           />
         )}
       </Field>
-      <p className="text-xs text-subtle">Changes save automatically. Amounts are today's TWD.</p>
+      <p className="text-xs text-subtle">Changes save automatically. Amounts are in today's money.</p>
     </div>
   );
 }

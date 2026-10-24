@@ -20,32 +20,41 @@ export interface StoredResult {
   signature: string;
 }
 
+let shared: { worker: Worker; api: Remote<MonteCarloWorkerApi> } | undefined;
+
+/** One Monte Carlo worker for the page; created on first use. */
+export function monteCarloWorker(): Remote<MonteCarloWorkerApi> {
+  if (!shared) {
+    const worker = new Worker(new URL('../../workers/montecarlo.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+    shared = { worker, api: wrap<MonteCarloWorkerApi>(worker) };
+  }
+  return shared.api;
+}
+
 export function useMonteCarlo() {
-  const workerRef = useRef<Worker | null>(null);
-  const apiRef = useRef<Remote<MonteCarloWorkerApi> | null>(null);
   const [results, setResults] = useState<Record<string, StoredResult>>({});
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string>();
+  const latest = useRef(0);
 
   useEffect(
     () => () => {
-      workerRef.current?.terminate();
+      shared?.worker.terminate();
+      shared = undefined;
     },
     [],
   );
 
   const run = useCallback(
     async (jobs: { id: string; input: ProjectionInput }[], runs: number, seed: number) => {
-      if (!apiRef.current) {
-        workerRef.current = new Worker(new URL('../../workers/montecarlo.worker.ts', import.meta.url), {
-          type: 'module',
-        });
-        apiRef.current = wrap<MonteCarloWorkerApi>(workerRef.current);
-      }
+      if (jobs.length === 0) return;
+      const ticket = ++latest.current;
       setRunning(true);
       setError(undefined);
       try {
-        const summaries = await apiRef.current.run(
+        const summaries = await monteCarloWorker().run(
           jobs.map((j) => j.input),
           { runs, seed },
         );
@@ -59,7 +68,7 @@ export function useMonteCarlo() {
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       } finally {
-        setRunning(false);
+        if (ticket === latest.current) setRunning(false);
       }
     },
     [],

@@ -191,8 +191,15 @@ export function buildProjectionInput(
       inflationLinked: st.inflationLinked,
     })),
     barista: o.baristaIncome
-      ? { annual: fromMinor(o.baristaIncome.annualMinor), untilAge: o.baristaIncome.untilAge }
+      ? {
+          annual: fromMinor(o.baristaIncome.annualMinor),
+          untilAge: o.baristaIncome.untilAge,
+          inTarget: o.baristaIncome.inTarget,
+        }
       : undefined,
+    workExtraYears: o.targetFiAge === undefined ? o.workExtraYears : undefined,
+    targetSpending:
+      o.targetSpendingMinor !== undefined ? fromMinor(o.targetSpendingMinor) * multiplier : undefined,
     laborInsurance: li.enabled
       ? {
           settings: li,
@@ -220,6 +227,7 @@ export function buildProjectionInput(
     fxDrift: assumptions.fxDrift,
     fxVolatility: assumptions.fxVolatility,
     events: eventsToProjection(spec.events),
+    crash: o.crash,
     taiwan: tw,
   };
 }

@@ -35,6 +35,11 @@ Defaults chosen where the PRD and technical design left a question open. Each is
   TWD `tw_equity` dividends. Thresholds are nominal NT$ amounts compared against nominal dividends.
 - **AMT** is a flag only, raised when overseas dividends exceed the threshold.
 - **Liabilities** amortise with their payment and rate; payments are assumed to be part of spending.
+- **Typical path.** The deterministic projection uses each asset class's median return,
+  (1 + m) ÷ √(1 + σ² ÷ (1 + m)²) − 1, the median of the same lognormal Monte Carlo draws from. With
+  the arithmetic mean it sat above almost every simulated future, so the Lab's two charts told
+  opposite stories. On the demo plan the typical path ends between Monte Carlo's P40 and P60
+  (tested). FI dates on every page move later as a result; locked plans keep their saved projection.
 - **Monte Carlo** uses lognormal returns with the arithmetic mean and volatility from the assumption
   set, correlated by Cholesky. Inflation and FX are normal and independent of returns. Run _i_ always
   uses seed `(seed, i)`, so scenarios compared with one seed share their random numbers.
@@ -122,3 +127,35 @@ announcements). Re-check before relying on a number; the as-of date is on the Se
 Not modelled: the NT$7.5M basic exemption and 20% basic tax (the app only flags years when overseas
 income must be reported), and ETF distributions paid out of capital gains, which are exempt from
 income tax and the supplementary premium.
+
+## Strategy Lab: clarity and trust redesign
+
+From the PRD "Strategy Lab — Clarity & Trust Redesign" (R1–R15, all three phases).
+
+- **Your plan today** is a built-in row that always mirrors live data and can't be edited; "Make a
+  copy" creates a stored scenario. Every scenario is compared with it ("vs your plan").
+- **Simple view** (default) uses the plain glossary labels (`lib/glossary.ts`) with tooltips;
+  **Advanced** adds runs, seed, timing, P10–P90, the withdrawal rule, assumption set and Taiwan
+  levers. A browser test checks the Simple view contains none of P10, P90, seed, det., SWR or Monte
+  Carlo.
+- **Verdict**: simulated futures (Monte Carlo) lead; past markets sit beside them. Tiers: On track
+  85%+, Borderline 70–84%, At risk under 70%. Failed runs report their median run-out age.
+- **Simulations run automatically** (1,000 runs, seed 42) whenever a visible plan changes.
+- **"Why these differ"** appears when the two lenses differ by more than 10 points. It compares the
+  mix's typical real return under the assumptions with its real return over 1871–2022.
+- **Cause lines** appear for chance differences of 5 points or more, naming the first change that
+  points the same way: working years, FI spending, a crash, part-time income, one-off events,
+  savings, draw rate, return shift, withdrawal rule, mix.
+- **Name check** warns when a savings-rate override is below today's rate, or a name says more /
+  earlier while the effect is the opposite.
+- **Safer variants and solving for a target** keep a "stop as soon as I reach my target" plan on that
+  rule. Fixing its stop age instead removed the built-in safety valve: bad futures that stop later
+  were forced to stop on time, so "work 1 more year" scored lower than the plan. New levers make
+  this possible: `workExtraYears` (keep working N years after reaching the target),
+  `targetSpendingMinor` (size the target on other spending, so a spending cut doesn't bring the
+  stop date forward) and `baristaIncome.inTarget` (part-time income not counted towards the target).
+- **Crash lever**: equities fall by `drop` in total over the first `years` years after stopping,
+  in every lens.
+- **Reference checks**: zero-volatility Monte Carlo equals the typical path; the classic 4% / 60/40
+  / 30-year case over 1871–2022 succeeds in 96% of start years (published: about 95%; the check
+  passes from 90% to 99%).

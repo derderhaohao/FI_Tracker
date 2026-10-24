@@ -81,8 +81,8 @@ test('exports and restores an encrypted backup', async ({ page }) => {
 test('Strategy Lab shows the historical backtest and buy vs. rent', async ({ page }) => {
   const errors = await loadDemo(page);
   await page.goto('./#/lab');
-  await expect(page.getByRole('columnheader', { name: 'Historical' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Historical backtest/ })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Past-markets check' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Past-markets check:/ })).toBeVisible();
   await expect(page.getByText(/of \d+ starting years/)).toBeVisible();
 
   await page.getByRole('radio', { name: 'Buy vs. rent' }).click();

@@ -20,6 +20,8 @@ export interface SeriesSpec {
   slot: number;
   area?: boolean;
   dashed?: boolean;
+  /** Overrides the slot colour (e.g. a neutral reference series). */
+  color?: string;
 }
 
 export interface LineChartProps<T extends object> {
@@ -47,10 +49,11 @@ export function LineChart<T extends object>({
   ariaLabel,
 }: LineChartProps<T>) {
   const theme = useChartTheme();
-  const color = (slot: number) => theme.series[slot % theme.series.length];
+  const slotColor = (slot: number) => theme.series[slot % theme.series.length];
+  const color = (s: SeriesSpec) => s.color ?? slotColor(s.slot);
   return (
     <figure aria-label={ariaLabel} className="m-0">
-      <ChartLegend items={series.map((s) => ({ label: s.label, color: color(s.slot), dashed: s.dashed }))} />
+      <ChartLegend items={series.map((s) => ({ label: s.label, color: color(s), dashed: s.dashed }))} />
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
@@ -82,7 +85,7 @@ export function LineChart<T extends object>({
                     rows={series.map((s) => ({
                       label: s.label,
                       value: yFormat(Number((row as Record<string, unknown>)[s.key] ?? Number.NaN)),
-                      color: color(s.slot),
+                      color: color(s),
                     }))}
                   />
                 );
@@ -102,7 +105,7 @@ export function LineChart<T extends object>({
                   key={`${s.key}-area`}
                   dataKey={s.key}
                   stroke="none"
-                  fill={color(s.slot)}
+                  fill={color(s)}
                   fillOpacity={0.1}
                   isAnimationActive={false}
                   activeDot={false}
@@ -115,7 +118,7 @@ export function LineChart<T extends object>({
                 key={s.key}
                 dataKey={s.key}
                 name={s.label}
-                stroke={color(s.slot)}
+                stroke={color(s)}
                 strokeWidth={2}
                 strokeDasharray={s.dashed ? '6 4' : undefined}
                 dot={false}

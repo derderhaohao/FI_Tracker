@@ -14,17 +14,17 @@ built in as editable settings.
 
 ## Screens
 
-| Route          | Screen       | What it does                                                                                            |
-| -------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
-| `#/`           | Dashboard    | Net worth, FI progress, projected FI date, savings rate, alerts, backup                                 |
-| `#/accounts`   | Accounts     | Account registry and liability terms                                                                    |
-| `#/snapshots`  | Snapshots    | Accounts × dates grid, FX per date, holdings, CSV import, change attribution with reconciliation check  |
-| `#/cashflow`   | Cash flow    | Monthly totals or individual transactions, CSV import from bank exports, lump sums, savings-rate trend  |
-| `#/goal`       | Goal         | FI budget and tiers, SWR, income streams, post-employment costs, target age, goal history               |
-| `#/projection` | Projection   | Baseline projection, FI target, sensitivity, year table                                                 |
-| `#/lab`        | Strategy Lab | Scenarios, comparison, Monte Carlo bands, historical backtest (1871–2022), buy vs. rent, plan of record |
-| `#/reviews`    | Reviews      | Checklists, plan vs. actual, review log                                                                 |
-| `#/settings`   | Settings     | Assumptions, Taiwan settings, categories, backup / restore, encrypted export, auto-save, demo data      |
+| Route          | Screen       | What it does                                                                                                                                                            |
+| -------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `#/`           | Dashboard    | Net worth, FI progress, projected FI date, savings rate, alerts, backup                                                                                                 |
+| `#/accounts`   | Accounts     | Account registry and liability terms                                                                                                                                    |
+| `#/snapshots`  | Snapshots    | Accounts × dates grid, FX per date, holdings, CSV import, change attribution with reconciliation check                                                                  |
+| `#/cashflow`   | Cash flow    | Monthly totals or individual transactions, CSV import from bank exports, lump sums, savings-rate trend                                                                  |
+| `#/goal`       | Goal         | FI budget and tiers, SWR, income streams, post-employment costs, target age, goal history                                                                               |
+| `#/projection` | Projection   | Baseline projection, FI target, sensitivity, year table                                                                                                                 |
+| `#/lab`        | Strategy Lab | A plain verdict per plan, what-if templates, comparison against your plan today, simulated futures and past markets (1871–2022), what would make it safer, buy vs. rent |
+| `#/reviews`    | Reviews      | Checklists, plan vs. actual, review log                                                                                                                                 |
+| `#/settings`   | Settings     | Assumptions, Taiwan settings, categories, backup / restore, encrypted export, auto-save, demo data                                                                      |
 
 ## Getting started
 
@@ -87,9 +87,11 @@ tests/e2e/      Playwright specs
 sample-data/    fictional demo data
 ```
 
-The deterministic projection and Monte Carlo share one yearly step function
-(`domain/projection.ts`), so both always apply the same rules; with volatility set to zero, Monte
-Carlo reproduces the deterministic projection exactly (tested).
+The deterministic projection (the "typical path") and Monte Carlo share one yearly step function
+(`domain/projection.ts`), so both always apply the same rules. The typical path uses each asset's
+median (compounded) return, so it runs through the middle of the simulated futures; with volatility
+set to zero the two are identical, and Monte Carlo reproduces the typical path exactly (tested, and
+shown as a reference check in the Strategy Lab).
 
 ## Deployment (GitHub Pages)
 
