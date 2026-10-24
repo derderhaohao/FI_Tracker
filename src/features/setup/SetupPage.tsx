@@ -6,6 +6,8 @@ import { today, yearOf } from '@/domain/dates';
 import { formatMoney, fromMinor } from '@/domain/money';
 import { savingsRate } from '@/domain/cashflow';
 import { useAppData } from '@/app/data';
+import { requestPersistence } from '@/db/defaults';
+import { ASSET_CLASS_LABELS, type Allocation, type AssetClass } from '@/domain/entities';
 import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +18,11 @@ import { dateAfterYears, pct, twd, twdCompact } from '@/lib/format';
 import {
   applySetup,
   buildSetupRecords,
+  CASH_WARNING,
+  chosenMix,
   currentAge,
+  currentMix,
+  MIX_PRESETS,
   draftAccount,
   emptyDraft,
   previewSetup,
@@ -24,9 +30,12 @@ import {
   STEPS,
   validateStep,
   type DraftAccount,
+  type MixChoice,
   type SetupDraft,
   type SetupKind,
 } from './setupModel';
+
+type StepProps = { d: SetupDraft; set: (p: Partial<SetupDraft>) => void };
 
 const STORAGE_KEY = 'fi-tracker-setup-draft';
 
@@ -371,7 +380,64 @@ function StepTaiwan({ d, set }: { d: SetupDraft; set: (p: Partial<SetupDraft>) =
   );
 }
 
-function StepReview({ d }: { d: SetupDraft }) {
+function mixText(a: Allocation): string {
+  return (Object.entries(a) as [AssetClass, number][])
+    .filter(([, v]) => v > 0)
+    .sort((x, y) => y[1] - x[1])
+    .map(([k, v]) => `${ASSET_CLASS_LABELS[k]} ${Math.round(v * 100)}%`)
+    .join(' · ');
+}
+
+function MixChoiceField({ d, set }: StepProps) {
+  const current = currentMix(d);
+  const options: { value: MixChoice; label: string; text: string }[] = [
+    ...(current ? [{ value: 'current' as const, label: 'Keep my current mix', text: mixText(current) }] : []),
+    ...(Object.entries(MIX_PRESETS) as [Exclude<MixChoice, 'current'>, (typeof MIX_PRESETS)['growth']][]).map(
+      ([value, p]) => ({ value, label: p.label, text: p.text }),
+    ),
+  ];
+  const chosen = chosenMix(d);
+  return (
+    <fieldset className="rounded-lg border p-4">
+      <legend className="px-1 text-sm font-semibold">How should new savings be invested?</legend>
+      <p className="mb-3 text-sm text-muted-foreground">
+        The projection invests what you save each month in this mix. It matters: cash grows slowly, so a mix
+        that is mostly cash pushes your FI date later. You can change it any time in Settings.
+      </p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {options.map((o) => (
+          <label
+            key={o.value}
+            className={cn(
+              'flex cursor-pointer gap-2 rounded-md border p-3 text-sm',
+              d.mix === o.value ? 'border-primary bg-surface-2' : 'hover:bg-surface-2',
+            )}
+          >
+            <input
+              type="radio"
+              name="mix"
+              className="mt-1"
+              checked={d.mix === o.value}
+              onChange={() => set({ mix: o.value })}
+            />
+            <span>
+              <span className="font-medium">{o.label}</span>
+              <span className="block text-xs text-muted-foreground">{o.text}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      {chosen && (chosen.cash ?? 0) > CASH_WARNING && (
+        <Notice tone="warning" className="mt-3">
+          {Math.round((chosen.cash ?? 0) * 100)}% of new savings would stay in cash, which barely beats
+          inflation. Unless you need it soon, a mix with more shares and bonds usually reaches FI sooner.
+        </Notice>
+      )}
+    </fieldset>
+  );
+}
+
+function StepReview({ d, set }: StepProps) {
   const { settings, categories, activeAssumptions } = useAppData();
   const preview = useMemo(() => {
     const records = buildSetupRecords(d, {
@@ -386,8 +452,9 @@ function StepReview({ d }: { d: SetupDraft }) {
   const owned = d.accounts.filter((a) => a.kind !== 'loan');
   return (
     <div className="flex flex-col gap-5">
+      <MixChoiceField d={d} set={set} />
       <section className="rounded-lg border bg-surface-2 p-5">
-        <div className="text-sm text-muted-foreground">Projected FI date</div>
+        <div className="text-sm text-muted-foreground">Most likely FI date</div>
         {preview.fiAge !== undefined && preview.yearsToFi !== undefined ? (
           <>
             <div className="mt-1 text-4xl font-semibold tracking-tight">
@@ -457,8 +524,11 @@ function StepReview({ d }: { d: SetupDraft }) {
           </li>
           <li>{d.taiwan.skipped ? 'Taiwan pension details skipped.' : 'Your 勞退 and 勞保 details.'}</li>
           <li>
-            Your current investment mix as the target allocation for new savings (change it in Settings).
+            {chosenMix(d)
+              ? `New savings invested as: ${mixText(chosenMix(d)!)}.`
+              : 'Choose how new savings are invested, above.'}
           </li>
+          <li>Your browser is asked to keep this data safe from automatic clean-up when space runs low.</li>
         </ul>
       </div>
     </div>
@@ -521,6 +591,11 @@ export function SetupPage() {
   };
 
   const finish = async () => {
+    const problems = validateStep(step, draft, year);
+    if (problems.length) {
+      setErrors(problems);
+      return;
+    }
     setSaving(true);
     try {
       await applySetup(
@@ -533,7 +608,9 @@ export function SetupPage() {
         }),
       );
       saveDraft(undefined);
-      navigate('/?setup=done');
+      // Ask the browser not to clear this site's storage under pressure (product review, issue 11).
+      const kept = await requestPersistence();
+      navigate(`/?setup=done&storage=${kept ? 'kept' : 'not-kept'}`);
     } catch (e) {
       setSaving(false);
       setErrors([`Could not save: ${e instanceof Error ? e.message : String(e)}`]);
@@ -590,7 +667,7 @@ export function SetupPage() {
           {step === 2 && <StepMoney d={draft} set={set} />}
           {step === 3 && <StepGoal d={draft} set={set} />}
           {step === 4 && <StepTaiwan d={draft} set={set} />}
-          {step === 5 && <StepReview d={draft} />}
+          {step === 5 && <StepReview d={draft} set={set} />}
           {errors.length > 0 && (
             <Notice tone="warning">
               <ul className="list-disc pl-4">

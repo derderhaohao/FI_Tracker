@@ -11,7 +11,7 @@ import {
 import { correlationKey, defaultAssumptionSet } from '@/domain/assumptions';
 import { today } from '@/domain/dates';
 import { db } from '@/db/db';
-import { ensureDefaults } from '@/db/defaults';
+import { ensureDefaults, requestPersistence } from '@/db/defaults';
 import { newId, patch, save } from '@/db/repo';
 import {
   backupFileName,
@@ -1096,7 +1096,12 @@ function Backup() {
           ) : persisted ? (
             <Badge tone="good">granted</Badge>
           ) : (
-            <Badge tone="warning">not granted — the browser may clear data under storage pressure</Badge>
+            <>
+              <Badge tone="warning">not granted — the browser may clear data under storage pressure</Badge>{' '}
+              <Button size="sm" variant="ghost" onClick={() => void requestPersistence().then(setPersisted)}>
+                Ask the browser to keep it
+              </Button>
+            </>
           )}
         </li>
         <li>Backups are named *.fi.json; the repository's .gitignore blocks them from being committed.</li>

@@ -7,13 +7,14 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge, Table } from '@/components/ui/misc';
 import { pct, twdCompact } from '@/lib/format';
 import { inflationIndex } from '@/lib/valueMode';
-import type { LabRow } from './model';
+import { stopAge, type LabRow } from './model';
 
 /** Past-markets check of the selected scenario (LAB-7, PRD R4). */
 export function BacktestCard({ row, slot, advanced }: { row: LabRow; slot: number; advanced: boolean }) {
   const valueMode = useUi((s) => s.valueMode);
   const name = row.name;
   const b = row.backtest;
+  const planAge = stopAge(row.result);
   const idx = (k: number) => (valueMode === 'nominal' ? inflationIndex(row.input.inflation, k) : 1);
   const rows = b.ages.map((age, k) => ({
     age,
@@ -27,6 +28,9 @@ export function BacktestCard({ row, slot, advanced }: { row: LabRow; slot: numbe
     <Card className="mt-4">
       <CardHeader
         title={`Past-markets check: ${name}`}
+        actions={
+          <span className="text-xs text-subtle">A second opinion; the status uses simulated futures</span>
+        }
         description={`Replays real US market years: the plan starts once in each year from ${b.firstYear} to ${b.lastYear}${b.wrapped ? ' (sequences wrap to the start of the data)' : ''}. Shares follow US stocks with dividends, bonds follow 10-year Treasuries, inflation follows US prices; cash, property and other keep their assumed return.`}
       />
       <CardContent>
@@ -43,7 +47,13 @@ export function BacktestCard({ row, slot, advanced }: { row: LabRow; slot: numbe
             <div className="text-xl font-semibold">
               {b.medianFiAge !== undefined ? Math.round(b.medianFiAge) : '—'}
             </div>
-            <div className="text-xs text-subtle">reach FI in {pct(b.fiRate, 0)} of runs</div>
+            <div className="text-xs text-subtle">
+              reach FI in {pct(b.fiRate, 0)} of runs
+              {planAge !== undefined &&
+                b.medianFiAge !== undefined &&
+                Math.round(b.medianFiAge) !== planAge &&
+                ` · your plan uses ${planAge}: ${Math.round(b.medianFiAge) < planAge ? 'past US returns were higher than your assumptions' : 'past returns were lower than your assumptions'}`}
+            </div>
           </div>
           <div className="col-span-2">
             <div className="text-muted-foreground">Hardest starting years</div>

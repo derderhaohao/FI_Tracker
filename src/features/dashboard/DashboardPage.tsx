@@ -10,11 +10,12 @@ import { useAppData } from '@/app/data';
 import { Welcome } from '@/features/setup/Welcome';
 import { NextSteps } from '@/features/setup/NextSteps';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
+import { PlanHealthCard } from '@/components/PlanHealthCard';
 import { LineChart } from '@/components/charts/LineChart';
 import { ShareBars } from '@/components/charts/ShareBars';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { EmptyState, Notice, PageHeader, Stat } from '@/components/ui/misc';
-import { dateAfterYears, monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
 
 export function DashboardPage() {
   const data = useAppData();
@@ -99,37 +100,13 @@ export function DashboardPage() {
         </div>
       )}
 
-      <section className="mb-4 rounded-lg border bg-surface p-5">
-        <div className="text-sm text-muted-foreground">Projected FI date</div>
-        {baseline.fiAge !== undefined && baseline.yearsToFi !== undefined ? (
-          <>
-            <div className="mt-1 text-5xl font-semibold tracking-tight">
-              {dateAfterYears(ctx.asOfDate, baseline.yearsToFi)}
-            </div>
-            <div className="mt-2 text-sm text-muted-foreground">
-              Age {baseline.fiAge} · in {baseline.yearsToFi.toFixed(1)} years if nothing changes ·{' '}
-              {baseline.success
-                ? 'money lasts to age ' + settings.horizonAge
-                : `money runs out at age ${baseline.depletionAge}`}{' '}
-              ·{' '}
-              <Link className="text-primary hover:underline" to="/projection">
-                See projection
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mt-1 text-3xl font-semibold">Not reached by age {settings.horizonAge}</div>
-            <div className="mt-2 text-sm text-muted-foreground">
-              Add cash flow and an FI budget, or try a scenario in the{' '}
-              <Link className="text-primary hover:underline" to="/lab">
-                Strategy Lab
-              </Link>
-              .
-            </div>
-          </>
-        )}
-      </section>
+      <PlanHealthCard
+        note={
+          baseline.fiAge === undefined
+            ? 'Add cash flow and an FI budget, or try a scenario in the Strategy Lab.'
+            : 'The age is the typical path, where markets return their typical amount every year; the status counts how often the money lasts across 1,000 simulated futures.'
+        }
+      />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat

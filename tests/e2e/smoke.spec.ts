@@ -21,7 +21,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await expect(page.getByText('Demo data loaded.')).toBeVisible();
 
   await page.getByRole('link', { name: 'Dashboard' }).first().click();
-  await expect(page.getByText('Projected FI date')).toBeVisible();
+  await expect(page.getByLabel('Plan health').getByText(/^Most likely age \d+ · \w{3} \d{4}$/)).toBeVisible();
   await expect(page.getByText('Total net worth').first()).toBeVisible();
 
   // Add a snapshot by copying the last period, then edit one balance.
@@ -32,7 +32,8 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await expect(cell).toBeVisible();
   await cell.fill('150,000');
   await cell.press('Enter');
-  await expect(page.getByText('New snapshot saved.')).toBeVisible();
+  // No permanent backup banner: prompts come after setup, reviews or 30 days.
+  await expect(page.getByText(/Last backup was|No backup in over/)).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Projection' }).first().click();
   await expect(page.getByText('Investable net worth against the FI target')).toBeVisible();

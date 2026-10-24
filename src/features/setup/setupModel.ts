@@ -122,7 +122,36 @@ export interface SetupDraft {
     avgInsuredSalaryMinor?: number;
     claimAge?: number;
   };
+  /** How new savings are invested; asked on the last step. */
+  mix?: MixChoice;
 }
+
+export type MixChoice = 'current' | 'growth' | 'balanced' | 'cautious';
+
+/** Ready-made mixes for new savings, offered beside the current mix. */
+export const MIX_PRESETS: Record<
+  Exclude<MixChoice, 'current'>,
+  { label: string; text: string; allocation: Allocation }
+> = {
+  growth: {
+    label: 'Mostly shares',
+    text: '80% shares, 15% bonds, 5% cash. Bigger swings, higher typical growth.',
+    allocation: { global_equity: 0.4, us_equity: 0.25, tw_equity: 0.15, bond: 0.15, cash: 0.05 },
+  },
+  balanced: {
+    label: 'Balanced',
+    text: '60% shares, 30% bonds, 10% cash.',
+    allocation: { global_equity: 0.3, us_equity: 0.18, tw_equity: 0.12, bond: 0.3, cash: 0.1 },
+  },
+  cautious: {
+    label: 'Cautious',
+    text: '35% shares, 45% bonds, 20% cash. Smaller swings, lower typical growth.',
+    allocation: { global_equity: 0.2, us_equity: 0.1, tw_equity: 0.05, bond: 0.45, cash: 0.2 },
+  },
+};
+
+/** Cash above this share of new savings quietly lowers long-run growth. */
+export const CASH_WARNING = 0.3;
 
 export function draftAccount(kind: SetupKind, existing: readonly DraftAccount[] = []): DraftAccount {
   const p = SETUP_KINDS[kind];
@@ -187,6 +216,11 @@ export function validateStep(step: number, d: SetupDraft, currentYear: number): 
         errors.push('Enter how much you would spend per year once you stop working.');
       if (d.swr < 0.025 || d.swr > 0.05) errors.push('The withdrawal rate must be between 2.5% and 5%.');
       break;
+    case 5:
+      if (!d.mix) errors.push('Choose how your new savings will be invested.');
+      else if (d.mix === 'current' && !currentMix(d))
+        errors.push('There is no current mix to keep yet; pick one of the ready-made mixes.');
+      break;
     case 4: {
       const t = d.taiwan;
       if (t.skipped) break;
@@ -247,6 +281,12 @@ export function currentMix(d: SetupDraft): Allocation | undefined {
   return out;
 }
 
+/** The target allocation the user chose, if any. */
+export function chosenMix(d: SetupDraft): Allocation | undefined {
+  if (!d.mix) return undefined;
+  return d.mix === 'current' ? currentMix(d) : MIX_PRESETS[d.mix].allocation;
+}
+
 /** Turns a complete draft into the records to save. Pure: ids come from `newId`. */
 export function buildSetupRecords(d: SetupDraft, ctx: SetupContext): SetupRecords {
   const at = { createdAt: ctx.now, updatedAt: ctx.now };
@@ -255,7 +295,8 @@ export function buildSetupRecords(d: SetupDraft, ctx: SetupContext): SetupRecord
     birthYear: d.birthYear ?? ctx.settings.birthYear,
     defaultSwr: d.swr,
     destination: { ...ctx.settings.destination, targetFiAge: d.targetFiAge },
-    targetAllocation: currentMix(d) ?? ctx.settings.targetAllocation,
+    targetAllocation: chosenMix(d) ?? ctx.settings.targetAllocation,
+    backupPrompt: 'setup',
     updatedAt: ctx.now,
   };
 

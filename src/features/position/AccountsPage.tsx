@@ -217,6 +217,8 @@ export function AccountsPage() {
         ACCOUNT_TYPES.indexOf(a.type) - ACCOUNT_TYPES.indexOf(b.type) || a.nickname.localeCompare(b.nickname),
     );
   const hasSnapshots = (id: string) => snapshots.some((s) => s.accountId === id);
+  const latest = (id: string) =>
+    snapshots.filter((s) => s.accountId === id).sort((x, y) => y.date.localeCompare(x.date))[0];
 
   return (
     <>
@@ -266,6 +268,7 @@ export function AccountsPage() {
                   <th>Type</th>
                   <th>Asset class</th>
                   <th>Currency</th>
+                  <th className="text-right">Latest balance</th>
                   <th>Investable</th>
                   <th>Terms</th>
                   <th className="w-28" />
@@ -283,6 +286,16 @@ export function AccountsPage() {
                       <td>{ACCOUNT_TYPE_LABELS[a.type]}</td>
                       <td>{ASSET_CLASS_LABELS[a.assetClass]}</td>
                       <td>{a.currency}</td>
+                      <td className="text-right">
+                        {latest(a.id) ? (
+                          <>
+                            {formatMoney(fromMinor(latest(a.id)!.balanceMinor), a.currency)}
+                            <div className="text-xs text-subtle">{latest(a.id)!.date}</div>
+                          </>
+                        ) : (
+                          <span className="text-subtle">—</span>
+                        )}
+                      </td>
                       <td>
                         {a.type === 'liability'
                           ? '—'

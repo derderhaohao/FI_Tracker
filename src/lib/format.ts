@@ -1,4 +1,4 @@
-import { formatMoney, formatPercent } from '@/domain/money';
+import { formatMoney, formatPercent, fromMinor } from '@/domain/money';
 
 export const twd = (v: number) => formatMoney(v, 'TWD');
 export const twdCompact = (v: number) => formatMoney(v, 'TWD', { compact: true });
@@ -20,4 +20,12 @@ export function monthLabel(month: string): string {
     year: 'numeric',
     timeZone: 'UTC',
   });
+}
+
+/** "40% more" / "25% less": the FI budget against what you spend now, in words. */
+export function budgetVsActual(budgetMinor: number | undefined, actual: number): string {
+  if (budgetMinor === undefined || actual <= 0) return '';
+  const d = fromMinor(budgetMinor) / actual - 1;
+  if (Math.abs(d) < 0.005) return 'same';
+  return `${formatPercent(Math.abs(d), 0)} ${d > 0 ? 'more' : 'less'}`;
 }

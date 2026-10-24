@@ -45,6 +45,13 @@ export function NextSteps() {
           <X />
         </Button>
       </div>
+      {params.get('storage') && (
+        <p className="mt-1 text-sm">
+          {params.get('storage') === 'kept'
+            ? 'Your browser agreed to keep this data when space runs low.'
+            : 'Your browser did not promise to keep this data, so a backup matters even more.'}
+        </p>
+      )}
       <p className="mt-1 text-sm text-muted-foreground">
         Once a month, update balances in Snapshots and last month’s pay and spending in Cash flow. When you
         have time:

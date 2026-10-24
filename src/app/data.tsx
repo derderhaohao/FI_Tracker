@@ -31,8 +31,10 @@ export interface AppData extends PlanData {
   baseline: ProjectionResult;
   /** FI number now: (S − G) ÷ SWR, without the bridge fund. */
   fiNumberNow: number;
-  /** Guaranteed income G counted in the FI number. */
+  /** Guaranteed income G counted in the FI number, valued at the plan's stop age. */
   guaranteedIncome: number;
+  /** Typical-path stop-work age (or the target or current age when FI is not reached). */
+  planStopAge: number;
 }
 
 const DataContext = createContext<AppData | undefined>(undefined);
@@ -95,8 +97,12 @@ export function DataProvider({ children, fallback }: { children: ReactNode; fall
     const ctx = baselineContext(plan);
     const baselineInput = buildProjectionInput(plan, activeAssumptions, BASELINE_SPEC, ctx);
     const baseline = runProjection(baselineInput);
+    // Guaranteed income as the plan will see it: 勞保 years and the annuity depend on when
+    // work stops, so value it at the typical stop age, not today's age.
+    const planStopAge =
+      baseline.retireAge ?? baseline.fiAge ?? settings.destination.targetFiAge ?? ctx.startAge;
     const guaranteedIncome = permanentIncome(
-      guaranteedStreams(baselineInput, ctx.startAge),
+      guaranteedStreams(baselineInput, planStopAge),
       baselineInput.horizonAge,
     );
     const fiNumberNow = fiNumber(baselineInput.fiSpending, guaranteedIncome, baselineInput.swr);
@@ -109,6 +115,7 @@ export function DataProvider({ children, fallback }: { children: ReactNode; fall
       baseline,
       fiNumberNow,
       guaranteedIncome,
+      planStopAge,
     };
   }, [raw]);
 

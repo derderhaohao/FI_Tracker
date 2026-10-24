@@ -6,7 +6,7 @@ import { addMonths, daysBetween, monthOf, today } from '@/domain/dates';
 import { netWorthSeries } from '@/domain/networth';
 import { flowsVsPlan, netWorthVsPlan } from '@/domain/planVsActual';
 import { db } from '@/db/db';
-import { newId, save } from '@/db/repo';
+import { newId, patch, save } from '@/db/repo';
 import { useAppData, type AppData } from '@/app/data';
 import { lockPlanOfRecord } from '@/features/lab/actions';
 import { LineChart } from '@/components/charts/LineChart';
@@ -106,6 +106,8 @@ function NewReview() {
         .filter(Boolean),
       checklist: checked,
     });
+    // A finished review is a good moment to back up (product review, issue 11).
+    await patch(db.settings, 'singleton', { backupPrompt: 'review' });
     setChecked({});
     setNotes('');
     setDecisions('');

@@ -1,10 +1,12 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   ArrowLeftRight,
   ClipboardCheck,
   FlaskConical,
   Landmark,
   LayoutDashboard,
+  MoreHorizontal,
   Settings as SettingsIcon,
   Table2,
   Target,
@@ -24,6 +26,72 @@ const NAV = [
   { to: '/reviews', label: 'Reviews', icon: ClipboardCheck },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ] as const;
+
+/** Phone tabs (product review, issue 9): four destinations plus More, which lists the rest. */
+const PHONE_TABS = ['/', '/snapshots', '/cashflow', '/lab'];
+
+function MobileNav() {
+  const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const tabs = NAV.filter((n) => PHONE_TABS.includes(n.to));
+  const more = NAV.filter((n) => !PHONE_TABS.includes(n.to));
+  const moreActive = more.some((n) => pathname.startsWith(n.to));
+  const item = 'flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px]';
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-20 md:hidden" onClick={() => setOpen(false)}>
+          <nav
+            aria-label="More pages"
+            className="absolute inset-x-0 bottom-14 rounded-t-lg border-t bg-surface p-2 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {more.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-md px-3 py-3 text-sm',
+                    isActive ? 'bg-surface-2 font-medium' : 'text-foreground',
+                  )
+                }
+              >
+                <Icon className="size-5" aria-hidden />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      )}
+      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-surface md:hidden">
+        {tabs.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            onClick={() => setOpen(false)}
+            className={({ isActive }) => cn(item, isActive ? 'text-primary' : 'text-muted-foreground')}
+          >
+            <Icon className="size-5" aria-hidden />
+            <span className="whitespace-nowrap">{label}</span>
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label="More pages"
+          className={cn(item, moreActive || open ? 'text-primary' : 'text-muted-foreground')}
+          onClick={() => setOpen((o) => !o)}
+        >
+          <MoreHorizontal className="size-5" aria-hidden />
+          <span>More</span>
+        </button>
+      </nav>
+    </>
+  );
+}
 
 export function Layout() {
   return (
@@ -61,27 +129,7 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
-      <nav
-        aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-10 flex overflow-x-auto border-t bg-surface md:hidden"
-      >
-        {NAV.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              cn(
-                'flex min-w-16 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px]',
-                isActive ? 'text-primary' : 'text-muted-foreground',
-              )
-            }
-          >
-            <Icon className="size-5" aria-hidden />
-            <span className="whitespace-nowrap">{label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      <MobileNav />
     </div>
   );
 }

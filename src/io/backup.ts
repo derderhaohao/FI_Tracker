@@ -112,5 +112,11 @@ export async function markBackedUp(database: FiDatabase = db): Promise<void> {
   const s = await database.settings.get('singleton');
   if (!s) return;
   const now = new Date().toISOString();
-  await database.settings.put({ ...s, lastBackupAt: now, snapshotSinceBackup: false, updatedAt: now });
+  await database.settings.put({
+    ...s,
+    lastBackupAt: now,
+    snapshotSinceBackup: false,
+    backupPrompt: undefined,
+    updatedAt: now,
+  });
 }

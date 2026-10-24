@@ -159,3 +159,29 @@ From the PRD "Strategy Lab — Clarity & Trust Redesign" (R1–R15, all three ph
 - **Reference checks**: zero-volatility Monte Carlo equals the typical path; the classic 4% / 60/40
   / 30-year case over 1871–2022 succeeds in 96% of start years (published: about 95%; the check
   passes from 90% to 99%).
+
+## Product review, "Now" phase: one answer and data safety
+
+From "FI Tracker — Product Review & Roadmap" (24 Oct 2026).
+
+- **One status everywhere.** `PlanHealthProvider` runs the simulated futures for "your plan today"
+  once (1,000 runs, seed 42, the Lab's defaults). Dashboard, Projection and Goal show its status
+  (On track 85%+, Watch 70–84%, At risk under 70%) and the typical-path stop age; the Lab's "Your
+  plan today" row uses the same inputs, runs and seed, so all four agree (browser test).
+- **Shared rounding** (`domain/planStatus.ts`): 95% or more is "Nearly all" and ten dots, 5% or
+  less is "Almost none"; otherwise the nearest of ten.
+- **Past markets are a second opinion**: shown smaller under the simulated futures, with the reason
+  they differ; their typical stop-work age names why it differs from the plan's.
+- **Guaranteed income is valued at the plan's stop age** (it was valued at today's age, which left
+  勞保 at zero for anyone short of 15 insured years today). The FI number and goal history now
+  count it.
+- **Quick estimates retired**: their closed-form "years to FI" disagreed with the projection. The
+  Goal page compares the target age with the projection instead.
+- **Investment mix is a choice in setup**, offered as the current mix or three presets, with a
+  warning above 30% cash.
+- **Backups**: the permanent banner is gone. A prompt appears after setup, after each review and
+  when the last backup (or, without one, the first data) is over 30 days old; "Later" hides it
+  for 7 days. Auto-save is offered first where the browser supports it. Persistent storage is
+  requested when setup finishes (and from Settings), not silently on every start.
+- **Phone navigation**: Dashboard, Snapshots, Cash flow and Strategy Lab, plus More for the rest.
+- Unknown links show "Page not found"; Accounts lists the latest balance.
