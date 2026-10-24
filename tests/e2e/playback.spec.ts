@@ -48,7 +48,10 @@ test('firing an event keeps the past, and undo restores it exactly', async ({ pa
     .getByRole('button', { name: /^Fire Windfall/ })
     .first()
     .click();
-  await expect(page.getByLabel('Impact of the last event')).toContainText(/Windfall: \+NT\$/);
+  // A windfall brings FI forward (stopping sooner can leave less at 95, so the sign there varies).
+  await expect(page.getByLabel('Impact of the last event')).toContainText(
+    /Windfall: [+−]NT\$.* · FI \d+ months earlier/,
+  );
   await expect(page.getByRole('cell', { name: 'Windfall' })).toBeVisible();
   expect(await counter(page, 'Investments').innerText()).toBe(investNow);
   await page.getByLabel('Playhead month').fill('120');

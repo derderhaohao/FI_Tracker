@@ -1991,4 +1991,38 @@ export const ZH_TW: Record<string, string> = {
   '勞退 pension': '勞退退休金',
   'Labor pension fund': '勞工退休基金',
   '{y} y {m} m': '{y} 歲 {m} 個月',
+  // loans from Accounts
+  'Open the loan': '開啟貸款',
+  'Open the loans': '開啟貸款',
+  'Loan payments now come from the loan’s terms in Accounts. Tell it where the payment sits in your cash flow (or let it add the payment for you), so it is never counted twice.':
+    '貸款還款現在取自「帳戶」中的貸款條件。請告訴它這筆還款在現金流中的位置（或讓它幫你自動加入），避免重複計算。',
+  'Loan payments now come from each loan’s terms in Accounts. Tell each one where its payment sits in your cash flow (or let it add the payment for you), so none is counted twice.':
+    '貸款還款現在取自「帳戶」中各筆貸款的條件。請告訴每筆貸款它的還款在現金流中的位置（或讓它幫你自動加入），避免重複計算。',
+  'Loan payments': '貸款還款',
+  'Loan payments of {amount}/mo are added separately until {month}; leave them out of the FI budget.':
+    '每月 {amount} 的貸款還款會另外計算到 {month}；請不要計入財務自由預算。',
+  'from loan terms in Accounts': '取自「帳戶」的貸款條件',
+  'incl. {amount}/mo loan payment (Accounts)': '含每月 {amount} 貸款還款（帳戶）',
+  'Scheduled from Accounts; type to change this month': '依「帳戶」排定；輸入金額即可修改本月',
+  'Spending while working / year, loans aside': '工作期間支出／年（不含貸款）',
+  'Last payment {month}': '最後一期 {month}',
+  'In Cash flow, this payment is': '這筆還款在現金流中',
+  'A “Loan payments” row fills itself in Cash flow every month until the loan ends. Leave the payment out of your other categories.':
+    '現金流中的「貸款還款」列會每月自動填入，直到貸款結束。請不要再把這筆還款記在其他類別中。',
+  'Nothing to type twice: the plan reads the payment from here, takes it out of everyday spending, and stops it when the loan ends.':
+    '不必重複輸入：計畫會從這裡讀取還款金額，從日常支出中分開計算，並在貸款結束時停止。',
+  'Already part of my spending': '已包含在我的支出中',
+  'Not in my cash flow: add it automatically': '不在我的現金流中：自動加入',
+  'In category': '所在類別',
+  'Where your monthly spending includes it': '你每月支出中包含它的類別',
+  '— somewhere in my spending —': '— 在我的支出中某處 —',
+  'Add the remaining term so the plan knows when the payments stop.':
+    '請填入剩餘期數，讓計畫知道還款何時結束。',
+  'added to Cash flow automatically': '自動加入現金流',
+  'in {name}': '在{name}中',
+  'in your spending': '在你的支出中',
+  'Filled from loan terms in Accounts': '由「帳戶」的貸款條件填入',
+  'Spending while working, loans aside': '工作期間支出（不含貸款）',
+  'Loan · {name}': '貸款 · {name}',
+  '{amount}/mo until {month}': '每月 {amount}，到 {month}',
 };

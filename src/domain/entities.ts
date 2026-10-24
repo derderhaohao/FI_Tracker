@@ -278,6 +278,14 @@ export const liabilitySchema = z.object({
   floating: z.boolean().optional(),
   /** The property this loan is secured on. */
   propertyAccountId: idSchema.optional(),
+  /**
+   * How the payment shows in cash flow: already part of spending (`included`, the default),
+   * optionally in a named category, or added automatically as a "Loan payments" row (`auto`).
+   */
+  cashFlow: z.enum(['included', 'auto']).optional(),
+  categoryId: idSchema.optional(),
+  /** Month the payment and remaining term were entered; the term counts down from here. */
+  termsAsOf: monthSchema.optional(),
   ...audit,
 });
 export type Liability = z.infer<typeof liabilitySchema>;
@@ -291,6 +299,8 @@ export const categorySchema = z.object({
   essential: z.boolean(),
   /** Annual FI-phase spending for this category, in TWD minor units (expense only). */
   fiAnnualMinor: minorSchema.min(0).optional(),
+  /** `loans`: the "Loan payments" row filled from loan terms in Accounts. */
+  system: z.enum(['loans']).optional(),
   ...audit,
 });
 export type Category = z.infer<typeof categorySchema>;
@@ -306,6 +316,8 @@ export const cashFlowSchema = z.object({
   note: z.string().max(500).optional(),
   /** Set for individual transactions (transaction mode, CSV import); absent for monthly totals. */
   date: isoDateSchema.optional(),
+  /** A loan payment scheduled from Accounts; computed, never stored. */
+  scheduled: z.boolean().optional(),
   ...audit,
 });
 export type CashFlow = z.infer<typeof cashFlowSchema>;

@@ -50,7 +50,10 @@ export interface ProjectionStream {
 export interface ProjectionLiability {
   balance: number;
   rate: number;
+  /** Nominal TWD a year, fixed, so its real value falls with inflation. */
   annualPayment: number;
+  /** Monthly payments left at the start; absent = pay until the balance is cleared. */
+  months?: number;
 }
 
 export interface ProjectionEvent {
@@ -227,7 +230,10 @@ export interface YearRow {
   spending: number;
   /** Added to liquid from work (negative = drawn down while working). */
   savings: number;
+  /** Drawn from liquid after FI, loan payments included. */
   withdrawal: number;
+  /** Loan payments from the terms in Accounts: out of savings while working, withdrawn after FI. */
+  loanPayments: number;
   streamIncome: number;
   pensionContribution: number;
   eventAmount: number;
@@ -297,6 +303,28 @@ export function guaranteedStreams(input: ProjectionInput, retireAge: number): Gu
   return out;
 }
 
+/** Loan payments still due after stopping at `retireAge`, as negative temporary income (real TWD). */
+export function loanStreams(input: ProjectionInput, retireAge: number): GuaranteedStream[] {
+  const out: GuaranteedStream[] = [];
+  for (const l of input.liabilities) {
+    if (l.annualPayment <= 0 || l.months === undefined || l.months <= 0) continue;
+    const endAge = Math.round(input.startAge + l.months / 12);
+    if (endAge <= retireAge) continue;
+    const years = Math.max(0, retireAge - input.startAge);
+    out.push({
+      startAge: retireAge,
+      endAge,
+      annual: -l.annualPayment / Math.pow(1 + input.inflation, years),
+    });
+  }
+  return out;
+}
+
+/** What the money needed at `retireAge` must cover: guaranteed income, less loans still running. */
+export function targetStreams(input: ProjectionInput, retireAge: number): GuaranteedStream[] {
+  return [...guaranteedStreams(input, retireAge), ...loanStreams(input, retireAge)];
+}
+
 export function prepare(input: ProjectionInput): Prepared {
   const years = Math.max(0, input.horizonAge - input.startAge);
   const required = new Float64Array(years + 1);
@@ -304,7 +332,7 @@ export function prepare(input: ProjectionInput): Prepared {
     const age = input.startAge + k;
     required[k] = fiTarget(
       input.targetSpending ?? input.fiSpending,
-      guaranteedStreams(input, age),
+      targetStreams(input, age),
       input.swr,
       age,
       input.horizonAge,
@@ -474,6 +502,7 @@ export function simulate(
         spending: 0,
         savings: 0,
         withdrawal: 0,
+        loanPayments: 0,
         streamIncome: 0,
         pensionContribution: 0,
         eventAmount: 0,
@@ -541,6 +570,21 @@ export function simulate(
       depletionAge = age;
     flows.eventAmount = eventAmount;
 
+    // Loan payments this year, from the terms in Accounts. The final year clears what is left.
+    const growth = 1 + draw.inflation;
+    let loanPaid = 0;
+    const loanDue = liabilities.map((l) => {
+      const due = l.balance * (1 + l.rate);
+      if (l.annualPayment <= 0 || due <= 0 || (l.months !== undefined && l.months <= 0))
+        return { due, paid: 0 };
+      const n = l.months === undefined ? 12 : Math.min(12, l.months);
+      const last = l.months !== undefined && l.months <= 12;
+      const paid = last ? due : Math.min(due, (l.annualPayment * n) / 12 / inflationIndex);
+      loanPaid += paid;
+      return { due, paid };
+    });
+    flows.loanPayments = loanPaid;
+
     // 2–3. This year's flows, decided at the start of the year. They land mid-year, so they
     // earn half a year's return: the same as spreading them over twelve months, which keeps
     // this yearly engine in step with the monthly playback engine.
@@ -549,10 +593,13 @@ export function simulate(
       // 2. Before FI: savings to liquid by target allocation, 勞退 to locked.
       const base = input.annualIncome * incomeFactor;
       const income = incomeFor(input, age, base, incomeFactor) * stress.pay;
+      // A savings-rate lever sets the total going out, loan payments included.
       const spending =
-        input.savingsRate !== undefined ? base * (1 - input.savingsRate) : input.currentSpending;
+        input.savingsRate !== undefined
+          ? Math.max(0, base * (1 - input.savingsRate) - loanPaid)
+          : input.currentSpending;
       const working = income > 0 ? incomeFactor : 0;
-      const savings = income - spending + input.pension.liquidDelta * working;
+      const savings = income - spending - loanPaid + input.pension.liquidDelta * working;
       const contribution = (input.pension.employer + input.pension.voluntary) * working;
       applyFlows = () => {
         if (savings >= 0) deposit(liquid, input.allocation, savings);
@@ -582,19 +629,19 @@ export function simulate(
       spendingNow = result.spending;
       if (input.fiSpending > 0)
         minSpendingRatio = Math.min(minSpendingRatio, result.spending / input.fiSpending);
+      const out = result.withdrawal + loanPaid;
       applyFlows = () => {
-        if (result.withdrawal >= 0) {
-          if (!withdraw(liquid, result.withdrawal) && depletionAge === undefined) depletionAge = age;
+        if (out >= 0) {
+          if (!withdraw(liquid, out) && depletionAge === undefined) depletionAge = age;
         } else {
-          deposit(liquid, input.allocation, -result.withdrawal);
+          deposit(liquid, input.allocation, -out);
         }
       };
-      Object.assign(flows, { spending: result.spending, withdrawal: result.withdrawal, streamIncome });
+      Object.assign(flows, { spending: result.spending, withdrawal: out, streamIncome });
     }
 
     // 4. Returns net of fees and Taiwan frictions; 5. FX on foreign-currency assets.
     // Applied in two halves around the flows.
-    const growth = 1 + draw.inflation;
     let taxDrag = 0;
     let overseasIncome = 0;
     const halfYear = () => {
@@ -628,7 +675,10 @@ export function simulate(
     halfYear();
     applyFlows();
     halfYear();
-    for (const l of liabilities) l.balance = Math.max(0, l.balance * (1 + l.rate) - l.annualPayment) / growth;
+    liabilities.forEach((l, i) => {
+      l.balance = Math.max(0, loanDue[i].due - loanDue[i].paid) / growth;
+      if (l.months !== undefined) l.months = Math.max(0, l.months - 12);
+    });
     inflationIndex *= growth;
     incomeFactor *= (1 + input.salaryGrowth) / growth;
 
