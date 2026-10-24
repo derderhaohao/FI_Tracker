@@ -16,6 +16,13 @@ export function addMonths(month: string, n: number): string {
   return `${String(year).padStart(4, '0')}-${String(mon).padStart(2, '0')}`;
 }
 
+/** Whole months from `from` to `to` (negative when `to` is earlier). */
+export function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = from.split('-').map(Number);
+  const [ty, tm] = to.split('-').map(Number);
+  return (ty - fy) * 12 + (tm - fm);
+}
+
 /** Inclusive list of months from `from` to `to`. */
 export function monthRange(from: string, to: string): string[] {
   const out: string[] = [];

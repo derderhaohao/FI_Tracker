@@ -163,6 +163,50 @@ describe('deterministic projection', () => {
     expect(result.rows[3].liabilities).toBe(0);
   });
 
+  describe('loan payments from Accounts', () => {
+    const working = makeInput({
+      annualIncome: 1_200_000,
+      currentSpending: 600_000,
+      fiSpending: 1e12,
+      liquid: [],
+      liabilities: [{ balance: 480_000, rate: 0, annualPayment: 240_000, months: 24 }],
+    });
+
+    it('come out of savings while the loan runs, then stop', () => {
+      const r = runProjection(working);
+      expect(r.rows[1].loanPayments).toBeCloseTo(240_000);
+      expect(r.rows[2].loanPayments).toBeCloseTo(240_000);
+      expect(r.rows[3].loanPayments).toBe(0);
+      expect(r.rows[1].savings).toBeCloseTo(360_000);
+      expect(r.rows[3].savings).toBeCloseTo(600_000);
+      expect(r.rows[2].liabilities).toBe(0);
+    });
+
+    it('are fixed in nominal terms, so they shrink with inflation', () => {
+      const r = runProjection({ ...working, inflation: 0.02, salaryGrowth: 0.02 });
+      expect(r.rows[2].loanPayments).toBeCloseTo(240_000 / 1.02);
+    });
+
+    it('keep being paid from investments after FI, and raise the money needed by what is left', () => {
+      const rich = makeInput({ liquid: [{ assetClass: 'cash', currency: 'TWD', value: 20_000_000 }] });
+      const loan = {
+        ...rich,
+        liabilities: [{ balance: 360_000, rate: 0, annualPayment: 120_000, months: 36 }],
+      };
+      const a = runProjection(rich);
+      const b = runProjection(loan);
+      expect(b.retireAge).toBe(40);
+      expect(b.rows[0].fiTarget - a.rows[0].fiTarget).toBeCloseTo(360_000);
+      for (const k of [1, 2, 3]) expect(b.rows[k].withdrawal - a.rows[k].withdrawal).toBeCloseTo(120_000);
+      expect(b.rows[4].withdrawal).toBeCloseTo(a.rows[4].withdrawal);
+    });
+
+    it('count toward a savings-rate lever', () => {
+      const r = runProjection({ ...working, savingsRate: 0.3 });
+      expect(r.rows[1].spending + r.rows[1].loanPayments).toBeCloseTo(1_200_000 * 0.7);
+    });
+  });
+
   it('supports a savings-rate lever and income changes', () => {
     const result = runProjection(
       makeInput({

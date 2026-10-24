@@ -774,8 +774,14 @@ function Categories() {
                     size="icon"
                     variant="ghost"
                     aria-label={t('Delete {name}', { name: c.name })}
-                    disabled={used(c.id)}
-                    title={used(c.id) ? t('Used by cash flow entries') : undefined}
+                    disabled={used(c.id) || !!c.system}
+                    title={
+                      c.system
+                        ? t('Filled from loan terms in Accounts')
+                        : used(c.id)
+                          ? t('Used by cash flow entries')
+                          : undefined
+                    }
                     onClick={() => void db.categories.delete(c.id)}
                   >
                     <Trash2 />

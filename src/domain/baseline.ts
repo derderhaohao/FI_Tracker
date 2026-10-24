@@ -16,7 +16,8 @@ import {
 } from './entities';
 import { assetAssumptionList, correlationMatrix } from './assumptions';
 import { monthlyTotals, trailing12, type TrailingTotals } from './cashflow';
-import { ageAt, today, yearOf } from './dates';
+import { addMonths, ageAt, monthOf, today, yearOf } from './dates';
+import { loanPaymentsIn, loanSchedules, monthsLeft, type LoanSchedule } from './loans';
 import { fiSpendingByTier, type FiSpending } from './fiNumber';
 import { fromMinor } from './money';
 import { netWorthAt, snapshotDates, type NetWorth } from './networth';
@@ -54,6 +55,10 @@ export interface BaselineContext {
   tiers: FiSpending;
   /** True when no FI budget is set and trailing-12-month spending is used instead. */
   fiSpendingFromT12: boolean;
+  /** Loan payment schedules from the terms in Accounts. */
+  loans: LoanSchedule[];
+  /** Trailing-12-month spending without loan payments, annualised like `t12.annualExpense`. */
+  annualSpendingExLoans: number;
   warnings: string[];
 }
 
@@ -86,6 +91,17 @@ export function baselineContext(data: PlanData): BaselineContext {
   const netWorth = netWorthAt(asOfDate, data.accounts, data.snapshots, data.fxRates, data.settings.birthYear);
   const totals = monthlyTotals(data.cashFlows, data.categories, data.fxRates);
   const t12 = trailing12(totals);
+  const loans = loanSchedules(data.liabilities, data.accounts, data.snapshots);
+  const end = totals.at(-1)?.month;
+  const window = end ? totals.filter((m) => m.month >= addMonths(end, -11) && m.month <= end) : [];
+  const loanPaid = loanPaymentsIn(
+    window.map((m) => m.month),
+    new Map(window.map((m) => [m.month, m.byCategory])),
+    loans,
+    data.categories,
+  );
+  const annualSpendingExLoans =
+    t12.monthsWithData > 0 ? Math.max(0, t12.expense - loanPaid) * (12 / t12.monthsWithData) : 0;
   const tiers = fiSpendingByTier(data.categories, data.settings.destination);
   const fiSpendingFromT12 = tiers.full - tiers.postEmployment <= 0;
   const warnings: string[] = [];
@@ -95,7 +111,17 @@ export function baselineContext(data: PlanData): BaselineContext {
   if (t12.monthsWithData === 0)
     warnings.push(t('No cash flow yet: income and spending are zero unless a scenario sets them.'));
   if (fiSpendingFromT12) warnings.push(t('No FI budget set: FI spending uses trailing-12-month spending.'));
-  return { asOfDate, startAge, netWorth, t12, tiers, fiSpendingFromT12, warnings };
+  return {
+    asOfDate,
+    startAge,
+    netWorth,
+    t12,
+    tiers,
+    fiSpendingFromT12,
+    loans,
+    annualSpendingExLoans,
+    warnings,
+  };
 }
 
 function eventsToProjection(events: readonly ScenarioEvent[]) {
@@ -130,10 +156,12 @@ export function buildProjectionInput(
     const a = b.account;
     if (b.bucket === 'liability') {
       const terms = data.liabilities.find((l) => l.accountId === a.id);
+      const schedule = ctx.loans.find((l) => l.accountId === a.id);
       liabilities.push({
         balance: b.twd,
         rate: terms?.interestRate ?? 0,
-        annualPayment: terms ? fromMinor(terms.monthlyPaymentMinor) * 12 : 0,
+        annualPayment: schedule ? schedule.monthly * 12 : 0,
+        months: schedule ? monthsLeft(schedule, addMonths(monthOf(ctx.asOfDate), 1)) : 0,
       });
       continue;
     }
@@ -154,11 +182,14 @@ export function buildProjectionInput(
   }
 
   const annualIncome = o.annualIncomeMinor !== undefined ? fromMinor(o.annualIncomeMinor) : t12.annualIncome;
+  // Loan payments run on their own schedule (from Accounts), so spending here leaves them out.
   const currentSpending =
-    (o.currentSpendingMinor !== undefined ? fromMinor(o.currentSpendingMinor) : t12.annualExpense) *
+    (o.currentSpendingMinor !== undefined ? fromMinor(o.currentSpendingMinor) : ctx.annualSpendingExLoans) *
     multiplier;
   const tier = o.fiTier ?? s.destination.fiTier;
-  const baseFiSpending = ctx.fiSpendingFromT12 ? t12.annualExpense + tiers.postEmployment : tiers[tier];
+  const baseFiSpending = ctx.fiSpendingFromT12
+    ? ctx.annualSpendingExLoans + tiers.postEmployment
+    : tiers[tier];
   const fiSpending =
     (o.fiSpendingMinor !== undefined ? fromMinor(o.fiSpendingMinor) : baseFiSpending) * multiplier;
 

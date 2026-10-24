@@ -64,16 +64,24 @@ export function stopDate(
   return age === undefined ? undefined : dateAfterYears(asOfDate, Math.max(0, age - input.startAge));
 }
 
-/** Spending while working, as the projection applies it in the first year. */
+/** Loan payments in the first year, from the loan terms in Accounts. */
+export function loanPaymentsNow(input: ProjectionInput): number {
+  return input.liabilities.reduce(
+    (sum, l) => sum + (l.annualPayment * Math.min(12, Math.max(0, l.months ?? 12))) / 12,
+    0,
+  );
+}
+
+/** Spending while working, loans aside, as the projection applies it in the first year. */
 export function spendingNow(input: ProjectionInput): number {
   return input.savingsRate !== undefined
-    ? input.annualIncome * (1 - input.savingsRate)
+    ? Math.max(0, input.annualIncome * (1 - input.savingsRate) - loanPaymentsNow(input))
     : input.currentSpending;
 }
 
-/** Savings per year while working (before 勞退 changes). */
+/** Savings per year while working (before 勞退 changes), after loan payments. */
 export function annualSavings(input: ProjectionInput): number {
-  return input.annualIncome - spendingNow(input);
+  return input.annualIncome - spendingNow(input) - loanPaymentsNow(input);
 }
 
 /** Share of take-home pay saved; undefined without income. */

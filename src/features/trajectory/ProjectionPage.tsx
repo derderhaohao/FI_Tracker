@@ -15,7 +15,8 @@ import { Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc
 import { PlaybackView } from './playback/PlaybackView';
 import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { toMode } from '@/lib/valueMode';
-import { dateAfterYears, twd, twdCompact } from '@/lib/format';
+import { dateAfterYears, monthLabel, twd, twdCompact } from '@/lib/format';
+import { addMonths } from '@/domain/dates';
 import { t } from '@/i18n';
 
 const TIER_LABELS: Record<string, string> = { lean: t('Lean'), full: t('Full'), fat: t('Fat') };
@@ -36,6 +37,7 @@ export function ProjectionPage() {
     return { result: runProjection(input), sens: sensitivity(data, assumptions, BASELINE_SPEC, ctx) };
   }, [data, assumptions, ctx]);
   const rows = toMode(result.rows, valueMode);
+  const hasLoans = result.rows.some((r) => r.loanPayments > 0);
   const fiRow = result.fiAge !== undefined ? result.rows[result.fiAge - ctx.startAge] : undefined;
 
   return (
@@ -242,9 +244,23 @@ export function ProjectionPage() {
                         }),
                       ],
                       [
-                        t('Spending while working'),
+                        ctx.loans.length
+                          ? t('Spending while working, loans aside')
+                          : t('Spending while working'),
                         t('{amount}/yr', { amount: twd(data.baselineInput.currentSpending) }),
                       ],
+                      ...ctx.loans.map(
+                        (l) =>
+                          [
+                            t('Loan · {name}', {
+                              name: data.accounts.find((a) => a.id === l.accountId)?.nickname ?? '',
+                            }),
+                            t('{amount}/mo until {month}', {
+                              amount: twd(l.monthly),
+                              month: monthLabel(addMonths(l.endMonth, -1)),
+                            }),
+                          ] as const,
+                      ),
                       [
                         t('FI spending'),
                         t('{fiSpending}/yr ({fiTier} tier)', {
@@ -310,6 +326,7 @@ export function ProjectionPage() {
                       <th className="text-right">{t('Spending')}</th>
                       <th className="text-right">{t('Saved')}</th>
                       <th className="text-right">{t('Withdrawn')}</th>
+                      {hasLoans && <th className="text-right">{t('Loans')}</th>}
                       <th className="text-right">{t('Streams')}</th>
                       <th className="text-right">{t('Total NW')}</th>
                     </tr>
@@ -329,6 +346,9 @@ export function ProjectionPage() {
                         <td className="text-right">{twdCompact(r.spending)}</td>
                         <td className="text-right">{twdCompact(r.savings)}</td>
                         <td className="text-right">{twdCompact(r.withdrawal)}</td>
+                        {hasLoans && (
+                          <td className="text-right">{r.loanPayments ? twdCompact(r.loanPayments) : '—'}</td>
+                        )}
                         <td className="text-right">{twdCompact(r.streamIncome)}</td>
                         <td className="text-right">{twdCompact(r.totalNetWorth)}</td>
                       </tr>

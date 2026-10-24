@@ -15,6 +15,7 @@ import {
   type ProjectionResult,
 } from '@/domain/projection';
 import { fiNumber, permanentIncome } from '@/domain/fiNumber';
+import { loanSchedules, scheduledLoanFlows } from '@/domain/loans';
 import { db } from '@/db/db';
 
 export interface AppData extends PlanData {
@@ -93,7 +94,16 @@ export function DataProvider({ children, fallback }: { children: ReactNode; fall
     const settings = raw.settings;
     const activeAssumptions =
       raw.assumptionSets.find((a) => a.id === settings.activeAssumptionSetId) ?? raw.assumptionSets[0];
-    const plan: PlanData = { ...raw, settings };
+    // Loans set to "add automatically" appear as scheduled, never-stored cash-flow rows.
+    const cashFlows = [
+      ...raw.cashFlows,
+      ...scheduledLoanFlows(
+        raw.cashFlows,
+        loanSchedules(raw.liabilities, raw.accounts, raw.snapshots),
+        raw.categories,
+      ),
+    ];
+    const plan: PlanData = { ...raw, cashFlows, settings };
     const ctx = baselineContext(plan);
     const baselineInput = buildProjectionInput(plan, activeAssumptions, BASELINE_SPEC, ctx);
     const baseline = runProjection(baselineInput);
@@ -108,6 +118,7 @@ export function DataProvider({ children, fallback }: { children: ReactNode; fall
     const fiNumberNow = fiNumber(baselineInput.fiSpending, guaranteedIncome, baselineInput.swr);
     return {
       ...raw,
+      cashFlows,
       settings,
       activeAssumptions,
       ctx,
