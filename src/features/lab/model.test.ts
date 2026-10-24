@@ -53,6 +53,8 @@ function mc(successRate: number, extra: Partial<MonteCarloSummary> = {}): MonteC
     fiAgeDistribution: [],
     balanceAtHorizonP50: 0,
     minSpendingRatioP50: 1,
+    horizonSorted: [],
+    lowestSorted: [],
     elapsedMs: 1,
     ...extra,
   };

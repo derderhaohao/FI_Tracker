@@ -28,6 +28,9 @@ export interface MonteCarloSummary {
   fiAgeP90?: number;
   fiAgeDistribution: { age: number; share: number }[];
   balanceAtHorizonP50: number;
+  /** Every run's investable at the horizon and lowest investable, sorted (for ranking a story). */
+  horizonSorted: number[];
+  lowestSorted: number[];
   /** Median of the lowest spending ratio (withdrawal rules that cut spending). */
   minSpendingRatioP50: number;
   elapsedMs: number;
@@ -65,6 +68,7 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
   const fiAges: number[] = [];
   const depletionAges: number[] = [];
   const horizon = new Float64Array(runs);
+  const lowest = new Float64Array(runs);
   const minSpending = new Float64Array(runs);
   let successes = 0;
 
@@ -87,6 +91,9 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
     else if (result.depletionAge !== undefined) depletionAges.push(result.depletionAge);
     if (result.fiAge !== undefined) fiAges.push(result.fiAge);
     horizon[r] = result.balanceAtHorizon;
+    let low = Infinity;
+    for (const v of result.investable) if (v < low) low = v;
+    lowest[r] = low;
     minSpending[r] = result.minSpendingRatio;
   }
 
@@ -113,6 +120,7 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
   const counts = new Map<number, number>();
   for (const a of fiAges) counts.set(a, (counts.get(a) ?? 0) + 1);
   horizon.sort();
+  lowest.sort();
   minSpending.sort();
 
   return {
@@ -132,6 +140,8 @@ export function runMonteCarlo(input: ProjectionInput, options: MonteCarloOptions
     fiAgeP90: fiAges.length ? percentile(fiAges, 0.9) : undefined,
     fiAgeDistribution: [...counts.entries()].map(([age, count]) => ({ age, share: count / runs })),
     balanceAtHorizonP50: percentile(horizon, 0.5),
+    horizonSorted: Array.from(horizon),
+    lowestSorted: Array.from(lowest),
     minSpendingRatioP50: percentile(minSpending, 0.5),
     elapsedMs: performance.now() - started,
   };

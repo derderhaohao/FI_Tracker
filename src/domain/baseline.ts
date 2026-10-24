@@ -22,6 +22,7 @@ import { fromMinor } from './money';
 import { netWorthAt, snapshotDates, type NetWorth } from './networth';
 import type { Bucket, LockedBucket, ProjectionInput, ProjectionLiability } from './projection';
 import { laborPensionContribution } from './taiwan/laborPension';
+import { findEvent, scaleShock, SEVERITY_SCALE } from './playback/library';
 import { clampClaimAge } from './taiwan/laborInsurance';
 
 /** Everything the projection reads from the database. */
@@ -228,6 +229,31 @@ export function buildProjectionInput(
     fxVolatility: assumptions.fxVolatility,
     events: eventsToProjection(spec.events),
     crash: o.crash,
+    stress: (o.stressEvents ?? []).flatMap((e) => {
+      const def = findEvent(e.eventId, s.customEvents ?? []);
+      if (!def) return [];
+      const k = SEVERITY_SCALE[e.severity];
+      return [
+        {
+          name: def.name,
+          start: e.timing === 'year' ? (e.years ?? 1) * 12 : undefined,
+          afterStop: e.timing === 'afterStop',
+          shocks: def.shocks.map((x) => scaleShock(x, e.severity)),
+          rates: (def.rates ?? []).map((r) => ({
+            ...r,
+            pts: r.pts * k,
+            months: r.months >= 1200 ? r.months : Math.round(r.months * k),
+          })),
+          pay: def.pay
+            ? {
+                factor: def.pay.factor < 1 ? 1 - (1 - def.pay.factor) * k : 1 + (def.pay.factor - 1) * k,
+                months: def.pay.months !== undefined ? Math.round(def.pay.months * k) : undefined,
+              }
+            : undefined,
+          lump: def.lump !== undefined ? def.lump * k : undefined,
+        },
+      ];
+    }),
     taiwan: tw,
   };
 }

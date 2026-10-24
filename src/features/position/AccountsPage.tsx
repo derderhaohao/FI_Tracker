@@ -8,6 +8,10 @@ import {
   ACCOUNT_TYPE_LABELS,
   ASSET_CLASSES,
   ASSET_CLASS_LABELS,
+  LOCATION_LABELS,
+  LOCATIONS,
+  REGION_LABELS,
+  REGIONS,
   type Account,
   type AccountType,
 } from '@/domain/entities';
@@ -37,6 +41,14 @@ const formSchema = z
     interestRate: z.string(),
     monthlyPayment: z.string(),
     remainingMonths: z.string().regex(/^(\d{1,4})?$/, 'Whole months'),
+    region: z.string(),
+    location: z.string(),
+    /** "US 62, EU 15, JP 6, EM 11, Other 6" */
+    exposure: z
+      .string()
+      .regex(/^(\s*(TW|US|JP|EU|EM|Other)\s+\d{1,3}(\.\d+)?\s*,?)*$/, 'Use pairs like “US 62, EU 15”'),
+    floating: z.boolean(),
+    propertyAccountId: z.string(),
   })
   .refine((v) => !/\d{6,}/.test(v.nickname), {
     path: ['nickname'],
@@ -56,11 +68,36 @@ function emptyForm(): FormValues {
     interestRate: '',
     monthlyPayment: '',
     remainingMonths: '',
+    region: '',
+    location: '',
+    exposure: '',
+    floating: false,
+    propertyAccountId: '',
   };
+}
+
+function exposureText(e: Account['exposure']): string {
+  return e
+    ? Object.entries(e)
+        .filter(([, v]) => (v ?? 0) > 0)
+        .map(([k, v]) => `${k} ${Math.round((v ?? 0) * 1000) / 10}`)
+        .join(', ')
+    : '';
+}
+
+function parseExposure(text: string): Account['exposure'] {
+  const out: Record<string, number> = {};
+  for (const m of text.matchAll(/(TW|US|JP|EU|EM|Other)\s+(\d{1,3}(?:\.\d+)?)/g))
+    out[m[1]] = Number(m[2]) / 100;
+  const sum = Object.values(out).reduce((a, b) => a + b, 0);
+  if (sum <= 0) return undefined;
+  for (const k of Object.keys(out)) out[k] /= sum;
+  return out;
 }
 
 function AccountForm({ account, onDone }: { account?: Account; onDone: () => void }) {
   const { liabilities } = useAppData();
+
   const terms = account ? liabilities.find((l) => l.accountId === account.id) : undefined;
   const {
     register,
@@ -82,10 +119,19 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           interestRate: terms ? String(terms.interestRate * 100) : '',
           monthlyPayment: terms ? String(fromMinor(terms.monthlyPaymentMinor)) : '',
           remainingMonths: terms ? String(terms.remainingMonths) : '',
+          region: account.region ?? '',
+          location: account.location ?? '',
+          exposure: exposureText(account.exposure),
+          floating: terms?.floating ?? false,
+          propertyAccountId: terms?.propertyAccountId ?? '',
         }
       : emptyForm(),
   });
   const type = watch('type');
+  const assetClass = watch('assetClass');
+  const region = watch('region');
+  const { accounts } = useAppData();
+  const properties = accounts.filter((a) => a.assetClass === 'property' && a.id !== account?.id);
 
   const onSubmit = async (v: FormValues) => {
     const id = account?.id ?? newId();
@@ -100,6 +146,9 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
       investable: v.type === 'liability' ? false : v.investable,
       accessAge: v.accessAge === '' ? undefined : Number(v.accessAge),
       archived: account?.archived ?? false,
+      region: (v.region || undefined) as Account['region'],
+      location: v.assetClass === 'property' ? ((v.location || undefined) as Account['location']) : undefined,
+      exposure: parseExposure(v.exposure),
     });
     if (v.type === 'liability') {
       await save(db.liabilities, {
@@ -108,6 +157,8 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
         interestRate: v.interestRate === '' ? 0 : Number(v.interestRate) / 100,
         monthlyPaymentMinor: parseMoneyInput(v.monthlyPayment) ?? 0,
         remainingMonths: v.remainingMonths === '' ? 0 : Number(v.remainingMonths),
+        floating: v.floating,
+        propertyAccountId: v.propertyAccountId || undefined,
       });
     } else if (terms) {
       await db.liabilities.delete(id);
@@ -173,8 +224,64 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           </div>
         </>
       )}
+      {type !== 'liability' && (
+        <Field label="Region" hint="For playback stories; Auto uses class and currency">
+          {(id) => (
+            <Select id={id} {...register('region')}>
+              <option value="">Auto</option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {REGION_LABELS[r]}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+      )}
+      {assetClass === 'property' && (
+        <Field label="Location">
+          {(id) => (
+            <Select id={id} {...register('location')}>
+              <option value="">Auto (by currency)</option>
+              {LOCATIONS.map((l) => (
+                <option key={l} value={l}>
+                  {LOCATION_LABELS[l]}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+      )}
+      {(region === 'Global' || (assetClass === 'global_equity' && !region)) && (
+        <Field
+          label="Region split (%)"
+          hint="Blank = US 62, EU 15, JP 6, EM 11, Other 6"
+          error={errors.exposure?.message}
+        >
+          {(id) => (
+            <Input id={id} placeholder="US 62, EU 15, JP 6, EM 11, Other 6" {...register('exposure')} />
+          )}
+        </Field>
+      )}
       {type === 'liability' && (
         <>
+          <div className="flex items-end pb-2">
+            <Checkbox label="Floating rate (follows rate shocks)" {...register('floating')} />
+          </div>
+          {properties.length > 0 && (
+            <Field label="Secured on">
+              {(id) => (
+                <Select id={id} {...register('propertyAccountId')}>
+                  <option value="">—</option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nickname}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          )}
           <Field label="Interest rate (% a year)">
             {(id) => <Input id={id} inputMode="decimal" {...register('interestRate')} />}
           </Field>

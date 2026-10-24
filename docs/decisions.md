@@ -205,3 +205,38 @@ From "FI Tracker — Product Review & Roadmap" (24 Oct 2026).
   device (Settings, and the end of the update).
 - **Inline glossary**: terms can be tapped anywhere; added Coast FI and bridge fund, and used on
   the Dashboard, Projection and Goal pages (Coast FI is back on the Goal page, explained).
+
+## Projection playback and scenario events
+
+From "PRD: Projection Playback & Scenario Events" (24 Oct 2026), all three release phases.
+
+- **Flows land mid-year in the yearly engine.** Savings, withdrawals and 勞退 contributions now
+  earn half a year's return (they used to land on 1 January). This is what spreading them over
+  twelve months gives, so the new monthly engine matches the yearly projection: on the demo data
+  the worst year-end gap is 0.15% (limit 0.5%) and the FI date is the same month (tested). FI dates
+  move slightly later everywhere.
+- **Monthly engine** (`domain/playback/engine.ts`): account by account, mirroring the yearly rules
+  (decisions at each model year's start, unlocks, rebalancing and the FI check at its end, Taiwan
+  frictions as yearly rates). Event shocks move twelve market factors (shares by region, bonds,
+  property by location, USD and JPY); each account follows its exposures. The state of every
+  month is kept, so a live event recomputes only from its month and played months never change.
+- **Library** (`domain/playback/library.ts`): the PRD's 29 scenarios with its indicative depths
+  and shapes, labelled everywhere as hypothetical stress stories. "Global equity" in the PRD hits
+  all share markets; region-specific shocks reach global funds through their region split.
+- **Open questions, decided**: geopolitical events default to the PRD's fixed years (movable to
+  "just after you stop work"); plain descriptive names; home equity counts in total net worth but
+  not in investments; 勞退 follows 30% TW shares, 30% global shares, 40% bonds with its guaranteed
+  minimum (1.7% a year, editable) applied when it unlocks; the end card ranks every story against
+  the Strategy Lab's simulations for the same plan, whatever the backdrop; firing an event keeps
+  playing by default (setting).
+- **Data model** (optional fields, no schema version change): account region, a global fund's
+  region split (default US 62, EU 15, JP 6, EM 11, other 6) and property location; floating-rate
+  loans and the property they are secured on; JPY works like USD with its own FX rate.
+- **Strategy Lab** scenarios can include the same events ("World events"); each simulated year's
+  draw is bent by the change in the event's shape over that year.
+- **Behaviour options**: "pause new investing" sends savings to cash while an event runs; "sell
+  after a fall" sells all shares when prices fall that far below the pre-event level and buys back
+  when they recover or the events end. The end card compares them, including any change in the
+  stop-work age.
+- **Saved stories** and **custom events** live in Settings, so backups carry them; a shared story
+  file holds events and timing only, never balances.
