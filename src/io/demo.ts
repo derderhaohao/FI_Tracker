@@ -323,7 +323,8 @@ export function buildDemoBackup(): BackupFile {
         accountId: accounts.loan.id,
         interestRate: 0.025,
         monthlyPaymentMinor: toMinor(12_500),
-        // NT$170,000 left after September's payment: 14 more, the last one smaller.
+        // The app works the term out from the latest balance (NT$170,000: 14 more payments);
+        // the stored figures match it, for backups.
         remainingMonths: 14,
         termsAsOf: addMonths(LAST_MONTH, 1),
         cashFlow: 'included' as const,

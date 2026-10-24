@@ -29,7 +29,63 @@ export interface LoanSchedule {
   categoryId?: string;
 }
 
-/** Payment schedules for loans with a monthly payment and a remaining term. */
+/** Longest schedule we model: a payment that never clears the loan runs this long. */
+export const MAX_LOAN_MONTHS = 1200;
+
+/**
+ * Months to repay `balance` at `annualRate` with a fixed monthly `payment`:
+ * n = −ln(1 − r·B / P) / ln(1 + r) with r the monthly rate. Undefined when the payment does
+ * not cover the interest, so the loan is never repaid.
+ */
+export function monthsToRepay(balance: number, annualRate: number, payment: number): number | undefined {
+  if (balance <= 0.005) return 0;
+  if (payment <= 0) return undefined;
+  const r = annualRate / 12;
+  if (r <= 0) return Math.ceil(balance / payment - 1e-9);
+  if (payment <= r * balance) return undefined;
+  return Math.ceil(-Math.log(1 - (r * balance) / payment) / Math.log(1 + r) - 1e-9);
+}
+
+export interface LoanTerm {
+  /** Payments left after `asOf`'s previous month; MAX_LOAN_MONTHS when never repaid. */
+  months: number;
+  /** First month the remaining payments count from. */
+  asOf: string;
+  /** The balance the term is worked out from, in the loan's currency, and its date. */
+  balance?: number;
+  date?: string;
+  /** The payment does not cover the interest. */
+  neverRepaid: boolean;
+}
+
+/**
+ * The remaining term, worked out from the loan's latest balance in Snapshots, its rate and its
+ * payment, so it follows every new balance. Without a snapshot, the term stored with the loan.
+ */
+export function loanTerm(terms: Liability, snapshots: readonly Snapshot[]): LoanTerm | undefined {
+  const latest = snapshots
+    .filter((s) => s.accountId === terms.accountId)
+    .reduce<Snapshot | undefined>((m, s) => (m === undefined || s.date > m.date ? s : m), undefined);
+  if (!latest) {
+    if (terms.remainingMonths <= 0) return undefined;
+    return {
+      months: terms.remainingMonths,
+      asOf: terms.termsAsOf ?? monthOf(terms.updatedAt),
+      neverRepaid: false,
+    };
+  }
+  const balance = fromMinor(latest.balanceMinor);
+  const months = monthsToRepay(balance, terms.interestRate, fromMinor(terms.monthlyPaymentMinor));
+  return {
+    months: months ?? MAX_LOAN_MONTHS,
+    asOf: addMonths(monthOf(latest.date), 1),
+    balance,
+    date: latest.date,
+    neverRepaid: months === undefined,
+  };
+}
+
+/** Payment schedules for loans with a monthly payment, ending when the loan is repaid. */
 export function loanSchedules(
   liabilities: readonly Liability[],
   accounts: readonly Account[],
@@ -38,18 +94,21 @@ export function loanSchedules(
   const out: LoanSchedule[] = [];
   for (const terms of liabilities) {
     const account = accounts.find((a) => a.id === terms.accountId);
-    if (!account || account.archived || terms.monthlyPaymentMinor <= 0 || terms.remainingMonths <= 0)
-      continue;
-    const asOf = terms.termsAsOf ?? monthOf(terms.updatedAt);
+    if (!account || account.archived || terms.monthlyPaymentMinor <= 0) continue;
+    const term = loanTerm(terms, snapshots);
+    if (!term) continue;
     const first = snapshots
       .filter((s) => s.accountId === terms.accountId)
       .reduce<string | undefined>((m, s) => (m === undefined || s.date < m ? s.date : m), undefined);
-    const firstMonth = first ? monthOf(first) : asOf;
+    // Payments are known from the first snapshot, or from when the terms were entered if earlier.
+    const startMonth = [first ? monthOf(first) : undefined, terms.termsAsOf, term.asOf]
+      .filter((m): m is string => m !== undefined)
+      .reduce((a, b) => (b < a ? b : a));
     out.push({
       accountId: terms.accountId,
       monthly: fromMinor(terms.monthlyPaymentMinor),
-      startMonth: firstMonth < asOf ? firstMonth : asOf,
-      endMonth: addMonths(asOf, terms.remainingMonths),
+      startMonth,
+      endMonth: addMonths(term.asOf, term.months),
       mode: loanCashFlowMode(terms),
       categoryId: terms.categoryId,
     });

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { CashFlow, Category, Liability, Snapshot } from './entities';
-import { loanPaymentsIn, loanSchedules, monthsLeft, scheduledLoanFlows } from './loans';
+import {
+  loanPaymentsIn,
+  loanSchedules,
+  loanTerm,
+  MAX_LOAN_MONTHS,
+  monthsLeft,
+  monthsToRepay,
+  scheduledLoanFlows,
+} from './loans';
 import { makeAccount } from './testFixtures';
 
 const stamp = { createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' };
@@ -14,11 +22,11 @@ const terms = (over: Partial<Liability> = {}): Liability => ({
   ...stamp,
   ...over,
 });
-const snap = (date: string): Snapshot => ({
+const snap = (date: string, owed = 170_000): Snapshot => ({
   id: date,
   accountId: 'car',
   date,
-  balanceMinor: 100_000_00,
+  balanceMinor: owed * 100,
   ...stamp,
 });
 const loansCategory: Category = {
@@ -39,17 +47,53 @@ const flow = (month: string, categoryId: string, amount: number): CashFlow => ({
   ...stamp,
 });
 
+describe('months to repay', () => {
+  it('follow the amortisation formula', () => {
+    // NT$170,000 at 2.5% with NT$12,500 a month: 13 full payments and a smaller 14th.
+    expect(monthsToRepay(170_000, 0.025, 12_500)).toBe(14);
+    expect(monthsToRepay(120_000, 0, 12_000)).toBe(10);
+    expect(monthsToRepay(120_001, 0, 12_000)).toBe(11);
+    expect(monthsToRepay(0, 0.03, 10_000)).toBe(0);
+  });
+
+  it('never end when the payment does not cover the interest', () => {
+    expect(monthsToRepay(10_000_000, 0.03, 25_000)).toBeUndefined();
+    expect(monthsToRepay(10_000, 0.03, 0)).toBeUndefined();
+  });
+});
+
 describe('loan schedules', () => {
-  it('count the term down from when it was entered, back to the first snapshot', () => {
-    const [s] = loanSchedules([terms()], [loanAccount], [snap('2026-06-30')]);
+  it('work the term out from the latest balance, back to the first snapshot', () => {
+    const [s] = loanSchedules([terms()], [loanAccount], [snap('2026-06-30', 207_000), snap('2026-09-30')]);
     expect(s).toMatchObject({
       monthly: 12_500,
       startMonth: '2026-06',
-      endMonth: '2027-11',
+      endMonth: '2027-12',
       mode: 'included',
     });
-    expect(monthsLeft(s, '2026-10')).toBe(13);
+    expect(monthsLeft(s, '2026-10')).toBe(14);
     expect(monthsLeft(s, '2028-01')).toBe(0);
+    expect(loanTerm(terms(), [snap('2026-09-30')])).toMatchObject({
+      months: 14,
+      asOf: '2026-10',
+      balance: 170_000,
+      date: '2026-09-30',
+      neverRepaid: false,
+    });
+  });
+
+  it('shorten when a new, lower balance is entered', () => {
+    const [s] = loanSchedules([terms()], [loanAccount], [snap('2026-09-30'), snap('2026-10-31', 50_000)]);
+    expect(s.endMonth).toBe('2027-04');
+  });
+
+  it('run to the longest term when the payment never repays the loan', () => {
+    const t = loanTerm(terms({ monthlyPaymentMinor: 300_00 }), [snap('2026-09-30')]);
+    expect(t).toMatchObject({ months: MAX_LOAN_MONTHS, neverRepaid: true });
+  });
+
+  it('fall back to the stored term without a balance', () => {
+    expect(loanTerm(terms(), [])).toEqual({ months: 14, asOf: '2026-09', neverRepaid: false });
   });
 
   it('skip loans without a payment or term, and archived ones', () => {

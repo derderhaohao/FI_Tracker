@@ -95,12 +95,12 @@ describe('baseline', () => {
       { assetClass: 'other', currency: 'TWD', value: 1_000_000, unlockAge: 60, pension: true },
     ]);
     expect(input.nonInvestable[0].value).toBe(12_000_000);
-    // 240 payments from 2026-08; the projection starts after September's.
+    // Worked out from the NT$8M owed on 2026-09-30 at 2% with NT$40,000 a month: 244 payments from October.
     expect(input.liabilities[0]).toEqual({
       balance: 8_000_000,
       rate: 0.02,
       annualPayment: 480_000,
-      months: 238,
+      months: 244,
     });
     expect(input.annualIncome).toBe(1_440_000);
     // Spending of 70k a month holds the 40k loan payment, which now runs on its own schedule.

@@ -29,7 +29,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input, Select } from '@/components/ui/input';
 import { Badge, EmptyState, PageHeader, Table } from '@/components/ui/misc';
-import { t } from '@/i18n';
+import { t, tn } from '@/i18n';
+import { loanTerm } from '@/domain/loans';
 
 const formSchema = z
   .object({
@@ -46,7 +47,6 @@ const formSchema = z
     accessAge: z.string().regex(/^(\d{1,3})?$/, t('Whole years')),
     interestRate: z.string(),
     monthlyPayment: z.string(),
-    remainingMonths: z.string().regex(/^(\d{1,4})?$/, t('Whole months')),
     region: z.string(),
     location: z.string(),
     /** "US 62, EU 15, JP 6, EM 11, Other 6" */
@@ -75,7 +75,6 @@ function emptyForm(): FormValues {
     accessAge: '',
     interestRate: '',
     monthlyPayment: '',
-    remainingMonths: '',
     region: '',
     location: '',
     exposure: '',
@@ -106,17 +105,10 @@ function parseExposure(text: string): Account['exposure'] {
 }
 
 function AccountForm({ account, onDone }: { account?: Account; onDone: () => void }) {
-  const { liabilities, categories } = useAppData();
+  const { liabilities, categories, snapshots } = useAppData();
 
   const terms = account ? liabilities.find((l) => l.accountId === account.id) : undefined;
   const thisMonth = monthOf(today());
-  // The term is stored as of the month it was entered; show what is left now.
-  const remainingNow = terms
-    ? Math.max(
-        0,
-        terms.remainingMonths - monthsBetween(terms.termsAsOf ?? monthOf(terms.updatedAt), thisMonth),
-      )
-    : undefined;
   const {
     register,
     handleSubmit,
@@ -136,7 +128,6 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           accessAge: account.accessAge?.toString() ?? '',
           interestRate: terms ? String(terms.interestRate * 100) : '',
           monthlyPayment: terms ? String(fromMinor(terms.monthlyPaymentMinor)) : '',
-          remainingMonths: remainingNow !== undefined ? String(remainingNow) : '',
           region: account.region ?? '',
           location: account.location ?? '',
           exposure: exposureText(account.exposure),
@@ -151,8 +142,54 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
   const assetClass = watch('assetClass');
   const region = watch('region');
   const cashFlow = watch('cashFlow');
-  const payment = parseMoneyInput(watch('monthlyPayment') ?? '');
-  const remaining = Number(watch('remainingMonths') || 0);
+  const paymentMinor = parseMoneyInput(watch('monthlyPayment') ?? '') ?? 0;
+  const payment = fromMinor(paymentMinor);
+  const rateText = watch('interestRate');
+  const annualRate = rateText === '' || !Number.isFinite(Number(rateText)) ? 0 : Number(rateText) / 100;
+  const currency = watch('currency');
+  // The remaining term is worked out from the latest balance in Snapshots, live as terms are typed.
+  const draft = (): Liability => ({
+    accountId: account?.id ?? '',
+    interestRate: annualRate,
+    monthlyPaymentMinor: paymentMinor,
+    remainingMonths: terms?.remainingMonths ?? 0,
+    termsAsOf: terms?.termsAsOf,
+    createdAt: terms?.createdAt ?? '',
+    updatedAt: terms?.updatedAt ?? '',
+  });
+  const term = account ? loanTerm(draft(), snapshots) : undefined;
+  const termText = (() => {
+    if (!term || term.balance === undefined)
+      return t('Enter this loan’s balance in Snapshots and the term is worked out from it.');
+    if (term.months === 0) return t('Paid off.');
+    if (payment <= 0) return t('Enter the monthly payment and the term is worked out from the balance.');
+    if (term.neverRepaid)
+      return t(
+        '{payment} a month does not cover the interest ({interest}), so this loan is never repaid at this payment.',
+        {
+          payment: formatMoney(payment, currency),
+          interest: formatMoney((term.balance * annualRate) / 12, currency),
+        },
+      );
+    return (
+      tn(
+        term.months,
+        'Paid off in 1 month · last payment {month}.',
+        'Paid off in {n} months · last payment {month}.',
+        {
+          month: monthLabel(addMonths(term.asOf, term.months - 1)),
+        },
+      ) +
+      ' ' +
+      t(
+        'Worked out from the balance of {balance} on {date}, the rate and the payment; it updates with each new balance.',
+        {
+          balance: formatMoney(term.balance, currency),
+          date: term.date ?? '',
+        },
+      )
+    );
+  })();
   const spendingCategories = categories.filter((c) => c.kind === 'expense' && !c.system);
   const { accounts } = useAppData();
   const properties = accounts.filter((a) => a.assetClass === 'property' && a.id !== account?.id);
@@ -175,15 +212,17 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
       exposure: parseExposure(v.exposure),
     });
     if (v.type === 'liability') {
+      // Keep the worked-out term with the loan too, for backups and older versions.
+      const worked = account && term?.balance !== undefined ? term : undefined;
       await save(db.liabilities, {
         ...(terms ?? {}),
         accountId: id,
         interestRate: v.interestRate === '' ? 0 : Number(v.interestRate) / 100,
         monthlyPaymentMinor: parseMoneyInput(v.monthlyPayment) ?? 0,
-        remainingMonths: v.remainingMonths === '' ? 0 : Number(v.remainingMonths),
+        remainingMonths: worked ? worked.months : (terms?.remainingMonths ?? 0),
         floating: v.floating,
         propertyAccountId: v.propertyAccountId || undefined,
-        termsAsOf: thisMonth,
+        termsAsOf: worked ? worked.asOf : (terms?.termsAsOf ?? thisMonth),
         cashFlow: v.cashFlow,
         categoryId: v.cashFlow === 'included' ? v.categoryId || undefined : undefined,
       });
@@ -316,17 +355,12 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
           <Field label={t('Monthly payment')}>
             {(id) => <Input id={id} inputMode="decimal" {...register('monthlyPayment')} />}
           </Field>
-          <Field
-            label={t('Remaining term (months)')}
-            error={errors.remainingMonths?.message}
-            hint={
-              remaining > 0
-                ? t('Last payment {month}', { month: monthLabel(addMonths(thisMonth, remaining - 1)) })
-                : undefined
-            }
-          >
-            {(id) => <Input id={id} inputMode="numeric" {...register('remainingMonths')} />}
-          </Field>
+          <div className="flex flex-col gap-1 text-sm sm:col-span-2 lg:col-span-4" data-testid="loan-term">
+            <span className="font-medium">{t('Remaining term')}</span>
+            <span className={term?.neverRepaid && payment > 0 ? 'text-critical' : 'text-muted-foreground'}>
+              {termText}
+            </span>
+          </div>
           <Field
             label={t('In Cash flow, this payment is')}
             className="sm:col-span-2"
@@ -361,11 +395,6 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
               )}
             </Field>
           )}
-          {!!payment && payment > 0 && remaining === 0 && (
-            <p className="text-xs text-subtle sm:col-span-2 lg:col-span-4">
-              {t('Add the remaining term so the plan knows when the payments stop.')}
-            </p>
-          )}
         </>
       )}
       <datalist id="currencies">
@@ -392,6 +421,16 @@ export function AccountsPage() {
     if (terms.cashFlow === 'auto') return t('added to Cash flow automatically');
     const c = categories.find((x) => x.id === terms.categoryId);
     return c ? t('in {name}', { name: c.name }) : t('in your spending');
+  };
+  /** Payments left from this month, worked out from the latest balance. */
+  const termLeft = (terms: Liability): string => {
+    const term = loanTerm(terms, snapshots);
+    if (!term) return '—';
+    if (term.neverRepaid) return t('never repaid');
+    const now = monthOf(today());
+    const from = term.asOf > now ? term.asOf : now;
+    const left = Math.max(0, monthsBetween(from, addMonths(term.asOf, term.months)));
+    return t('{n} mo', { n: left });
   };
   const [editing, setEditing] = useState<Account | 'new' | undefined>(
     accounts.length === 0 ? 'new' : undefined,
@@ -501,20 +540,13 @@ export function AccountsPage() {
                       </td>
                       <td className="text-muted-foreground">
                         {terms
-                          ? t('{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths} mo', {
+                          ? t('{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths}', {
                               toFixed: (terms.interestRate * 100).toFixed(2),
                               monthlyPaymentMinor: formatMoney(
                                 fromMinor(terms.monthlyPaymentMinor),
                                 a.currency,
                               ),
-                              remainingMonths: Math.max(
-                                0,
-                                terms.remainingMonths -
-                                  monthsBetween(
-                                    terms.termsAsOf ?? monthOf(terms.updatedAt),
-                                    monthOf(today()),
-                                  ),
-                              ),
+                              remainingMonths: termLeft(terms),
                             }) +
                             ' · ' +
                             whereText(terms)
