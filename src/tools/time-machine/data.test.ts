@@ -1,15 +1,16 @@
+// @vitest-environment node
+/// <reference types="node" />
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { monthIndex, simulate, type Series } from './engine';
 import type { PriceFile, PriceIndex } from './format';
 import { defaultScenario } from './state';
 
 /** The generated price files (TM-4), when the refresh workflow has written them. */
-const FILES = import.meta.glob<string>('../../../public/data/prices/*.json', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
-const byName = new Map(Object.entries(FILES).map(([path, text]) => [path.split('/').pop()!, text]));
+const DIR = new URL('../../../public/data/prices/', import.meta.url);
+const byName = new Map(
+  existsSync(DIR) ? readdirSync(DIR).map((f) => [f, readFileSync(new URL(f, DIR), 'utf8')] as const) : [],
+);
 const index = byName.has('index.json') ? (JSON.parse(byName.get('index.json')!) as PriceIndex) : undefined;
 
 describe.skipIf(!index)('Time Machine price files', () => {
