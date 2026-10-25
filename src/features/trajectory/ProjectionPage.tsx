@@ -44,9 +44,13 @@ export function ProjectionPage() {
     <>
       <PageHeader
         title={t('Projection')}
-        description={t(
-          'When you arrive if nothing changes: year by year from the latest snapshot to the horizon age, retiring as soon as FI is reached.',
-        )}
+        description={
+          mode === 'play'
+            ? t('Play a story: pick one, add events if you like, and watch your plan month by month.')
+            : t(
+                'Summary: when you arrive if nothing changes, year by year from the latest snapshot to the horizon age.',
+              )
+        }
         actions={
           <>
             <Segmented
@@ -54,40 +58,47 @@ export function ProjectionPage() {
               value={mode}
               onChange={setMode}
               options={[
-                { value: 'static', label: t('Year by year') },
-                { value: 'play', label: t('Play') },
+                { value: 'static', label: t('Summary') },
+                { value: 'play', label: t('Play a story') },
               ]}
             />
             <ValueModeToggle />
-            <Select
-              aria-label={t('Assumption set')}
-              value={setId}
-              onChange={(e) => setSetId(e.target.value)}
-              className="h-8 w-40"
-            >
-              {data.assumptionSets.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </Select>
-            <AssumptionBadge set={assumptions} />
+            {/* Play uses the active assumption set, so the picker only applies to the summary. */}
+            {mode === 'static' && (
+              <>
+                <Select
+                  aria-label={t('Assumption set')}
+                  value={setId}
+                  onChange={(e) => setSetId(e.target.value)}
+                  className="h-8 w-40"
+                >
+                  {data.assumptionSets.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </Select>
+                <AssumptionBadge set={assumptions} />
+              </>
+            )}
           </>
         }
       />
-      <PlanHealthCard
-        compact
-        note={
-          setId !== data.activeAssumptions.id
-            ? t('The status uses your active assumption set ({name}); the chart below uses {name2}.', {
-                name: data.activeAssumptions.name,
-                name2: assumptions.name,
-              })
-            : t(
-                'The chart is the typical path: one future where markets return their typical amount every year. The status counts how often the money lasts across 1,000 simulated futures, so it can be lower even when this line never reaches zero.',
-              )
-        }
-      />
+      {mode === 'static' && (
+        <PlanHealthCard
+          compact
+          note={
+            setId !== data.activeAssumptions.id
+              ? t('The status uses your active assumption set ({name}); the chart below uses {name2}.', {
+                  name: data.activeAssumptions.name,
+                  name2: assumptions.name,
+                })
+              : t(
+                  'The chart is the typical path: one future where markets return their typical amount every year. The status counts how often the money lasts across 1,000 simulated futures, so it can be lower even when this line never reaches zero.',
+                )
+          }
+        />
+      )}
       {mode === 'play' ? (
         <PlaybackView />
       ) : (

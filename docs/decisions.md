@@ -240,3 +240,30 @@ From "PRD: Projection Playback & Scenario Events" (24 Oct 2026), all three relea
   stop-work age.
 - **Saved stories** and **custom events** live in Settings, so backups carry them; a shared story
   file holds events and timing only, never balances.
+
+## Play mode redesign
+
+From "PRD: Playback UX Redesign & Investment Time Machine" (25 Oct 2026), Part A, PX-1 to PX-15
+(saved as [prd-playback-ux-and-time-machine.md](prd-playback-ux-and-time-machine.md)). UI only:
+the playback engine and library are untouched and their tests pass unchanged.
+
+- **Story cards** keep all four backdrops and the three combinations (open question: keep them).
+  A combination resolves its timings against the normal story, as the old one-tap buttons did.
+- **One picker.** Paused, it schedules at a chosen age (cap of 3 kept, "n of 3 scheduled");
+  playing, it fires at the playhead. Opening it while playing does not pause, so the event lands
+  where the playhead is when "Fire now" is pressed. The number keys 1–6 still fire favourites.
+  The pin star in the picker replaces the old palette's favourites editor.
+- **Timeline track** shares the chart's age axis by giving the chart a fixed left inset (64 px,
+  76 px in zh-TW). Chips that would overlap stack on extra rows; milestone labels that would
+  overlap show as ticks only. Live chips cannot be dragged (the past is fixed); they can be
+  removed or jumped to.
+- **Result strip** compares the stop-work age and the money-lasts age with the normal story; it
+  reads the same analysis as the end card, so the values match at the last month. Total net
+  worth and "this month" moved to the "At this moment" panel (open on desktop, closed on phones).
+- **Speed**: Slow / Normal / Fast = 0.5×, 1× and 2.5× the smart pace from playback settings.
+- **Phone**: the strip, chart and step bar are sticky; the player bar sits fixed above the bottom
+  navigation; speed moves into the "⋯" menu there.
+- **Hints** (PX-14) are stored in localStorage (`fi-tracker-play-hints`), not in backups: they are
+  per device by design.
+- **Toggle** reads "Summary / Play a story"; the plan-health card and the assumption controls show
+  only in Summary.

@@ -24,9 +24,10 @@ test('switches to Taiwan Traditional Chinese and back, keeping the choice', asyn
   await expect(page.getByText(/你(可以|計畫)在 \d+ 歲/).first()).toBeVisible();
 
   await page.goto('./#/projection');
-  await page.getByRole('radio', { name: '播放' }).click();
+  await page.getByRole('radio', { name: '播放故事' }).click();
   await expect(page.getByText('一種可能的故事，不是預測。').first()).toBeVisible();
-  await page.getByRole('button', { name: '跳到結尾' }).click();
+  await page.getByRole('button', { name: '更多播放動作' }).click();
+  await page.getByRole('menuitem', { name: '跳到結尾' }).click();
   await expect(page.getByLabel('故事結束')).toBeVisible();
 
   await page.getByRole('radio', { name: 'English' }).first().click();
