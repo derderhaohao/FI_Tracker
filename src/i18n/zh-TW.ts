@@ -1998,12 +1998,9 @@ export const ZH_TW: Record<string, string> = {
   'Loan payments of {amount}/mo are added separately until {month}; leave them out of the FI budget.':
     '每月 {amount} 的貸款還款會另外計算到 {month}；請不要計入財務自由預算。',
   'from loan terms in Accounts': '取自「帳戶」的貸款條件',
-  'incl. {amount}/mo loan payment (Accounts)': '含每月 {amount} 貸款還款（帳戶）',
   'Scheduled from Accounts; type to change this month': '依「帳戶」排定；輸入金額即可修改本月',
   'Spending while working / year, loans aside': '工作期間支出／年（不含貸款）',
   'In Cash flow, this payment is': '這筆還款在現金流中',
-  'A “Loan payments” row fills itself in Cash flow every month until the loan ends. Leave the payment out of your other categories.':
-    '現金流中的「貸款還款」列會每月自動填入，直到貸款結束。請不要再把這筆還款記在其他類別中。',
   'Nothing to type twice: the plan reads the payment from here, takes it out of everyday spending, and stops it when the loan ends.':
     '不必重複輸入：計畫會從這裡讀取還款金額，從日常支出中分開計算，並在貸款結束時停止。',
   'Already part of my spending': '已包含在我的支出中',
@@ -2035,4 +2032,14 @@ export const ZH_TW: Record<string, string> = {
   '{n} mo': '{n} 個月',
   '{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths}':
     '{toFixed}% · 每月 {monthlyPaymentMinor} · {remainingMonths}',
+  // loan payments shown in Cash flow categories
+  'Added from the loan terms in Accounts': '依「帳戶」的貸款條件自動加入',
+  '+ {amount} loan': '+ 貸款 {amount}',
+  'Part of this amount, from the loan terms in Accounts': '已包含在這筆金額中，取自「帳戶」的貸款條件',
+  'incl. {amount} loan': '含貸款 {amount}',
+  'Added to the category below in Cash flow every month until the loan ends, beside what you type there. Leave it out of the amounts you type.':
+    '貸款結束前，每月都會自動加到下方類別的現金流中，與你輸入的金額並列。請不要把它算進你輸入的金額。',
+  'Where Cash flow adds the payment each month': '現金流每月加入這筆還款的類別',
+  'A separate “Loan payments” row': '另列一行「貸款還款」',
+  'added to {name} automatically': '自動加入{name}',
 };

@@ -224,9 +224,9 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
         propertyAccountId: v.propertyAccountId || undefined,
         termsAsOf: worked ? worked.asOf : (terms?.termsAsOf ?? thisMonth),
         cashFlow: v.cashFlow,
-        categoryId: v.cashFlow === 'included' ? v.categoryId || undefined : undefined,
+        categoryId: v.categoryId || undefined,
       });
-      if (v.cashFlow === 'auto') await ensureLoanCategory();
+      if (v.cashFlow === 'auto' && !v.categoryId) await ensureLoanCategory();
     } else if (terms) {
       await db.liabilities.delete(id);
     }
@@ -367,7 +367,7 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
             hint={
               cashFlow === 'auto'
                 ? t(
-                    'A “Loan payments” row fills itself in Cash flow every month until the loan ends. Leave the payment out of your other categories.',
+                    'Added to the category below in Cash flow every month until the loan ends, beside what you type there. Leave it out of the amounts you type.',
                   )
                 : t(
                     'Nothing to type twice: the plan reads the payment from here, takes it out of everyday spending, and stops it when the loan ends.',
@@ -381,20 +381,29 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
               </Select>
             )}
           </Field>
-          {cashFlow === 'included' && (
-            <Field label={t('In category')} hint={t('Where your monthly spending includes it')}>
-              {(id) => (
-                <Select id={id} {...register('categoryId')}>
-                  <option value="">{t('— somewhere in my spending —')}</option>
-                  {spendingCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-          )}
+          <Field
+            label={t('In category')}
+            hint={
+              cashFlow === 'auto'
+                ? t('Where Cash flow adds the payment each month')
+                : t('Where your monthly spending includes it')
+            }
+          >
+            {(id) => (
+              <Select id={id} {...register('categoryId')}>
+                <option value="">
+                  {cashFlow === 'auto'
+                    ? t('A separate “Loan payments” row')
+                    : t('— somewhere in my spending —')}
+                </option>
+                {spendingCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
         </>
       )}
       <datalist id="currencies">
@@ -418,8 +427,9 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
 export function AccountsPage() {
   const { accounts, liabilities, snapshots, categories } = useAppData();
   const whereText = (terms: Liability) => {
-    if (terms.cashFlow === 'auto') return t('added to Cash flow automatically');
-    const c = categories.find((x) => x.id === terms.categoryId);
+    const c = categories.find((x) => x.id === terms.categoryId && !x.system);
+    if (terms.cashFlow === 'auto')
+      return c ? t('added to {name} automatically', { name: c.name }) : t('added to Cash flow automatically');
     return c ? t('in {name}', { name: c.name }) : t('in your spending');
   };
   /** Payments left from this month, worked out from the latest balance. */

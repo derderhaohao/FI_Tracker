@@ -25,9 +25,15 @@ export interface LoanSchedule {
   /** First month without a payment. */
   endMonth: string;
   mode: 'included' | 'auto';
-  /** For included loans: the expense category that holds the payment, when named. */
+  /**
+   * The expense category the payment shows under: for included loans the one whose amounts
+   * already hold it, for automatic ones the one it is added to (else the "Loan payments" row).
+   */
   categoryId?: string;
 }
+
+/** Before any month: a loan already running when tracking began counts in every earlier month. */
+const BEGINNING = '0000-01';
 
 /** Longest schedule we model: a payment that never clears the loan runs this long. */
 export const MAX_LOAN_MONTHS = 1200;
@@ -92,6 +98,10 @@ export function loanSchedules(
   snapshots: readonly Snapshot[],
 ): LoanSchedule[] {
   const out: LoanSchedule[] = [];
+  const firstTracked = snapshots.reduce<string | undefined>(
+    (m, s) => (m === undefined || s.date < m ? s.date : m),
+    undefined,
+  );
   for (const terms of liabilities) {
     const account = accounts.find((a) => a.id === terms.accountId);
     if (!account || account.archived || terms.monthlyPaymentMinor <= 0) continue;
@@ -100,10 +110,16 @@ export function loanSchedules(
     const first = snapshots
       .filter((s) => s.accountId === terms.accountId)
       .reduce<string | undefined>((m, s) => (m === undefined || s.date < m ? s.date : m), undefined);
-    // Payments are known from the first snapshot, or from when the terms were entered if earlier.
-    const startMonth = [first ? monthOf(first) : undefined, terms.termsAsOf, term.asOf]
-      .filter((m): m is string => m !== undefined)
-      .reduce((a, b) => (b < a ? b : a));
+    // A loan that was there when tracking began (in the first snapshot) was being paid in every
+    // cash-flow month before it too; one added later starts at its first snapshot, or when its
+    // terms were entered if earlier.
+    const existing =
+      first !== undefined && firstTracked !== undefined && monthOf(first) === monthOf(firstTracked);
+    const startMonth = existing
+      ? BEGINNING
+      : [first ? monthOf(first) : undefined, terms.termsAsOf, term.asOf]
+          .filter((m): m is string => m !== undefined)
+          .reduce((a, b) => (b < a ? b : a));
     out.push({
       accountId: terms.accountId,
       monthly: fromMinor(terms.monthlyPaymentMinor),
@@ -129,39 +145,73 @@ export function loanCategory(categories: readonly Category[]): Category | undefi
 }
 
 /**
- * Scheduled payments for loans added automatically: one regular TWD row per tracked month
- * (a month with any stored entry) while a loan runs. A stored entry in the "Loan payments"
- * category for a month replaces the schedule for that month (a prepayment, a skipped payment).
- * These rows are never stored.
+ * The category an automatic loan's payment is added to: the expense category chosen for it,
+ * else the "Loan payments" row (when it exists).
+ */
+export function loanTarget(s: LoanSchedule, categories: readonly Category[]): Category | undefined {
+  const chosen = categories.find((c) => c.id === s.categoryId && c.kind === 'expense');
+  return chosen ?? loanCategory(categories);
+}
+
+/**
+ * Scheduled payments for loans added automatically: one TWD row per tracked month (a month
+ * with any stored entry) and target category while a loan runs. In the "Loan payments" row a
+ * stored entry for a month replaces the schedule for that month (a prepayment, a skipped
+ * payment). These rows are never stored.
  */
 export function scheduledLoanFlows(
   cashFlows: readonly CashFlow[],
   schedules: readonly LoanSchedule[],
   categories: readonly Category[],
 ): CashFlow[] {
-  const category = loanCategory(categories);
+  const system = loanCategory(categories);
   const auto = schedules.filter((s) => s.mode === 'auto');
-  if (!category || auto.length === 0) return [];
+  if (auto.length === 0) return [];
   const tracked = new Set(cashFlows.map((f) => f.month));
-  const overridden = new Set(cashFlows.filter((f) => f.categoryId === category.id).map((f) => f.month));
+  const overridden = new Set(
+    system ? cashFlows.filter((f) => f.categoryId === system.id).map((f) => f.month) : [],
+  );
   const out: CashFlow[] = [];
   for (const month of [...tracked].sort()) {
-    if (overridden.has(month)) continue;
-    const amount = auto.reduce((sum, s) => sum + (isActive(s, month) ? s.monthly : 0), 0);
-    if (amount <= 0) continue;
-    out.push({
-      id: `loan:${month}`,
-      month,
-      categoryId: category.id,
-      amountMinor: Math.round(amount * 100),
-      currency: 'TWD',
-      lumpSum: false,
-      scheduled: true,
-      createdAt: '',
-      updatedAt: '',
-    });
+    const byTarget = new Map<string, number>();
+    for (const s of auto) {
+      const target = loanTarget(s, categories);
+      if (!target || !isActive(s, month)) continue;
+      if (target.id === system?.id && overridden.has(month)) continue;
+      byTarget.set(target.id, (byTarget.get(target.id) ?? 0) + s.monthly);
+    }
+    for (const [categoryId, amount] of byTarget) {
+      out.push({
+        id: `loan:${categoryId}:${month}`,
+        month,
+        categoryId,
+        amountMinor: Math.round(amount * 100),
+        currency: 'TWD',
+        lumpSum: false,
+        scheduled: true,
+        createdAt: '',
+        updatedAt: '',
+      });
+    }
   }
   return out;
+}
+
+/** Loan payments shown in `categoryId` for `month`: kept inside its amounts, or added to them. */
+export function loanPaymentsInCategory(
+  schedules: readonly LoanSchedule[],
+  categories: readonly Category[],
+  categoryId: string,
+  month: string,
+): { included: number; added: number } {
+  let included = 0;
+  let added = 0;
+  for (const s of schedules) {
+    if (!isActive(s, month)) continue;
+    if (s.mode === 'included' && s.categoryId === categoryId) included += s.monthly;
+    else if (s.mode === 'auto' && loanTarget(s, categories)?.id === categoryId) added += s.monthly;
+  }
+  return { included, added };
 }
 
 /**
@@ -174,11 +224,19 @@ export function loanPaymentsIn(
   schedules: readonly LoanSchedule[],
   categories: readonly Category[],
 ): number {
-  const category = loanCategory(categories);
+  const system = loanCategory(categories);
   let sum = 0;
   for (const month of months) {
-    if (category) sum += byMonth.get(month)?.[category.id] ?? 0;
-    for (const s of schedules) if (s.mode === 'included' && isActive(s, month)) sum += s.monthly;
+    // The "Loan payments" row holds its own payments, typed overrides included.
+    if (system) sum += byMonth.get(month)?.[system.id] ?? 0;
+    for (const s of schedules) {
+      if (!isActive(s, month)) continue;
+      if (s.mode === 'included') sum += s.monthly;
+      else {
+        const target = loanTarget(s, categories);
+        if (target && target.id !== system?.id) sum += s.monthly;
+      }
+    }
   }
   return sum;
 }
