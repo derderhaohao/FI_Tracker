@@ -18,7 +18,7 @@ import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
 import { t } from '@/i18n';
 import { Link } from 'react-router-dom';
 import { LoanNotice } from '@/components/LoanNotice';
-import { isActive, LOAN_CATEGORY, type LoanSchedule } from '@/domain/loans';
+import { LOAN_CATEGORY, loanPaymentsInCategory } from '@/domain/loans';
 
 const VISIBLE_MONTHS = 6;
 
@@ -29,8 +29,11 @@ function isRegular(f: CashFlow) {
   return !f.lumpSum && f.currency === 'TWD' && !f.date;
 }
 
-function regularFlow(flows: readonly CashFlow[], month: string, categoryId: string) {
-  return flows.find((f) => f.month === month && f.categoryId === categoryId && isRegular(f));
+/** A cell's own typed amount; in the "Loan payments" row the scheduled payment stands in for it. */
+function regularFlow(flows: readonly CashFlow[], month: string, categoryId: string, loanRow = false) {
+  return flows.find(
+    (f) => f.month === month && f.categoryId === categoryId && isRegular(f) && (loanRow || !f.scheduled),
+  );
 }
 
 /**
@@ -60,13 +63,6 @@ async function setRegular(month: string, categoryId: string, minor: number | und
 function defaultDate(month: string): string {
   const t = today();
   return monthOf(t) === month ? t : `${month}-01`;
-}
-
-/** Loan payments the user keeps inside this category's spending, per month. */
-function includedLoans(loans: readonly LoanSchedule[], categoryId: string, month: string): number {
-  return loans
-    .filter((l) => l.mode === 'included' && l.categoryId === categoryId && isActive(l, month))
-    .reduce((sum, l) => sum + l.monthly, 0);
 }
 
 function Entries({ month, categories, mode }: { month: string; categories: Category[]; mode: CashFlowMode }) {
@@ -358,20 +354,21 @@ export function CashFlowPage() {
                 {t('from loan terms in Accounts')}
               </Link>
             )}
-            {(() => {
-              const m = shown.at(-1);
-              const inc = m ? includedLoans(loans, c.id, m) : 0;
-              return inc > 0 ? (
-                <Link to="/accounts" className="block text-[11px] text-subtle hover:text-primary">
-                  {t('incl. {amount}/mo loan payment (Accounts)', { amount: twd(inc) })}
-                </Link>
-              ) : null;
-            })()}
           </td>
           {shown.map((m) => {
             const extra = byMonth.get(m)?.byCategory[c.id] ?? 0;
-            const regular = regularFlow(cashFlows, m, c.id);
-            const others = extra - (regular ? regular.amountMinor / 100 : 0);
+            const loanRow = c.system === LOAN_CATEGORY;
+            const regular = regularFlow(cashFlows, m, c.id, loanRow);
+            // Loan payments from Accounts shown in this cell: kept inside the typed amount, or added.
+            const loan = loanRow
+              ? { included: 0, added: 0 }
+              : loanPaymentsInCategory(loans, categories, c.id, m);
+            const scheduled = loanRow
+              ? 0
+              : cashFlows
+                  .filter((f) => f.scheduled && f.month === m && f.categoryId === c.id)
+                  .reduce((sum, f) => sum + f.amountMinor / 100, 0);
+            const others = extra - (regular ? regular.amountMinor / 100 : 0) - scheduled;
             return (
               <td key={m} className="w-36 min-w-28 align-top">
                 {mode === 'transactions' ? (
@@ -400,6 +397,24 @@ export function CashFlowPage() {
                       }}
                     />
                   </div>
+                )}
+                {loan.added > 0 && (
+                  <Link
+                    to="/accounts"
+                    className="mt-0.5 block text-right text-[11px] text-primary hover:underline"
+                    title={t('Added from the loan terms in Accounts')}
+                  >
+                    {t('+ {amount} loan', { amount: twd(loan.added) })}
+                  </Link>
+                )}
+                {loan.included > 0 && (
+                  <Link
+                    to="/accounts"
+                    className="mt-0.5 block text-right text-[11px] text-subtle hover:text-primary"
+                    title={t('Part of this amount, from the loan terms in Accounts')}
+                  >
+                    {t('incl. {amount} loan', { amount: twd(loan.included) })}
+                  </Link>
                 )}
                 {mode === 'monthly' && Math.abs(others) > 0.5 && (
                   <div className="mt-0.5 text-right text-[11px] text-subtle">

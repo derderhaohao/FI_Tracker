@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { CashFlow, Category, Liability, Snapshot } from './entities';
 import {
+  isActive,
   loanPaymentsIn,
+  loanPaymentsInCategory,
   loanSchedules,
   loanTerm,
   MAX_LOAN_MONTHS,
@@ -63,8 +65,13 @@ describe('months to repay', () => {
 });
 
 describe('loan schedules', () => {
-  it('work the term out from the latest balance, back to the first snapshot', () => {
-    const [s] = loanSchedules([terms()], [loanAccount], [snap('2026-06-30', 207_000), snap('2026-09-30')]);
+  it('work the term out from the latest balance; a loan added later starts at its first snapshot', () => {
+    const bank: Snapshot = { ...snap('2026-01-31'), id: 'bank', accountId: 'bank' };
+    const [s] = loanSchedules(
+      [terms()],
+      [loanAccount],
+      [bank, snap('2026-06-30', 207_000), snap('2026-09-30')],
+    );
     expect(s).toMatchObject({
       monthly: 12_500,
       startMonth: '2026-06',
@@ -80,6 +87,15 @@ describe('loan schedules', () => {
       date: '2026-09-30',
       neverRepaid: false,
     });
+  });
+
+  it('count a loan that was there when tracking began in every earlier cash-flow month', () => {
+    // Setup records last month's cash flow, then today's balances: the loan was paid last month too.
+    const [s] = loanSchedules([terms()], [loanAccount], [snap('2026-10-24')]);
+    expect(isActive(s, '2026-09')).toBe(true);
+    expect(isActive(s, '2024-01')).toBe(true);
+    expect(isActive(s, '2027-12')).toBe(true);
+    expect(isActive(s, '2028-01')).toBe(false);
   });
 
   it('shorten when a new, lower balance is entered', () => {
@@ -126,6 +142,34 @@ describe('automatic loan payments in cash flow', () => {
     expect(scheduledLoanFlows(stored, schedules, [])).toEqual([]);
     const included = loanSchedules([terms()], [loanAccount], []);
     expect(scheduledLoanFlows(stored, included, [loansCategory])).toEqual([]);
+  });
+});
+
+describe('automatic loan payments added to a chosen category', () => {
+  const housing: Category = { id: 'housing', name: 'Housing', kind: 'expense', essential: true, ...stamp };
+  const schedules = loanSchedules([terms({ cashFlow: 'auto', categoryId: 'housing' })], [loanAccount], []);
+  const stored = [flow('2026-09', 'housing', 18_000), flow('2026-10', 'housing', 18_000)];
+
+  it('add the payment to that category every tracked month, beside what was typed', () => {
+    const rows = scheduledLoanFlows(stored, schedules, [housing, loansCategory]);
+    expect(rows.map((r) => [r.categoryId, r.month, r.amountMinor])).toEqual([
+      ['housing', '2026-09', 12_500_00],
+      ['housing', '2026-10', 12_500_00],
+    ]);
+  });
+
+  it('say what each cell holds, and count as loan payments, not everyday spending', () => {
+    expect(loanPaymentsInCategory(schedules, [housing], 'housing', '2026-09')).toEqual({
+      included: 0,
+      added: 12_500,
+    });
+    const included = loanSchedules([terms({ categoryId: 'housing' })], [loanAccount], []);
+    expect(loanPaymentsInCategory(included, [housing], 'housing', '2026-09')).toEqual({
+      included: 12_500,
+      added: 0,
+    });
+    const byMonth = new Map([['2026-09', { housing: 30_500 }]]);
+    expect(loanPaymentsIn(['2026-09'], byMonth, schedules, [housing])).toBe(12_500);
   });
 });
 

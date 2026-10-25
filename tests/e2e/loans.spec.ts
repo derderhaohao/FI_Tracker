@@ -11,7 +11,8 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   await page.goto('./#/accounts');
   await expect(page.getByText(/12,500\/mo · \d+ mo · in Loan repayment/)).toBeVisible();
   await page.goto('./#/cashflow');
-  await expect(page.getByText('incl. NT$12,500/mo loan payment (Accounts)')).toBeVisible();
+  // Every month's cell says how much of it is the loan.
+  await expect(page.getByText('incl. NT$12,500 loan')).toHaveCount(6);
 
   // The projection pays it on its own schedule, then stops.
   await page.goto('./#/projection');
@@ -27,7 +28,19 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   await expect(page.getByTestId('loan-term')).toContainText(
     'Paid off in 14 months · last payment Nov 2027. Worked out from the balance of NT$170,000 on 2026-09-30',
   );
+  // "Add it for me" into Housing: each month's Housing gains the payment beside what was typed.
   await page.getByLabel('In Cash flow, this payment is').selectOption('auto');
+  await page.getByLabel('In category').selectOption({ label: 'Housing' });
+  await page.getByRole('button', { name: 'Save account' }).click();
+  await expect(page.getByText(/added to Housing automatically/)).toBeVisible();
+  await page.goto('./#/cashflow');
+  await expect(page.getByLabel('Housing 2026-09', { exact: true })).toHaveValue('18,000');
+  await expect(page.getByText('+ NT$12,500 loan')).toHaveCount(6);
+
+  // Or as a separate "Loan payments" row, where one month can be changed.
+  await page.goto('./#/accounts');
+  await page.getByRole('button', { name: 'Edit Car loan' }).click();
+  await page.getByLabel('In category').selectOption('');
   await page.getByRole('button', { name: 'Save account' }).click();
   await expect(page.getByText(/added to Cash flow automatically/)).toBeVisible();
 

@@ -20,7 +20,7 @@ import { Checkbox, Field, Input } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
 import { budgetVsActual, monthLabel, pct, twd, twdCompact } from '@/lib/format';
 import { addMonths } from '@/domain/dates';
-import { LOAN_CATEGORY, type LoanSchedule } from '@/domain/loans';
+import { LOAN_CATEGORY, loanTarget, type LoanSchedule } from '@/domain/loans';
 import { t } from '@/i18n';
 
 const TIER_LABELS: Record<FiTier, string> = { lean: t('Lean'), full: t('Full'), fat: t('Fat') };
@@ -32,7 +32,10 @@ function updateDestination(changes: Partial<ReturnType<typeof useAppData>['setti
 }
 
 function BudgetRow({ c, actual, loans }: { c: Category; actual: number; loans: LoanSchedule[] }) {
-  const mine = loans.filter((l) => (c.system === LOAN_CATEGORY ? l.mode === 'auto' : l.categoryId === c.id));
+  const { categories } = useAppData();
+  const mine = loans.filter((l) =>
+    l.mode === 'auto' ? loanTarget(l, categories)?.id === c.id : l.categoryId === c.id,
+  );
   const until = mine.reduce((m, l) => (l.endMonth > m ? l.endMonth : m), '');
   const loanNote = mine.length
     ? t('Loan payments of {amount}/mo are added separately until {month}; leave them out of the FI budget.', {
