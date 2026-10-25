@@ -20,7 +20,8 @@ const OUT = new URL('../public/data/prices/', import.meta.url);
 const FIRST = '1999-12'; // one month before Jan 2000, so a Jan 2000 start has a buying price
 const MAX_FILE = 8 * 1024;
 const MAX_FOLDER = 5 * 1024 * 1024;
-const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
+// A plain agent: Yahoo answers 429 to some full browser strings.
+const UA = 'Mozilla/5.0';
 
 const only = new Set(process.argv.slice(2).map((s) => s.toUpperCase()));
 const warnings: string[] = [];
@@ -179,6 +180,12 @@ async function fred(): Promise<FxFile> {
   return { s: monthName(first), v };
 }
 
+/** Fallback USD/TWD: Yahoo's TWD=X month-end rates. */
+async function yahooFx(): Promise<FxFile> {
+  const m = fill('TWD=X', await yahoo('TWD=X'));
+  return { s: monthName(m.first), v: m.close.map(round) };
+}
+
 async function main() {
   mkdirSync(OUT, { recursive: true });
   const indexPath = new URL('index.json', OUT);
@@ -229,15 +236,18 @@ async function main() {
       keep();
       // The default benchmark is first in the list: if it fails, every source is blocked.
       if (ticker === 'SPY' && !entries.some((x) => x.t === 'SPY'))
-        throw new Error('SPY could not be downloaded');
+        throw new Error('SPY could not be downloaded', { cause: e });
     }
-    await sleep(400);
+    await sleep(800);
   }
   if (!entries.some((e) => e.t === 'SPY')) throw new Error('SPY is missing: the default benchmark needs it');
 
   let fx: boolean;
   try {
-    const f = await fred();
+    const f = await fred().catch(async (e: unknown) => {
+      warn(`FRED: ${e instanceof Error ? e.message : String(e)}, using Yahoo TWD=X month-end rates`);
+      return yahooFx();
+    });
     writeFileSync(new URL('fx.json', OUT), JSON.stringify(f));
     fx = true;
   } catch (e) {
@@ -248,7 +258,7 @@ async function main() {
   const index: PriceIndex = {
     asOf: monthName(asOf),
     built: new Date().toISOString().slice(0, 10),
-    source: `${[...sources].map((x) => (x === 'Yahoo' ? 'Yahoo Finance' : x)).join(' and ') || previous?.source.split(';')[0] || 'Yahoo Finance'} monthly adjusted closes; USD/TWD from FRED (EXTAUS)`,
+    source: `${[...sources].map((x) => (x === 'Yahoo' ? 'Yahoo Finance' : x)).join(' and ') || previous?.source.split(';')[0] || 'Yahoo Finance'} monthly adjusted closes; USD/TWD from FRED (EXTAUS) or Yahoo (TWD=X)`,
     tickers: entries,
     fx,
   };

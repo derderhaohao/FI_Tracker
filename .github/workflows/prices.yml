@@ -40,8 +40,9 @@ jobs:
           for url in \
             "https://query1.finance.yahoo.com/v8/finance/chart/SPY?range=1mo&interval=1mo" \
             "https://stooq.com/q/d/l/?s=spy.us&i=m" \
-            "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EXTAUS"; do
-            echo "$(curl -s -o /dev/null -w '%{http_code}' -A 'Mozilla/5.0' "$url") $url"
+            "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EXTAUS" \\
+            "https://query1.finance.yahoo.com/v8/finance/chart/TWD=X?range=1mo&interval=1mo"; do
+            echo "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' -A 'Mozilla/5.0' "$url") $url"
           done
       - run: npx tsx scripts/build-prices.ts
       - name: Commit changed files
