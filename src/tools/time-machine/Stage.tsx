@@ -29,6 +29,7 @@ import {
 import type { MarketEvent } from './events';
 import { accentButton } from './fields';
 import { lineColor, lineLabel, money, monthText, pct, pointLabel, pointMonth } from './labels';
+import { tickerText } from './search';
 import type { Speed } from './usePlayer';
 
 export type View = 'value' | 'growth';
@@ -348,7 +349,7 @@ export function Stage({
           <ol className="flex flex-col gap-1">
             {holdings.map((h) => (
               <li key={h.name} className="flex items-center gap-2 text-xs">
-                <span className="w-12 shrink-0 font-semibold">{h.name}</span>
+                <span className="w-14 shrink-0 font-semibold">{tickerText(h.name)}</span>
                 <span className="relative h-4 flex-1 overflow-hidden rounded bg-surface-2">
                   <span
                     className="absolute inset-y-0 left-0 rounded bg-tool-accent/70 motion-safe:transition-[width] motion-safe:duration-150"

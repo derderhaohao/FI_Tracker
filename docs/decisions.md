@@ -325,3 +325,49 @@ reads or writes FI Tracker data.
 - **Boundary**: an ESLint override blocks plan imports in `src/tools/`, and a unit test checks
   it. The e2e checks that IndexedDB is unchanged after using the tool. The page is lazy loaded, so
   the main bundle only gains the nav entry.
+
+## Taiwan stocks in the Time Machine
+
+From "PRD: Taiwan Stocks in Time Machine & Beginner (Kids) Mode" (25 Oct 2026), Part C, TW-1 to
+TW-10 (saved as [prd-taiwan-stocks-and-beginner-mode.md](prd-taiwan-stocks-and-beginner-mode.md)).
+
+- **Universe**:
+  - All 50 FTSE TWSE Taiwan 50 members, about 30 well-known mid caps and 15 ETFs, including the
+    two US-Treasury bond ETFs.
+  - Each entry has English and Chinese names and is priced in TWD.
+  - Codes are stored with Yahoo's `.TW` suffix (`2330.TW`) and shown without it.
+  - TPEx, leveraged and inverse ETFs are left out.
+- **Scenario currency replaces the "TWD view"**:
+  - The amount and top-ups are entered in the scenario currency (USD or TWD), and every line is
+    valued in it.
+  - A holding priced in the other currency gains the month-end exchange-rate change each month.
+  - Top-ups and rebalancing happen in the scenario currency.
+  - Cash, fixed-return and property lines grow at their rates in the scenario currency.
+- **Default currency**:
+  - TWD with 2330 + 0050 against the TAIEX total return when the UI is Chinese; otherwise USD with
+    AAPL + MSFT against SPY.
+  - Until the user picks a currency, it follows the first holding.
+  - Switching converts the amount at the latest rate, rounded to two significant digits.
+- **Exchange rates are month-end now**:
+  - Yahoo `TWD=X` month-end close, with FRED `DEXTAUS` (last day of each month) filling months
+    Yahoo lacks.
+  - Old TWD results therefore move slightly from the monthly averages used before.
+- **Old links (TW-10)**:
+  - Scenarios now carry `v: 2`.
+  - A link without it in USD opens unchanged.
+  - A link without it in TWD (the old display view) is converted at the rate before the start
+    month, so a lump sum ends at the same value; top-ups land at that start rate.
+- **TAIEX total return**:
+  - The generator reads TWSE's return index (MFI94U) month by month from 2003 and keeps what it
+    has fetched, so each monthly refresh only asks for new months.
+  - If TWSE can't be reached and no TWSE file exists yet, the benchmark is 0050's total return,
+    labelled as tracked by 0050.
+  - The TAIEX price index (`^TWII`) is offered only as "price only, dividends not included".
+- **Taiwan validation (TW-8)**: no published per-stock total-return figures can be fetched
+  reliably from the runner, so the generator checks consistency instead:
+  - Each Taiwan listing's yearly gap between total return and price return must look like a
+    dividend (0–15 points). This catches badly adjusted stock dividends and capital reductions.
+  - 0050 must track the TAIEX total return within 2 points a year.
+  - Findings are warnings in the workflow log, alongside the ±60% monthly-move flag.
+- **Currency effect (TW-9)**: "From exchange rates" is the final value less the same run with
+  the rate held still. It is shown only when some line is priced in another currency.

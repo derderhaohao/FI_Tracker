@@ -1,6 +1,6 @@
 // Scenario state (TM-3, TM-13, TM-23): the scenario lives in the URL hash query as `?s=`, and the
 // last scenario plus any saved ones in one localStorage key. Nothing goes to IndexedDB.
-import type { Benchmark, Holding, Scenario } from './engine';
+import type { Benchmark, Currency, Holding, Scenario } from './engine';
 
 export const STORAGE_KEY = 'fi-tracker-tm-last';
 export const MAX_HOLDINGS = 10;
@@ -17,8 +17,27 @@ interface Stored {
   saved?: SavedScenario[];
 }
 
-export function defaultScenario(end: string): Scenario {
+/** The default scenario: US names in USD, or Taiwan names in TWD when the UI is in Chinese (TW-3). */
+export function defaultScenario(end: string, currency: Currency = 'USD'): Scenario {
+  if (currency === 'TWD')
+    return {
+      v: 2,
+      amount: 300_000,
+      start: '2010-01',
+      end,
+      holdings: [
+        { ticker: '2330.TW', weight: 50 },
+        { ticker: '0050.TW', weight: 50 },
+      ],
+      late: 'cash',
+      rebalance: 'none',
+      topUp: 0,
+      priceOnly: false,
+      benchmarks: [{ kind: 'ticker', ticker: 'TAIEXTR' }],
+      currency: 'TWD',
+    };
   return {
+    v: 2,
     amount: 10_000,
     start: '2010-01',
     end,
@@ -109,6 +128,8 @@ export function sanitize(v: unknown, end: string): Scenario {
     priceOnly: s.priceOnly === true,
     benchmarks,
     currency: pick(s.currency, ['USD', 'TWD'] as const, 'USD'),
+    ...(s.v === 2 ? { v: 2 as const } : {}),
+    ...(s.currencyPicked === true ? { currencyPicked: true } : {}),
   };
 }
 
@@ -182,3 +203,29 @@ export function equalWeights(n: number): number[] {
 
 export const weightTotal = (h: readonly Holding[]) =>
   Math.round(h.reduce((a, b) => a + b.weight, 0) * 100) / 100;
+
+/**
+ * Opens a link made before Part C (TW-10). Without `v`, a USD scenario is unchanged; a TWD one
+ * meant "USD amounts shown in TWD", so its amounts are converted at the rate before the start
+ * month. A lump sum then ends at the same value; top-ups land at the start month's rate.
+ */
+export function upgradeLegacy(s: Scenario, twdPerUsdAtStart: number | undefined): Scenario {
+  if (s.v === 2) return s;
+  if (s.currency !== 'TWD') return { ...s, v: 2 };
+  if (!twdPerUsdAtStart) return s;
+  return {
+    ...s,
+    v: 2,
+    currencyPicked: true,
+    amount: Math.round(s.amount * twdPerUsdAtStart),
+    topUp: Math.round(s.topUp * twdPerUsdAtStart),
+  };
+}
+
+/** Converts an amount when the scenario currency changes, rounded to two significant digits. */
+export function convertAmount(v: number, from: Currency, to: Currency, twdPerUsd: number): number {
+  if (from === to || v === 0) return v;
+  const x = to === 'TWD' ? v * twdPerUsd : v / twdPerUsd;
+  const p = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.abs(x))) - 1));
+  return Math.max(1, Math.round(x / p) * p);
+}

@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Notice } from '@/components/ui/misc';
 import { cn } from '@/lib/cn';
-import { t, useLang } from '@/i18n';
+import { getLang, t, useLang } from '@/i18n';
 import {
   effectiveStart,
   lateListings,
   monthIndex,
+  needsFx,
   simulate,
   twr,
+  type Currency,
   type MarketData,
   type Scenario,
   type Series,
@@ -27,6 +29,7 @@ import { ResultsPanel, type Compared } from './ResultsPanel';
 import { SetupPanel } from './SetupPanel';
 import { Stage, type View } from './Stage';
 import {
+  convertAmount,
   decodeScenario,
   defaultScenario,
   encodeScenario,
@@ -34,6 +37,7 @@ import {
   loadSaved,
   saveLast,
   storeSaved,
+  upgradeLegacy,
   weightTotal,
   type SavedScenario,
 } from './state';
@@ -74,7 +78,9 @@ export function TimeMachinePage() {
         setIndex(i);
         const fromLink = params.get('s');
         setScenario(
-          (fromLink && decodeScenario(fromLink, i.asOf)) || loadLast(i.asOf) || defaultScenario(i.asOf),
+          (fromLink && decodeScenario(fromLink, i.asOf)) ||
+            loadLast(i.asOf) ||
+            defaultScenario(i.asOf, getLang() === 'zh-TW' ? 'TWD' : 'USD'),
         );
         setSaved(loadSaved(i.asOf));
       })
@@ -83,14 +89,52 @@ export function TimeMachinePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** TWD per USD at the latest month, for converting amounts when the currency changes. */
+  const latestRate = fx ? fx.v[fx.v.length - 1] : 30;
+  const currencyOf = useCallback(
+    (ticker: string): Currency => index?.tickers.find((e) => e.t === ticker)?.c ?? 'USD',
+    [index],
+  );
+  const withCurrency = useCallback(
+    (s: Scenario, c: Currency): Scenario =>
+      c === s.currency
+        ? s
+        : {
+            ...s,
+            currency: c,
+            amount: convertAmount(s.amount, s.currency, c, latestRate),
+            topUp: convertAmount(s.topUp, s.currency, c, latestRate),
+          },
+    [latestRate],
+  );
+
   const update = useCallback(
-    (s: Scenario) => {
+    (next: Scenario) => {
+      // Until the user picks a currency, it follows the first holding (TW-3).
+      const first = next.holdings[0] && currencyOf(next.holdings[0].ticker);
+      const s = !next.currencyPicked && first && index?.fx ? withCurrency(next, first) : next;
       setScenario(s);
       saveLast(s);
       setParams({ s: encodeScenario(s) }, { replace: true });
     },
-    [setParams],
+    [setParams, currencyOf, withCurrency, index],
   );
+  const onCurrency = useCallback(
+    (c: Currency) => scenario && update({ ...withCurrency(scenario, c), currencyPicked: true }),
+    [scenario, update, withCurrency],
+  );
+
+  // Links made before Part C (TW-10): USD ones open unchanged; TWD ones convert their amounts.
+  const upgrade = useCallback(
+    (s: Scenario) =>
+      upgradeLegacy(
+        s,
+        fx && fx.v[Math.min(fx.v.length - 1, Math.max(0, monthIndex(s.start) - 1 - fx.first))],
+      ),
+    [fx],
+  );
+  // Upgraded as soon as the rate is known; the link itself updates with the next change.
+  if (scenario && !scenario.v && (scenario.currency === 'USD' || fx)) setScenario(upgrade(scenario));
 
   // Load every ticker the scenario and the compared scenarios use (TM-4).
   const compareScenarios = picked.map((i) => saved[i]).filter(Boolean);
@@ -113,10 +157,10 @@ export function TimeMachinePage() {
   const missing = needed.filter(
     (tk) => (index && !index.tickers.some((e) => e.t === tk)) || failed.includes(tk),
   );
-  const wantFx = scenario?.currency === 'TWD' || compareScenarios.some((c) => c.scenario.currency === 'TWD');
+  // Month-end USD/TWD (TW-5): small, so it loads with the index.
   useEffect(() => {
-    if (wantFx && index?.fx) void loadFx().then(setFx);
-  }, [wantFx, index]);
+    if (index?.fx) void loadFx().then(setFx);
+  }, [index]);
 
   const dataFor = useCallback(
     (s: Scenario): MarketData | undefined => {
@@ -126,7 +170,7 @@ export function TimeMachinePage() {
         if (!x) return undefined;
         map.set(tk, x);
       }
-      if (s.currency === 'TWD' && !fx) return undefined;
+      if (needsFx(s, { series: map }) && !fx) return undefined;
       return { series: map, fx };
     },
     [series, fx],
@@ -145,15 +189,16 @@ export function TimeMachinePage() {
         .map((i) => saved[i])
         .filter(Boolean)
         .map((c) => {
-          const d = dataFor(c.scenario);
+          const sc = upgrade(c.scenario);
+          const d = dataFor(sc);
           return {
             name: c.name,
-            sim: d && weightTotal(c.scenario.holdings) === 100 ? simulate(c.scenario, d) : undefined,
-            benchmarks: c.scenario.benchmarks,
-            currency: c.scenario.currency,
+            sim: d && sc.v && weightTotal(sc.holdings) === 100 ? simulate(sc, d) : undefined,
+            benchmarks: sc.benchmarks,
+            currency: sc.currency,
           };
         }),
-    [picked, saved, dataFor],
+    [picked, saved, dataFor, upgrade],
   );
 
   // Market-event toasts (TM-18): when the playhead enters a period, and how far it fell by its end.
@@ -321,7 +366,7 @@ export function TimeMachinePage() {
                       setSaved(next);
                       storeSaved(next);
                     }}
-                    onOpen={(i) => update(saved[i].scenario)}
+                    onOpen={(i) => update(upgrade(saved[i].scenario))}
                     onDelete={(i) => {
                       const next = saved.filter((_, j) => j !== i);
                       setSaved(next);
@@ -342,6 +387,7 @@ export function TimeMachinePage() {
                 data={{ series, fx }}
                 late={late}
                 onChange={update}
+                onCurrency={onCurrency}
               />
               <BenchmarksPanel scenario={scenario} onChange={update} />
             </CardContent>

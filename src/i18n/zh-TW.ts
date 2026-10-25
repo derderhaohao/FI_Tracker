@@ -2306,4 +2306,18 @@ export const ZH_TW: Record<string, string> = {
   '{n} of {max}': '{n}／{max}',
   '{n} of {max} holdings': '{n}／{max} 檔持股',
   '{tickers} started trading after {month}.': '{tickers} 在 {month} 之後才開始交易。',
+  // Taiwan stocks in the Time Machine (TW-1..TW-10)
+  'Every line is valued in this currency; foreign holdings convert at each month-end rate.':
+    '每條線都以這個幣別計價；外幣持股以每月底匯率換算。',
+  'From exchange rates': '來自匯率',
+  'Gain in the scenario currency less the gain in local currency':
+    '以情境幣別計算的損益，減去以原幣別計算的損益',
+  'Monthly top-up': '每月加碼',
+  'Options: rebalancing, top-ups, dividends': '選項：再平衡、加碼、股利',
+  'Scenario currency': '情境幣別',
+  'Search by code or company, such as 2330 or Apple': '以代號或公司名稱搜尋，例如 2330 或 Apple',
+  US: '美國',
+  'TAIEX total return': '加權報酬指數',
+  'Taiwan 50 (0050)': '台灣50（0050）',
+  'TAIEX (price only, dividends not included)': '加權指數（僅價格，不含股利）',
 };
