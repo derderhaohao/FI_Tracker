@@ -279,6 +279,41 @@ async function twseReturnIndex(known: Map<number, number>): Promise<Map<number, 
   return out;
 }
 
+/**
+ * Repairs two faults seen in Yahoo's Taiwan data (TW-8), in place, and logs each one:
+ * - placeholder rows before listing: months up to the last run of three equal closes in the
+ *   first two years are dropped;
+ * - a share split the source did not adjust (or adjusted at the wrong month): a one-month fall to
+ *   within 5% of 1/n (n = 2…10) in both series. The history before it is scaled by that ratio.
+ * Other large moves stay as warnings for review.
+ */
+function repairTaiwan(ticker: string, m: Monthly) {
+  // The last month of three equal closes in a row within the first two years ends the placeholders.
+  let flat = -1;
+  for (let i = 2; i < Math.min(24, m.close.length - 1); i++)
+    if (m.close[i] === m.close[i - 1] && m.close[i] === m.close[i - 2] && m.adj[i] === m.adj[i - 1]) flat = i;
+  if (flat >= 0) {
+    warn(`${ticker}: dropped ${flat + 1} placeholder months before ${monthName(m.first + flat + 1)}`);
+    m.adj.splice(0, flat + 1);
+    m.close.splice(0, flat + 1);
+    m.first += flat + 1;
+  }
+  for (let i = m.close.length - 1; i > 0; i--) {
+    const r = m.close[i] / m.close[i - 1];
+    const ra = m.adj[i] / m.adj[i - 1];
+    if (r > 0.55 || Math.abs(ra / r - 1) > 0.02) continue;
+    const n = Math.round(1 / r);
+    if (n < 2 || n > 10 || Math.abs(r * n - 1) > 0.05) continue;
+    // A real crash tends to bounce back hard within months; a split does not.
+    if (m.close.slice(i + 1, i + 4).some((v, j) => v / m.close[i + j] >= 1.6)) continue;
+    warn(`${ticker}: ${monthName(m.first + i)} fell to 1/${n}: treated as an unadjusted ${n}-for-1 split`);
+    for (let j = 0; j < i; j++) {
+      m.close[j] /= n;
+      m.adj[j] /= n;
+    }
+  }
+}
+
 /** Each year's total return minus price return should look like a dividend (TW-8). */
 function checkDividends(ticker: string, data: PriceFile) {
   if (!data.p) return;
@@ -402,6 +437,7 @@ async function main() {
     }
     try {
       const m = await monthly(symbol);
+      if (market === 'TW' && kind !== 'index') repairTaiwan(ticker, m);
       sources.add(m.source);
       for (let i = 1; i < m.adj.length; i++) {
         const move = m.adj[i] / m.adj[i - 1] - 1;

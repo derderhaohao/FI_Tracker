@@ -363,6 +363,15 @@ TW-10 (saved as [prd-taiwan-stocks-and-beginner-mode.md](prd-taiwan-stocks-and-b
   - If TWSE can't be reached and no TWSE file exists yet, the benchmark is 0050's total return,
     labelled as tracked by 0050.
   - The TAIEX price index (`^TWII`) is offered only as "price only, dividends not included".
+- **Taiwan repairs (TW-8)**: Yahoo's Taiwan history has two kinds of fault, which the generator
+  fixes and logs:
+  - Splits it did not adjust, or adjusted at the wrong month (0050's 1-for-4 split shows as a −75%
+    month in 2014; 0052's 2025 split is missing). A one-month fall to within 5% of 1/n
+    (n = 2–10) in both series, with no strong rebound in the next three months, is treated as a
+    split and the earlier history is rescaled.
+  - Placeholder rows before a listing: months up to the last run of three equal closes in the
+    first two years are dropped (Pegatron's history starts at its June 2010 listing).
+  - Yahoo's 0050 history starts in 2009; the TAIEX total-return benchmark covers 2003 onwards.
 - **Taiwan validation (TW-8)**: no published per-stock total-return figures can be fetched
   reliably from the runner, so the generator checks consistency instead:
   - Each Taiwan listing's yearly gap between total return and price return must look like a
