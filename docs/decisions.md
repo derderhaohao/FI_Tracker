@@ -385,3 +385,48 @@ TW-10 (saved as [prd-taiwan-stocks-and-beginner-mode.md](prd-taiwan-stocks-and-b
   - Findings are warnings in the workflow log, alongside the ±60% monthly-move flag.
 - **Currency effect (TW-9)**: "From exchange rates" is the final value less the same run with
   the rate held still. It is shown only when some line is priced in another currency.
+
+## Beginner (Kids) mode
+
+From the same PRD, Part D, KD-1 to KD-9 (Release 5).
+
+- **Open questions, decided**:
+  - Money tree default growth is 6 coins for every 100 a year (the PRD's default, matching the
+    weather pattern's average).
+  - The freedom rule stays "× 25" (4 coins for every 100). It is round, and it stays separate from
+    the plan, which Beginner mode must never read.
+  - Yearly cost cards use generic round Taiwan figures: home 240,000, food 120,000, getting around
+    36,000, fun 36,000, trips 60,000. The parent can change them (Release 6); the real plan is
+    never copied in.
+  - Returning devices with plan data default to Pro without asking.
+- **When the welcome screen asks (KD-1)**: only on a first visit to the home page. A device with
+  plan data, a `?demo=1` link, or a link straight to a Pro page is Pro without asking, since that
+  is a grown-up following a link; a link into `#/kids` is Beginner. The choice lives in
+  localStorage `fi-tracker-mode`, in `src/lib/mode.ts` so Beginner mode can switch back without
+  importing app code.
+- **The plan database stays untouched (KD-2)**:
+  - In Beginner mode the app skips the plan's start-up defaults, the goal-history recorder and
+    the autosave.
+  - Beginner screens use their own Dexie database, `fi-tracker-kids`.
+  - An ESLint boundary (tested) keeps `src/kids/` away from plan code. The e2e compares the plan
+    database before and after a full session.
+- **Jars**:
+  - Balances are worked out from entries, never stored.
+  - Money in splits by the child's split (default 50 / 30 / 20). Leftover coins from rounding go
+    to Spend, and a changed split is kept on the profile.
+  - The "Save" jar is called "Savings" (儲蓄), because "Save" is already the Pro save button.
+- **Goals**:
+  - Weeks to go use the average coins a week into Savings over the last 8 weeks.
+  - "I bought it!" takes the price out of Savings and closes the goal.
+- **Kid math** (`src/kids/math.ts`) is whole coins only. Every rate is shown as "6 coins for
+  every 100 each year", and a split as "5 of every 10 coins".
+- **Copy**:
+  - Written fresh for children in English and Traditional Chinese (元 for coins).
+  - A test scans every Beginner string for percent signs, decimals and English words in the
+    Chinese text.
+  - Beginner mode's Chinese text (352 lines) loads with its lazy chunk through
+    `addTranslations`, so the main bundle grows by about 2 KB gzipped, not 10.
+- **Art**: original inline SVG for the avatars, jars, coins, piggy bank, bank and tree. Lucide
+  icons (ISC licence) for the source, category, goal and lesson pictures. No characters or logos.
+- **Lessons**: the PRD's ten ideas, four screens each, then a three-question quiz. Two right
+  answers earn the badge, and lessons open in order.

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { HashRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { db } from '@/db/db';
 import { ensureDefaults } from '@/db/defaults';
 import { importBackup } from '@/io/backup';
@@ -25,11 +25,28 @@ import { initAutosave } from '@/lib/autosave';
 import { Layout } from './Layout';
 import { NotFound } from './NotFound';
 import { t } from '@/i18n';
+import { getMode, setMode, useMode } from '@/lib/mode';
+import { WelcomeMode } from './WelcomeMode';
 
 // Standalone tools load on demand, so the main bundle does not grow (TM-1).
 const TimeMachinePage = lazy(() =>
   import('@/tools/time-machine/TimeMachinePage').then((m) => ({ default: m.TimeMachinePage })),
 );
+// Beginner mode is its own lazy app with its own database (KD-2).
+const KidsApp = lazy(() => import('@/kids/KidsApp').then((m) => ({ default: m.KidsApp })));
+
+/**
+ * Beginner or Pro before anything opens (KD-1). A device with plan data, a demo link or a deep
+ * link to a Pro page is Pro without asking; a link into `#/kids` is Beginner; otherwise the
+ * welcome screen asks.
+ */
+async function chooseMode(): Promise<void> {
+  if (getMode()) return;
+  const path = window.location.hash.replace(/^#/, '').split('?')[0];
+  if (path.startsWith('/kids')) setMode('beginner');
+  else if (window.location.hash.includes('demo=1') || (path && path !== '/')) setMode('pro');
+  else if ((await db.accounts.count()) > 0) setMode('pro');
+}
 
 /** `npm run demo` opens `#/settings?demo=1`: load the demo data when the database is empty. */
 async function loadDemoIfRequested(): Promise<void> {
@@ -47,24 +64,57 @@ function Loading({ error }: { error?: string }) {
 }
 
 export function App() {
-  const [ready, setReady] = useState(false);
+  const mode = useMode();
+  const [started, setStarted] = useState(false);
+  const [proReady, setProReady] = useState(false);
   const [error, setError] = useState<string>();
+  const fail = (e: unknown) =>
+    setError(
+      t('Could not open the local database ({v}). Private browsing may block storage.', {
+        v: e instanceof Error ? e.message : String(e),
+      }),
+    );
 
   useEffect(() => {
-    ensureDefaults()
-      .then(loadDemoIfRequested)
-      .then(() => setReady(true))
-      .catch((e: unknown) =>
-        setError(
-          t('Could not open the local database ({v}). Private browsing may block storage.', {
-            v: e instanceof Error ? e.message : String(e),
-          }),
-        ),
-      );
-    void initAutosave();
+    chooseMode()
+      .then(() => setStarted(true))
+      .catch(fail);
   }, []);
 
-  if (!ready) return <Loading error={error} />;
+  // The plan database gets its defaults only in Pro: Beginner mode never writes to it.
+  useEffect(() => {
+    if (!started || mode !== 'pro' || proReady) return;
+    ensureDefaults()
+      .then(loadDemoIfRequested)
+      .then(() => setProReady(true))
+      .catch(fail);
+    void initAutosave();
+  }, [started, mode, proReady]);
+
+  if (error) return <Loading error={error} />;
+  if (!started) return <Loading />;
+  if (!mode) return <WelcomeMode />;
+  if (mode === 'beginner')
+    return (
+      <ErrorBoundary>
+        <UpdatePrompt />
+        <HashRouter>
+          <Routes>
+            <Route
+              path="kids/*"
+              element={
+                <Suspense fallback={<Loading />}>
+                  <KidsApp />
+                </Suspense>
+              }
+            />
+            <Route path="*" element={<Navigate to="/kids" replace />} />
+          </Routes>
+        </HashRouter>
+      </ErrorBoundary>
+    );
+
+  if (!proReady) return <Loading />;
   return (
     <ErrorBoundary>
       <DataProvider fallback={<Loading />}>
@@ -94,6 +144,7 @@ export function App() {
                     </Suspense>
                   }
                 />
+                <Route path="kids/*" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
