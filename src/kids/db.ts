@@ -111,7 +111,7 @@ export async function createProfile(
     ...p,
     nickname: p.nickname.trim().slice(0, 20),
     id,
-    split: { ...DEFAULT_SPLIT },
+    split: { ...(await getSetting<Split>('defaultSplit', DEFAULT_SPLIT, database)) },
     createdAt: new Date().toISOString(),
   });
   await setSetting('activeProfile', id, database);
@@ -182,4 +182,15 @@ export function weeklySavePace(entries: readonly Entry[], now = Date.now()): num
   const first = Math.min(...recent.map((e) => Date.parse(e.date)));
   const weeks = Math.max(1, Math.ceil((now - first) / (7 * 86_400_000)));
   return Math.round(recent.reduce((a, e) => a + e.amount, 0) / weeks);
+}
+
+/** The saving pace for goals: recent coins into Savings, else the allowance's Savings share. */
+export function savePace(
+  entries: readonly Entry[],
+  allowance: number,
+  split: Split,
+  now = Date.now(),
+): number {
+  const recent = weeklySavePace(entries, now);
+  return recent > 0 ? recent : Math.floor((allowance * split.save) / 100);
 }

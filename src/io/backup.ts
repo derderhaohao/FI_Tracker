@@ -17,6 +17,8 @@ import {
 import { today } from '@/domain/dates';
 import { db, SCHEMA_VERSION, STORE_NAMES, type FiDatabase, type StoreName } from '@/db/db';
 import { migrateBackup } from './migrations';
+import { exportKids, importKids, kidsBackupSchema } from '@/kids/backup';
+import { kidsDb, type KidsDatabase } from '@/kids/db';
 import { t } from '@/i18n';
 
 /** Zod schema of the current backup file: `{ schemaVersion, exportedAt, data: { …all stores } }`. */
@@ -42,6 +44,8 @@ export const backupFileSchema = z.object({
   schemaVersion: z.literal(SCHEMA_VERSION),
   exportedAt: z.string(),
   data: backupDataSchema,
+  /** Beginner mode's data (KD-13); older backups simply lack it. */
+  kids: kidsBackupSchema.optional(),
 });
 export type BackupFile = z.infer<typeof backupFileSchema>;
 
@@ -49,16 +53,21 @@ export function backupFileName(date = today()): string {
   return `fi-tracker-${date}.fi.json`;
 }
 
-export async function exportBackup(database: FiDatabase = db): Promise<BackupFile> {
+export async function exportBackup(
+  database: FiDatabase = db,
+  kids: KidsDatabase | null = kidsDb,
+): Promise<BackupFile> {
   const data = {} as Record<StoreName, unknown[]>;
   await database.transaction('r', database.allTables(), async () => {
     for (const name of STORE_NAMES) data[name] = await database.table(name).toArray();
   });
+  const kidsData = kids ? await exportKids(kids) : undefined;
   return {
     app: 'fi-tracker',
     schemaVersion: SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     data: data as BackupData,
+    ...(kidsData ? { kids: kidsData } : {}),
   };
 }
 
@@ -91,8 +100,15 @@ export function parseBackupText(text: string): ParseResult {
   }
 }
 
-/** Replaces all data with the backup in one transaction. */
-export async function importBackup(file: BackupFile, database: FiDatabase = db): Promise<void> {
+/**
+ * Replaces all plan data with the backup in one transaction. Beginner mode's data is replaced
+ * only when the file has a `kids` section (KD-13).
+ */
+export async function importBackup(
+  file: BackupFile,
+  database: FiDatabase = db,
+  kids: KidsDatabase | null = kidsDb,
+): Promise<void> {
   await database.transaction('rw', database.allTables(), async () => {
     for (const name of STORE_NAMES) {
       const table = database.table(name);
@@ -100,6 +116,7 @@ export async function importBackup(file: BackupFile, database: FiDatabase = db):
       await table.bulkPut(file.data[name]);
     }
   });
+  if (file.kids && kids) await importKids(file.kids, kids);
 }
 
 export async function clearAllData(database: FiDatabase = db): Promise<void> {

@@ -16,12 +16,41 @@ import { migrateBackup } from './migrations';
 import demoFile from '../../sample-data/demo.json';
 import backupV1 from './fixtures/backup-v1.json';
 import Dexie from 'dexie';
+import { addMoney, createProfile, KidsDatabase } from '@/kids/db';
 
 let n = 0;
 function freshDb() {
   n += 1;
   return new FiDatabase(`test-${n}-${Date.now()}`);
 }
+
+describe('Beginner data in the main backup (KD-13)', () => {
+  it('carries a kids section when there are children, and restores it', async () => {
+    const plan = freshDb();
+    await ensureDefaults(plan);
+    const kids = new KidsDatabase(`kids-${Date.now()}`);
+    const id = await createProfile({ nickname: 'Leo', avatar: 1, age: 8 }, kids);
+    await addMoney((await kids.profiles.get(id))!, 50, 'gift', kids);
+    const file = await exportBackup(plan, kids);
+    expect(file.kids?.profiles).toHaveLength(1);
+    const parsed = parseBackup(JSON.parse(JSON.stringify(file)));
+    expect(parsed.ok).toBe(true);
+    const target = new KidsDatabase(`kids-target-${Date.now()}`);
+    await importBackup(parsed.ok ? parsed.file : file, freshDb(), target);
+    expect(await target.entries.count()).toBe(3);
+  });
+
+  it('reads older backups without a kids section and leaves the children alone', async () => {
+    const plan = freshDb();
+    await ensureDefaults(plan);
+    const file = await exportBackup(plan, null);
+    expect(file.kids).toBeUndefined();
+    const kids = new KidsDatabase(`kids-keep-${Date.now()}`);
+    await createProfile({ nickname: 'Ada', avatar: 0, age: 10 }, kids);
+    await importBackup(file, freshDb(), kids);
+    expect(await kids.profiles.count()).toBe(1);
+  });
+});
 
 describe('database and backup', () => {
   it('creates defaults once on first run', async () => {
