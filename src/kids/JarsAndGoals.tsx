@@ -3,15 +3,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { t } from '@/i18n';
 import { JarArt } from './art/Art';
-import { JAR_COLORS } from './art/palette';
-import { categoryName, coins, goalName, jarLine, jarName, sourceName, splitWords } from './copy';
+import { SplitEditor } from './split';
+import { categoryName, coins, goalName, jarLine, jarName, sourceName } from './copy';
 import {
   addMoney,
   kidsDb,
   MAX_GOALS,
   newId,
   spendMoney,
-  weeklySavePace,
+  savePace,
   type Category,
   type GoalPicture,
   type Source,
@@ -26,59 +26,6 @@ const SOURCES: Source[] = ['allowance', 'chores', 'redEnvelope', 'gift', 'other'
 const CATEGORIES: Category[] = ['snack', 'toy', 'book', 'game', 'giftForSomeone', 'other'];
 const PICTURES: GoalPicture[] = ['bike', 'game', 'book', 'trip', 'gift'];
 const JARS: Jar[] = ['spend', 'save', 'grow'];
-
-/** The split as a coloured bar with two sliders: Spend, then Save; Grow takes the rest. */
-function SplitEditor({ split, onChange }: { split: Split; onChange: (s: Split) => void }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex h-8 overflow-hidden rounded-full" aria-hidden>
-        {JARS.map((j) => (
-          <div key={j} style={{ width: `${split[j]}%`, background: JAR_COLORS[j] }} />
-        ))}
-      </div>
-      <label className="flex flex-col gap-1">
-        <span className="font-semibold">
-          {jarName('spend')}: {splitWords(split.spend)}
-        </span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={10}
-          value={split.spend}
-          aria-valuetext={splitWords(split.spend)}
-          className="h-10 accent-[#f59e0b]"
-          onChange={(e) => {
-            const spend = Number(e.target.value);
-            const save = Math.min(split.save, 100 - spend);
-            onChange({ spend, save, grow: 100 - spend - save });
-          }}
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="font-semibold">
-          {jarName('save')}: {splitWords(split.save)}
-        </span>
-        <input
-          type="range"
-          min={0}
-          max={100 - split.spend}
-          step={10}
-          value={split.save}
-          aria-valuetext={splitWords(split.save)}
-          className="h-10 accent-[#3b82f6]"
-          onChange={(e) => {
-            const save = Number(e.target.value);
-            onChange({ spend: split.spend, save, grow: 100 - split.spend - save });
-          }}
-        />
-      </label>
-      <p className="font-semibold">
-        {jarName('grow')}: {splitWords(split.grow)}
-      </p>
-    </div>
-  );
-}
 
 /** Money in (KD-5): where it came from, how much, and the 3-jar split. */
 function MoneyIn({ kids, onDone }: { kids: Kids; onDone: () => void }) {
@@ -241,7 +188,7 @@ function Goals({ kids }: { kids: Kids }) {
   const [adding, setAdding] = useState(false);
   const [picture, setPicture] = useState<GoalPicture>();
   const [price, setPrice] = useState(0);
-  const pace = weeklySavePace(kids.entries);
+  const pace = savePace(kids.entries, kids.allowance, kids.profile!.split);
   const save = kids.jars.save;
   return (
     <Panel title={t('My goals')}>

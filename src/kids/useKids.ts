@@ -18,6 +18,7 @@ export function useKids() {
   const profiles = useLiveQuery(() => kidsDb.profiles.orderBy('createdAt').toArray(), []);
   const activeId = useLiveQuery(() => getSetting<string | undefined>('activeProfile', undefined), []);
   const growth = useLiveQuery(() => getSetting<Growth>('growth', defaultGrowth()), []);
+  const allowance = useLiveQuery(() => getSetting<number>('allowance', 0), []);
   const profile: Profile | undefined = profiles?.find((p) => p.id === activeId) ?? profiles?.[0];
   const pid = profile?.id ?? '';
   const entries = useLiveQuery(
@@ -42,5 +43,7 @@ export function useKids() {
     goals: (goals ?? EMPTY).filter((g) => !g.reachedAt),
     progress: progress ?? EMPTY,
     growth: growth ?? defaultGrowth(),
+    /** Weekly allowance the parent set (KD-11), 0 when not set. */
+    allowance: allowance ?? 0,
   };
 }

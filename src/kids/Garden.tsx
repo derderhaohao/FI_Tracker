@@ -5,7 +5,7 @@ import { JarArt, TreeArt } from './art/Art';
 import { coins, goalName, jarName } from './copy';
 import { LESSONS } from './lessons/content';
 import { treeSize, weeksToGoal, type Jar } from './math';
-import { weeklySavePace } from './db';
+import { savePace } from './db';
 import type { Kids } from './types';
 import { BigButton, Panel } from './ui';
 import { GoalIcon } from './goalIcons';
@@ -18,7 +18,9 @@ export function Garden({ kids }: { kids: Kids }) {
   const { jars, goals, progress, profile } = kids;
   const top = goals[0];
   const most = Math.max(1, jars.spend, jars.save, jars.grow);
-  const weeks = top ? weeksToGoal(top.price, jars.save, weeklySavePace(kids.entries)) : undefined;
+  const weeks = top
+    ? weeksToGoal(top.price, jars.save, savePace(kids.entries, kids.allowance, profile!.split))
+    : undefined;
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">{t('Hi, {name}!', { name: profile!.nickname })}</h1>

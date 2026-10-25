@@ -173,3 +173,53 @@ test('Beginner screens have big touch targets and work from the keyboard at phon
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Hi, Kai!' })).toBeVisible();
 });
+
+test('with a PIN, leaving Beginner needs it; three wrong tries mean a wait (KD-10, KD-11)', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('./#/kids');
+  await page.getByPlaceholder('A fun name, not your real one').fill('Ivy');
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByRole('heading', { name: 'Hi, Ivy!' })).toBeVisible();
+
+  const pad = (digits: string) =>
+    (async () => {
+      for (const d of digits)
+        await page
+          .getByRole('group', { name: 'PIN pad' })
+          .getByRole('button', { name: d, exact: true })
+          .click();
+    })();
+
+  // Set a PIN in the grown-ups corner.
+  await page.getByRole('link', { name: 'Grown-ups' }).click();
+  await page.getByRole('button', { name: 'Set a PIN' }).click();
+  await pad('2468');
+  await pad('2468');
+  await expect(page.getByText('The PIN is set.')).toBeVisible();
+
+  // Save this child's progress, then load it back.
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Save progress' }).click(),
+  ]);
+  const path = await download.path();
+  await page.getByLabel('Load progress').setInputFiles(path!);
+  await expect(page.getByText('Progress loaded.')).toBeVisible();
+
+  // Leaving now needs the PIN; three wrong tries start the wait.
+  await page.getByRole('link', { name: 'Garden' }).click();
+  await page.getByRole('link', { name: 'Grown-ups' }).click();
+  await expect(page.getByText('Enter the grown-ups PIN')).toBeVisible();
+  await pad('1111');
+  await expect(page.getByText('That is not the PIN. Try again.')).toBeVisible();
+  await pad('2222');
+  await pad('3333');
+  await expect(page.getByText(/Too many tries\. Please wait \d+ seconds\./)).toBeVisible();
+  // The wait survives a reload.
+  await page.reload();
+  await expect(page.getByText(/Too many tries\. Please wait \d+ seconds\./)).toBeVisible();
+  expect(errors).toEqual([]);
+});

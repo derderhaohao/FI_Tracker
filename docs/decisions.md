@@ -430,3 +430,27 @@ From the same PRD, Part D, KD-1 to KD-9 (Release 5).
   icons (ISC licence) for the source, category, goal and lesson pictures. No characters or logos.
 - **Lessons**: the PRD's ten ideas, four screens each, then a three-question quiz. Two right
   answers earn the badge, and lessons open in order.
+
+### Beginner polish (Release 6, KD-10 to KD-13)
+
+- **Parent PIN (KD-10)**:
+  - Four digits, stored only as a salted PBKDF2-SHA-256 hash (100,000 rounds) in the kids
+    database.
+  - Labelled "a child lock, not a security feature".
+  - With a PIN set, the grown-ups corner, which is the only way back to Pro, asks for it. Three
+    wrong tries start a 30-second wait that survives a reload.
+  - The PIN never goes into backups or progress files.
+- **Grown-ups corner (KD-11)**:
+  - Weekly allowance. It sets the saving pace for goals until there are a few weeks of saving
+    to go by; adding it automatically each week is KD-14, P2.
+  - The child's split, and a default split for new children.
+  - Bank and money-tree growth (0–5 and 1–12 coins for every 100) and Freedom Quest cost
+    presets.
+  - Per child: start again (keeps the child), delete everything, and save or load one child's
+    progress as a JSON file. Loading replaces the same child or adds a new one if there is room.
+- **Weather (KD-12)** shipped with the Money Tree in Release 5.
+- **Backups (KD-13)**:
+  - The main backup gets an optional `kids` section, written only when there are children and
+    validated on import.
+  - Older backups without it import as before and leave the children's data alone.
+  - "Delete all data" in Pro clears the plan only, since Beginner data belongs to the children.
