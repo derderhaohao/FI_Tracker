@@ -47,8 +47,12 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   await page.goto('./#/cashflow');
   const september = page.getByLabel('Loan payments 2026-09', { exact: true });
   await expect(september).toHaveValue('12,500');
+  const scheduled = page.getByTitle('Scheduled from Accounts; type to change this month');
+  await expect(scheduled).toHaveCount(6);
   await september.fill('50,000');
   await september.press('Enter');
+  // Saved: September's amount is now typed, no longer the schedule.
+  await expect(scheduled).toHaveCount(5);
   await page.reload();
   await expect(page.getByLabel('Loan payments 2026-09', { exact: true })).toHaveValue('50,000');
   await expect(page.getByLabel('Loan payments 2026-08', { exact: true })).toHaveValue('12,500');
