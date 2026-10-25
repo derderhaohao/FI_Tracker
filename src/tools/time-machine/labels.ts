@@ -3,15 +3,17 @@ import type { Benchmark, Currency, Line, Simulation } from './engine';
 import type { IndexEntry } from './format';
 import { tickerText } from './search';
 
-/** Money in the display currency, whole units ($12,345 or NT$394,000). */
+/**
+ * Money in the scenario currency, whole units: $12,345 or NT$394,000 in every language (the
+ * zh-TW locale writes a bare "$" for TWD, which would read as dollars next to US holdings).
+ */
 export function money(v: number, currency: Currency, compact = false): string {
-  return new Intl.NumberFormat(locale(), {
-    style: 'currency',
-    currency,
-    currencyDisplay: currency === 'TWD' ? 'symbol' : 'narrowSymbol',
-    maximumFractionDigits: compact && Math.abs(v) >= 1000 ? 1 : 0,
-    notation: compact && Math.abs(v) >= 1000 ? 'compact' : 'standard',
-  }).format(v);
+  const big = compact && Math.abs(v) >= 1000;
+  const n = new Intl.NumberFormat(locale(), {
+    maximumFractionDigits: big ? 1 : 0,
+    notation: big ? 'compact' : 'standard',
+  }).format(Math.abs(v));
+  return `${v < 0 ? '-' : ''}${currency === 'TWD' ? 'NT$' : '$'}${n}`;
 }
 
 export function pct(v: number | undefined, digits = 1, signed = false): string {
