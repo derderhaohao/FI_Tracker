@@ -181,7 +181,7 @@ async function main() {
   }
   if (!entries.some((e) => e.t === 'SPY')) throw new Error('SPY is missing: the default benchmark needs it');
 
-  let fx = false;
+  let fx: boolean;
   try {
     const f = await fred();
     writeFileSync(new URL('fx.json', OUT), JSON.stringify(f));
