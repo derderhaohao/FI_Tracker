@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import {
   Area,
   CartesianGrid,
@@ -17,9 +17,42 @@ import { ChartLegend, TooltipBox } from '@/components/charts/ChartParts';
 import { axisTick, useChartTheme } from '@/components/charts/theme';
 import { twdCompact } from '@/lib/format';
 import type { Fade } from './usePlayback';
-import { getLang, t } from '@/i18n';
+import { ICONS } from './icons';
+import { plotInsets } from './trackModel';
+import { t } from '@/i18n';
 
 export type ChartView = 'total' | 'breakdown';
+
+/** An event band label: its icon and name at 12 px (PRD Playback UX PX-9). */
+function BandLabel({
+  viewBox,
+  name,
+  icon,
+  color,
+}: {
+  viewBox?: { x?: number; y?: number; width?: number };
+  name: string;
+  icon: string;
+  color: string;
+}) {
+  const Icon = ICONS[icon];
+  const x = (viewBox?.x ?? 0) + 4;
+  const y = (viewBox?.y ?? 0) + 4;
+  const width = Math.max(0, (viewBox?.width ?? 0) - 6);
+  if (width < 18) return null;
+  return (
+    <g>
+      {Icon && <Icon x={x} y={y} width={12} height={12} color={color} aria-hidden />}
+      {width > 40 && (
+        <text x={x + 15} y={y + 10} fontSize={12} fill={color}>
+          {name.length * 6.5 > width - 16
+            ? `${name.slice(0, Math.max(1, Math.floor((width - 16) / 6.5) - 1))}…`
+            : name}
+        </text>
+      )}
+    </g>
+  );
+}
 
 interface Props {
   path: PlaybackPath;
@@ -33,6 +66,8 @@ interface Props {
   fadeT: number;
   morphT: number;
   pins: { month: number; label: string }[];
+  /** Messages overlaid on the chart (top left), so nothing below moves (PX-7). */
+  overlay?: ReactNode;
 }
 
 /** Playback chart (PB-10 to PB-15, LE-3 to LE-5). */
@@ -47,7 +82,9 @@ export const PlaybackChart = memo(function PlaybackChart({
   fadeT,
   morphT,
   pins,
+  overlay,
 }: Props) {
+  const insets = plotInsets();
   const theme = useChartTheme();
   const k = (m: number) => (nominal ? path.inflationIndex[m] : 1);
   const head = Math.round(playhead);
@@ -128,9 +165,10 @@ export const PlaybackChart = memo(function PlaybackChart({
               }))
         }
       />
-      <div className="h-[230px] sm:h-[320px]">
+      <div className="relative h-[300px] lg:h-[420px]">
+        {overlay}
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 16, right: 12, bottom: 0, left: 0 }}>
+          <ComposedChart data={data} margin={{ top: 16, right: insets.right, bottom: 0, left: 0 }}>
             <CartesianGrid stroke={theme.grid} vertical={false} />
             <XAxis
               dataKey="m"
@@ -148,7 +186,7 @@ export const PlaybackChart = memo(function PlaybackChart({
               stroke={theme.axis}
               tickLine={false}
               axisLine={false}
-              width={getLang() === 'zh-TW' ? 76 : 64}
+              width={insets.left}
             />
             {bands.map((e) => (
               <ReferenceArea
@@ -158,7 +196,13 @@ export const PlaybackChart = memo(function PlaybackChart({
                 fill={e.def.palette === 'good' ? theme.good : theme.critical}
                 fillOpacity={0.07}
                 stroke="none"
-                label={{ value: e.def.name, position: 'insideTopLeft', fill: theme.text, fontSize: 10 }}
+                label={
+                  <BandLabel
+                    name={e.def.name}
+                    icon={e.def.icon}
+                    color={e.def.palette === 'good' ? theme.good : theme.critical}
+                  />
+                }
               />
             ))}
             {path.retireMonth !== undefined && (
@@ -170,7 +214,7 @@ export const PlaybackChart = memo(function PlaybackChart({
                   value: t('Stop work'),
                   position: 'insideBottomLeft',
                   fill: theme.text,
-                  fontSize: 10,
+                  fontSize: 12,
                 }}
               />
             )}
@@ -182,7 +226,7 @@ export const PlaybackChart = memo(function PlaybackChart({
                   value: t('Money runs out'),
                   position: 'insideBottomRight',
                   fill: theme.critical,
-                  fontSize: 10,
+                  fontSize: 12,
                 }}
               />
             )}
