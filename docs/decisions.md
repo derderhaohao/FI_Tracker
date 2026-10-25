@@ -454,3 +454,23 @@ From the same PRD, Part D, KD-1 to KD-9 (Release 5).
     validated on import.
   - Older backups without it import as before and leave the children's data alone.
   - "Delete all data" in Pro clears the plan only, since Beginner data belongs to the children.
+
+### Test suite
+
+- **Layers**:
+  - Unit tests (Vitest) for the calculations and data code.
+  - Component tests (Vitest, jsdom and Testing Library) for UI pieces and whole screens.
+  - Playwright end-to-end tests against the built site.
+  - All three run in CI on every push and pull request.
+- **FI calculations** are checked against hand-worked answers and closed forms, not against the
+  code itself, in `src/domain/fiCalculations.test.ts`:
+  - The FI number, real return, years to FI, coast FI and required savings.
+  - The bridge fund.
+  - How the projection responds to each lever.
+- **Pro pages** render with the demo plan in fake IndexedDB. jsdom has no Web Workers, so the
+  plan-health Monte Carlo runs in the test thread with 50 runs instead of the worker.
+- **Coverage gate**: `npm run coverage` measures every file in `src` except the entry points and
+  the worker shell, which only Playwright reaches.
+  - Thresholds sit just under the levels reached, so CI fails if coverage drops.
+  - The calculations, backups and the kids' coin logic have higher thresholds than the screens.
+  - CI posts a coverage table in the job summary and keeps the HTML report for a week.

@@ -91,8 +91,21 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
-      include: ['src/domain/**', 'src/db/**', 'src/io/**'],
-      exclude: ['**/*.test.ts'],
+      include: ['src/**/*.{ts,tsx}'],
+      // Entry points and the worker shell run only in a browser; Playwright covers them.
+      exclude: ['**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/vite-env.d.ts', 'src/workers/**'],
+      reporter: ['text', 'text-summary', 'json-summary', 'html'],
+      // CI fails when coverage drops below these (set just under the levels reached). The money
+      // maths, backups and the kids' coin logic are held to a higher bar than the screens.
+      thresholds: {
+        statements: 75,
+        branches: 63,
+        functions: 64,
+        lines: 77,
+        'src/domain/**': { statements: 94, branches: 81, functions: 95, lines: 95 },
+        'src/io/**': { statements: 95, branches: 85, functions: 94, lines: 96 },
+        'src/kids/{math,db,pin,backup}.ts': { statements: 97, branches: 88, functions: 98, lines: 98 },
+      },
     },
   },
 });

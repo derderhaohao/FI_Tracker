@@ -22,7 +22,17 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm run typecheck
-      - run: npm run coverage
+      - name: Unit and component tests, with the coverage gate
+        run: npm run coverage
+      - name: Coverage summary
+        if: always()
+        run: test -f coverage/coverage-summary.json && node scripts/coverage-summary.mjs >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage
+          retention-days: 7
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run build
       - name: Monte Carlo performance (10,000 runs under 5 s)

@@ -67,8 +67,8 @@ strategies (Strategy Lab). Each month: update balances in Snapshots and last mon
 npm run lint           # ESLint
 npm run format:check   # Prettier
 npm run typecheck      # tsc --noEmit
-npm test               # Vitest unit tests (domain, data, components)
-npm run coverage       # with coverage
+npm test               # Vitest unit and component tests
+npm run coverage       # the same, with the coverage gate CI enforces (report in coverage/)
 npm run build          # production build into dist/
 npm run e2e            # Playwright smoke tests against the built site
 npm run perf           # 10,000 Monte Carlo runs must finish in under 5 seconds
@@ -77,6 +77,8 @@ npm run demo:generate  # regenerate sample-data/demo.json
 # Locally, if Playwright's own browser is not downloaded:
 PLAYWRIGHT_CHROMIUM_PATH=/path/to/chrome npm run e2e
 ```
+
+What each test layer covers, and the coverage thresholds, are in [docs/testing.md](docs/testing.md).
 
 ### Layout
 
