@@ -31,6 +31,10 @@
   --series-6: #008300;
   --series-7: #6250d6;
   --series-8: #e34948;
+  /* Standalone tools (Time Machine, TM-2): an accent that is clearly not the app's teal. */
+  --tool-accent: #4f46e5;
+  --tool-accent-foreground: #ffffff;
+  --tool-accent-bg: #eef2ff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -63,6 +67,9 @@
     --series-6: #008300;
     --series-7: #9085e9;
     --series-8: #e66767;
+    --tool-accent: #a5b4fc;
+    --tool-accent-foreground: #1e1b4b;
+    --tool-accent-bg: #1e1b4b;
   }
 }
 
@@ -83,6 +90,9 @@
   --color-warning-bg: var(--warning-bg);
   --color-critical: var(--critical);
   --color-critical-bg: var(--critical-bg);
+  --color-tool-accent: var(--tool-accent);
+  --color-tool-accent-foreground: var(--tool-accent-foreground);
+  --color-tool-accent-bg: var(--tool-accent-bg);
   --font-sans: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
 }
 

@@ -27,4 +27,42 @@ export default tseslint.config(
     files: ['src/domain/**/*.ts'],
     rules: { '@typescript-eslint/no-explicit-any': 'error' },
   },
+  {
+    // Standalone tools never touch plan data (Time Machine, TM-3). Shared UI, chart theme,
+    // cn, download and i18n are the only app imports allowed.
+    files: ['src/tools/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@/app',
+                '@/app/*',
+                '@/db',
+                '@/db/*',
+                '@/domain',
+                '@/domain/*',
+                '@/state',
+                '@/state/*',
+                '@/io',
+                '@/io/*',
+              ],
+              message: 'Standalone tools must not use FI Tracker data or logic (PRD Part B, TM-3).',
+            },
+            {
+              group: ['@/features', '@/features/*', '@/hooks', '@/hooks/*', '@/workers', '@/workers/*'],
+              message: 'Standalone tools must not use FI Tracker data or logic (PRD Part B, TM-3).',
+            },
+            {
+              regex: '^@/(lib/(?!cn$|download$)|components/(?!ui/|charts/theme$))',
+              message:
+                'Allowed shared imports: @/components/ui/*, @/components/charts/theme, @/lib/cn, @/lib/download, @/i18n.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );

@@ -1,0 +1,67 @@
+name: Refresh Time Machine prices
+
+# Monthly refresh of the static price files (TM-4, TM-20). Also runs when the generator or the
+# ticker list changes, and on demand. Changed files are committed to the branch that ran it; on
+# main the Pages deploy is started afterwards (a commit made with GITHUB_TOKEN does not start
+# other workflows by itself).
+on:
+  schedule:
+    - cron: '17 6 2 * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - scripts/build-prices.ts
+      - scripts/prices-universe.ts
+      - .github/workflows/prices.yml
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: prices-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check the data sources
+        run: |
+          for url in \
+            "https://query1.finance.yahoo.com/v8/finance/chart/SPY?range=1mo&interval=1mo" \
+            "https://stooq.com/q/d/l/?s=spy.us&i=m" \
+            "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EXTAUS" \
+            "https://query1.finance.yahoo.com/v8/finance/chart/TWD=X?range=1mo&interval=1mo"; do
+            echo "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' -A 'Mozilla/5.0' "$url") $url"
+          done
+      - run: npx tsx scripts/build-prices.ts
+      - name: Commit changed files
+        id: commit
+        run: |
+          git add public/data/prices
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh Time Machine prices to $(node -p "require('./public/data/prices/index.json').asOf")"
+          # The branch may have moved while prices downloaded: replay the data commit on top.
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Deploy the new data
+        if: steps.commit.outputs.changed == 'true' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
