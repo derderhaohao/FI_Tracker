@@ -11,13 +11,13 @@ adds a **Beginner mode** for elementary school children (about ages 7–12) besi
 becomes **Pro mode**: a simpler, picture-led space that teaches what financial independence means
 through jars, goals and a money tree.
 
-|                             | Part C: Taiwan stocks                                                          | Part D: Beginner mode                  |
-| --------------------------- | ------------------------------------------------------------------------------ | -------------------------------------- |
-| Where                       | `#/tools/time-machine`                                                         | New `#/kids/*` routes with own layout  |
-| Touches FI plan data        | No                                                                             | No: its own local database             |
+|                             | Part C: Taiwan stocks                                                               | Part D: Beginner mode                        |
+| --------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------- |
+| Where                       | `#/tools/time-machine`                                                              | New `#/kids/*` routes with own layout        |
+| Touches FI plan data        | No                                                                                  | No: its own local database                   |
 | Main code                   | `scripts/prices-universe.ts`, `scripts/build-prices.ts`, `src/tools/time-machine/*` | New `src/kids/*`, mode switch in `src/app/*` |
-| Changes an earlier decision | Yes: amounts can now be entered in TWD, not only shown in TWD                   | No                                     |
-| Size                        | Small                                                                          | Large                                  |
+| Changes an earlier decision | Yes: amounts can now be entered in TWD, not only shown in TWD                       | No                                           |
+| Size                        | Small                                                                               | Large                                        |
 
 **Naming:** the Strategy Lab's "Simple / Advanced" toggle stays inside Pro mode. The new top-level
 choice is always called **Beginner / Pro**.
@@ -34,12 +34,12 @@ to the amount, with each foreign holding converted at that month's exchange rate
 
 ### Universe
 
-| Group            | Contents                                                                                        | About |
-| ---------------- | ----------------------------------------------------------------------------------------------- | ----- |
-| Taiwan 50        | Current FTSE TWSE Taiwan 50 members (2330 TSMC, 2317 Hon Hai, 2454 MediaTek, 2308 Delta…)        | 50    |
-| Popular mid caps | Well-known names outside the Taiwan 50 (2912 President Chain Store, 9921 Giant, 2207 Hotai…)    | 30    |
-| ETFs             | 0050, 006208, 0056, 00878, 00919, 00929, 00713, 00692, 00881, 00850, bond ETFs 00679B, 00687B   | 15–20 |
-| Benchmarks       | TAIEX total return index, TAIEX price index                                                     | 2     |
+| Group            | Contents                                                                                      | About |
+| ---------------- | --------------------------------------------------------------------------------------------- | ----- |
+| Taiwan 50        | Current FTSE TWSE Taiwan 50 members (2330 TSMC, 2317 Hon Hai, 2454 MediaTek, 2308 Delta…)     | 50    |
+| Popular mid caps | Well-known names outside the Taiwan 50 (2912 President Chain Store, 9921 Giant, 2207 Hotai…)  | 30    |
+| ETFs             | 0050, 006208, 0056, 00878, 00919, 00929, 00713, 00692, 00881, 00850, bond ETFs 00679B, 00687B | 15–20 |
+| Benchmarks       | TAIEX total return index, TAIEX price index                                                   | 2     |
 
 - Kept in `scripts/prices-universe.ts` with a new market field; Yahoo symbols use `.TW` (`2330.TW`).
 - Each entry has a code, an English and a Chinese name (`2330`, "TSMC", "台積電").
@@ -80,20 +80,20 @@ to the amount, with each foreign holding converted at that month's exchange rate
 
 ### Requirements
 
-| ID    | Requirement                                                                                 | Priority |
-| ----- | ------------------------------------------------------------------------------------------- | -------- |
-| TW-1  | ~100 TWSE stocks and ETFs with code, English and Chinese names, market and currency          | P0       |
-| TW-2  | Price files and index carry currency and market; files without them are read as US / USD    | P0       |
-| TW-3  | Scenario currency selector (USD / TWD) on the amount, with defaults; stored in the URL      | P0       |
-| TW-4  | Engine converts each holding and ticker benchmark monthly with month-end rates              | P0       |
-| TW-5  | Month-end USD/TWD (Yahoo TWD=X, FRED DEXTAUS fallback) replacing the monthly average        | P0       |
-| TW-6  | Search by code, Chinese or English name; market filter; market badges                       | P0       |
-| TW-7  | Benchmarks: TAIEX total return, Taiwan 50 (0050), TAIEX price index (labelled)              | P0       |
-| TW-8  | Generator validation for Taiwan dividends, stock dividends and capital reductions           | P0       |
-| TW-9  | "From exchange rates" column in the results table                                            | P1       |
-| TW-10 | Old share links (no currency field) open unchanged: USD, US tickers                          | P1       |
-| TW-11 | TPEx (上櫃) stocks                                                                           | P2       |
-| TW-12 | Optional 30% dividend withholding on US dividends for a Taiwan resident                     | P2       |
+| ID    | Requirement                                                                              | Priority |
+| ----- | ---------------------------------------------------------------------------------------- | -------- |
+| TW-1  | ~100 TWSE stocks and ETFs with code, English and Chinese names, market and currency      | P0       |
+| TW-2  | Price files and index carry currency and market; files without them are read as US / USD | P0       |
+| TW-3  | Scenario currency selector (USD / TWD) on the amount, with defaults; stored in the URL   | P0       |
+| TW-4  | Engine converts each holding and ticker benchmark monthly with month-end rates           | P0       |
+| TW-5  | Month-end USD/TWD (Yahoo TWD=X, FRED DEXTAUS fallback) replacing the monthly average     | P0       |
+| TW-6  | Search by code, Chinese or English name; market filter; market badges                    | P0       |
+| TW-7  | Benchmarks: TAIEX total return, Taiwan 50 (0050), TAIEX price index (labelled)           | P0       |
+| TW-8  | Generator validation for Taiwan dividends, stock dividends and capital reductions        | P0       |
+| TW-9  | "From exchange rates" column in the results table                                        | P1       |
+| TW-10 | Old share links (no currency field) open unchanged: USD, US tickers                      | P1       |
+| TW-11 | TPEx (上櫃) stocks                                                                       | P2       |
+| TW-12 | Optional 30% dividend withholding on US dividends for a Taiwan resident                  | P2       |
 
 ### Acceptance criteria
 
@@ -173,24 +173,24 @@ money, links, ads or network calls; nicknames only; no real tickers; everything 
 
 ### Requirements
 
-| ID    | Requirement                                                                     | Priority |
-| ----- | ------------------------------------------------------------------------------- | -------- |
-| KD-1  | Beginner / Pro choice on first visit, switchable; stored per device             | P0       |
-| KD-2  | Separate `fi-tracker-kids` database, `src/kids/`, ESLint boundary, lazy routes, 4 tabs | P0 |
-| KD-3  | Child profiles (up to 4): nickname, avatar, age                                 | P0       |
-| KD-4  | My Garden home                                                                  | P0       |
-| KD-5  | Money in and out, Need / Want, automatic 3-jar split with editable split        | P0       |
-| KD-6  | Goals (up to 3) with pictures, weeks-to-go and a celebration                    | P0       |
-| KD-7  | Money Tree simulator                                                            | P0       |
-| KD-8  | Freedom Quest                                                                   | P0       |
-| KD-9  | Lessons 1–10 with quizzes and badges, English and zh-TW                         | P0       |
-| KD-10 | Optional parent PIN for leaving Beginner mode                                   | P1       |
-| KD-11 | Parent corner: allowance, split, growth rates, presets, reset, save/load        | P1       |
-| KD-12 | "Weather" bumpy-years switch                                                    | P1       |
-| KD-13 | Kids section in the main backup file, backward compatible                       | P1       |
-| KD-14 | Automatic weekly allowance                                                      | P2       |
-| KD-15 | Read-aloud button                                                               | P2       |
-| KD-16 | Junior Time Machine                                                             | P2       |
+| ID    | Requirement                                                                            | Priority |
+| ----- | -------------------------------------------------------------------------------------- | -------- |
+| KD-1  | Beginner / Pro choice on first visit, switchable; stored per device                    | P0       |
+| KD-2  | Separate `fi-tracker-kids` database, `src/kids/`, ESLint boundary, lazy routes, 4 tabs | P0       |
+| KD-3  | Child profiles (up to 4): nickname, avatar, age                                        | P0       |
+| KD-4  | My Garden home                                                                         | P0       |
+| KD-5  | Money in and out, Need / Want, automatic 3-jar split with editable split               | P0       |
+| KD-6  | Goals (up to 3) with pictures, weeks-to-go and a celebration                           | P0       |
+| KD-7  | Money Tree simulator                                                                   | P0       |
+| KD-8  | Freedom Quest                                                                          | P0       |
+| KD-9  | Lessons 1–10 with quizzes and badges, English and zh-TW                                | P0       |
+| KD-10 | Optional parent PIN for leaving Beginner mode                                          | P1       |
+| KD-11 | Parent corner: allowance, split, growth rates, presets, reset, save/load               | P1       |
+| KD-12 | "Weather" bumpy-years switch                                                           | P1       |
+| KD-13 | Kids section in the main backup file, backward compatible                              | P1       |
+| KD-14 | Automatic weekly allowance                                                             | P2       |
+| KD-15 | Read-aloud button                                                                      | P2       |
+| KD-16 | Junior Time Machine                                                                    | P2       |
 
 ### Acceptance criteria
 
