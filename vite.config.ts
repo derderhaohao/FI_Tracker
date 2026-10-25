@@ -63,6 +63,18 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png}'],
         navigateFallback: 'index.html',
+        // Time Machine prices (TM-4): kept after first use so used tickers work offline, and
+        // refreshed in the background so a monthly update shows up on the next visit.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/data/prices/') && url.pathname.endsWith('.json'),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'time-machine-prices',
+              expiration: { maxEntries: 400 },
+            },
+          },
+        ],
       },
     }),
   ],

@@ -267,3 +267,61 @@ the playback engine and library are untouched and their tests pass unchanged.
   per device by design.
 - **Toggle** reads "Summary / Play a story"; the plan-health card and the assumption controls show
   only in Summary.
+
+## Investment Time Machine
+
+From the same PRD, Part B, TM-1 to TM-23. A standalone tool at `#/tools/time-machine`; it never
+reads or writes FI Tracker data.
+
+- **Open questions, decided**:
+  - **Data source:** Yahoo Finance monthly bars. Adjusted close gives the total-return index; close
+    gives price only. Stooq is the fallback.
+    - Only derived indices are published, rebased to 100 and rounded to 6 significant digits.
+    - Where only Stooq answered, price-only mode uses the total-return index.
+  - **Universe:** a curated ~150 tickers in `scripts/prices-universe.ts`: the largest US stocks,
+    about 40 ETFs and major ADRs.
+  - **Default amount:** $10,000.
+  - **Currency:** amounts are entered in USD; TWD is a display view only.
+  - **Accent:** indigo.
+- **Build-time data only**:
+  - The CSP stays `connect-src 'self'`.
+  - `.github/workflows/prices.yml` runs the generator on the 2nd of each month, on demand, and
+    when the generator or ticker list changes. It commits changed files to the branch it ran on.
+  - On main it then starts the Pages deploy, because a commit made with the workflow token does
+    not start other workflows by itself.
+  - The plain "Mozilla/5.0" user agent is used because Yahoo rejected a full browser string from
+    the runners.
+  - USD/TWD comes from FRED's monthly average (EXTAUS), with Yahoo's TWD=X month-end rate as the
+    fallback.
+- **Offline**: price files are not precached. The service worker caches each file on first use
+  (stale-while-revalidate), so used tickers replay offline and a monthly refresh shows up on the
+  next visit.
+- **Timing**:
+  - A scenario buys at the start of its start month, which is the previous month's close; values
+    are month-end.
+  - Data starts at December 1999, so a January 2000 start works.
+  - Top-ups land at each month-end after the first. Rebalancing happens after the top-up at the
+    end of December (yearly) or of each quarter.
+- **Late listing**:
+  - "Cash" holds the holding's share at 0% and buys at its first close.
+  - "Move" starts at the latest first month of any holding or ticker benchmark.
+- **Benchmarks get the same money at the same months.** Ticker benchmarks follow the same
+  late-listing rule. Cash, fixed-return and property lines grow at the rates as entered, in the
+  display currency.
+- **Property**:
+  - The year-by-year table takes % changes, not prices.
+  - Rent is a yearly yield on the current value, kept as cash or added to the property.
+  - With a mortgage, the amount is the down payment and the line is the equity: price less loan
+    balance, less payments made, plus rent kept. Buying costs apply to the full price.
+- **Metrics**:
+  - Yearly return is the CAGR for a lump sum, or the monthly IRR when there are top-ups.
+  - Worst fall, recovery, calendar years and volatility use a time-weighted index.
+  - Best and worst year use full calendar years when there are any.
+- **Market-event toasts** appear when the playhead enters a dated period and again at its end,
+  with the portfolio's fall from its peak.
+- **State**:
+  - The scenario lives in the URL (`?s=`, base64url JSON, validated on read).
+  - The last scenario and named saved scenarios share one localStorage key, `fi-tracker-tm-last`.
+- **Boundary**: an ESLint override blocks plan imports in `src/tools/`, and a unit test checks
+  it. The e2e checks that IndexedDB is unchanged after using the tool. The page is lazy loaded, so
+  the main bundle only gains the nav entry.

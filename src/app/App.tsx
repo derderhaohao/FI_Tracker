@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { db } from '@/db/db';
 import { ensureDefaults } from '@/db/defaults';
@@ -25,6 +25,11 @@ import { initAutosave } from '@/lib/autosave';
 import { Layout } from './Layout';
 import { NotFound } from './NotFound';
 import { t } from '@/i18n';
+
+// Standalone tools load on demand, so the main bundle does not grow (TM-1).
+const TimeMachinePage = lazy(() =>
+  import('@/tools/time-machine/TimeMachinePage').then((m) => ({ default: m.TimeMachinePage })),
+);
 
 /** `npm run demo` opens `#/settings?demo=1`: load the demo data when the database is empty. */
 async function loadDemoIfRequested(): Promise<void> {
@@ -81,6 +86,14 @@ export function App() {
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="setup" element={<SetupPage />} />
                 <Route path="update" element={<UpdatePage />} />
+                <Route
+                  path="tools/time-machine"
+                  element={
+                    <Suspense fallback={<Loading />}>
+                      <TimeMachinePage />
+                    </Suspense>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
