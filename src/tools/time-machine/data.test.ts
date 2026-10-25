@@ -42,4 +42,34 @@ describe.skipIf(!index)('Time Machine price files', () => {
       (10_000 * f.tr[monthIndex(index!.asOf) - spy.first]) / f.tr[monthIndex('2009-12') - spy.first];
     expect(Math.abs(sim.portfolio.values[sim.months] / expected - 1)).toBeLessThan(0.001);
   });
+
+  const tw = index?.tickers.filter((e) => e.m === 'TW') ?? [];
+  it.skipIf(tw.length === 0)(
+    'gives every Taiwan entry a Chinese name, TWD and the TW market (TW-1, TW-2)',
+    () => {
+      expect(tw.length).toBeGreaterThan(80);
+      for (const e of tw) {
+        expect(e.c, e.t).toBe('TWD');
+        expect(e.nz, e.t).toBeTruthy();
+      }
+    },
+  );
+
+  it.skipIf(!byName.has('0050.TW.json'))(
+    'NT$100,000 in 0050 from Jan 2010 matches its total return within 0.1%',
+    () => {
+      const f = JSON.parse(byName.get('0050.TW.json')!) as PriceFile;
+      const etf: Series = { first: monthIndex(f.s), tr: f.tr, p: f.p ?? f.tr, currency: 'TWD' };
+      const sc = {
+        ...defaultScenario(index!.asOf, 'TWD'),
+        amount: 100_000,
+        holdings: [{ ticker: '0050.TW', weight: 100 }],
+        benchmarks: [],
+      };
+      const sim = simulate(sc, { series: new Map([['0050.TW', etf]]) });
+      const expected =
+        (100_000 * f.tr[monthIndex(index!.asOf) - etf.first]) / f.tr[monthIndex('2009-12') - etf.first];
+      expect(Math.abs(sim.portfolio.values[sim.months] / expected - 1)).toBeLessThan(0.001);
+    },
+  );
 });

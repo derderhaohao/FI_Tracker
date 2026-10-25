@@ -61,6 +61,8 @@ export function ResultsPanel({
     );
   const years = lines.map((l) => ({ id: l.id, years: calendarYears(twr(l), sim.startMonth) }));
   const yearList = years[0]?.years ?? [];
+  // The currency effect column only when some line is priced in another currency (TW-9).
+  const showFx = lines.some((l) => l.fxEffect);
   const fallDates = (k: number) => monthText(sim.startMonth + k - 1);
 
   return (
@@ -104,6 +106,14 @@ export function ResultsPanel({
               <th className="text-right">{t('Best year')}</th>
               <th className="text-right">{t('Worst year')}</th>
               <th className="text-right">{t('Volatility')}</th>
+              {showFx && (
+                <th
+                  className="text-right"
+                  title={t('Gain in the scenario currency less the gain in local currency')}
+                >
+                  {t('From exchange rates')}
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -146,6 +156,18 @@ export function ResultsPanel({
                     {m.worst ? `${m.worst.year} · ${pct(m.worst.ret, 0, true)}` : '—'}
                   </td>
                   <td className="text-right">{pct(m.volatility)}</td>
+                  {showFx && (
+                    <td
+                      className={cn(
+                        'text-right',
+                        (l.fxEffect ?? 0) > 0 ? 'text-good' : (l.fxEffect ?? 0) < 0 ? 'text-critical' : '',
+                      )}
+                    >
+                      {l.fxEffect
+                        ? `${l.fxEffect < 0 ? '−' : '+'}${money(Math.abs(l.fxEffect), currency)}`
+                        : '—'}
+                    </td>
+                  )}
                 </tr>
               );
             })}

@@ -1,5 +1,10 @@
 // The Time Machine's calculations (PRD Part B, "Calculations"): pure functions, no app imports.
 //
+// Currencies (PRD Part C, TW-4): every ticker is priced in its own currency, and the scenario is
+// valued in one currency, the one the amount is entered in. A holding priced in another currency
+// gains or loses the exchange-rate change each month: 1 + r_base = (1 + r_local) × FX_t / FX_{t−1},
+// with FX as TWD per USD for a US holding in TWD and its inverse for a Taiwan holding in USD.
+//
 // Months are indices (year × 12 + month − 1). A scenario invests at the start of its start
 // month, which is the previous month's close, and reports a value at the end of every month
 // to its end month. Top-ups land at the end of each month after the first, split by target
@@ -49,7 +54,12 @@ export interface Scenario {
   topUp: number;
   priceOnly: boolean;
   benchmarks: Benchmark[];
+  /** The scenario currency: the amount and top-ups are in it and every line is valued in it. */
   currency: Currency;
+  /** 2 since Part C. Older links meant "USD amounts, shown in TWD" when currency was TWD. */
+  v?: 2;
+  /** The user chose the currency; until then it follows the first holding (TW-3). */
+  currencyPicked?: boolean;
 }
 
 /** A ticker's month-end closes from `first`, already rebased (only ratios matter). */
@@ -57,11 +67,13 @@ export interface Series {
   first: number;
   tr: readonly number[];
   p: readonly number[];
+  /** The price currency; missing means USD (TW-2). */
+  currency?: Currency;
 }
 
 export interface MarketData {
   series: ReadonlyMap<string, Series>;
-  /** TWD per USD by month, for the TWD view. */
+  /** Month-end TWD per USD by month (TW-5), needed when currencies are mixed. */
   fx?: { first: number; v: readonly number[] };
 }
 
@@ -76,6 +88,8 @@ export interface Line {
   flows: number[];
   /** Property only: the final value after selling costs. */
   afterSelling?: number;
+  /** Part of the final value that came from exchange rates (TW-9); 0 when currencies match. */
+  fxEffect?: number;
 }
 
 export interface Simulation {
@@ -137,6 +151,33 @@ export function lateListings(sc: Scenario, data: MarketData): { ticker: string; 
 
 const monthlyRate = (yearly: number) => Math.pow(1 + yearly, 1 / 12) - 1;
 
+const seriesCurrency = (s: Series): Currency => s.currency ?? 'USD';
+
+/** Whether any ticker the scenario uses is priced in another currency than the scenario's. */
+export function needsFx(sc: Scenario, data: MarketData): boolean {
+  const tickers = [
+    ...sc.holdings.map((h) => h.ticker),
+    ...sc.benchmarks.flatMap((b) => (b.kind === 'ticker' ? [b.ticker] : [])),
+  ];
+  return tickers.some((t) => {
+    const s = data.series.get(t);
+    return !!s && seriesCurrency(s) !== sc.currency;
+  });
+}
+
+/** Month-end TWD per USD for month `m`, holding the nearest known rate outside the data. */
+function fxAt(data: MarketData, m: number): number {
+  const { first, v } = data.fx!;
+  return v[Math.min(v.length - 1, Math.max(0, m - first))];
+}
+
+/** The exchange-rate part of a holding's growth over month `m`, into the scenario currency. */
+function fxFactor(s: Series, m: number, currency: Currency, data: MarketData): number {
+  if (seriesCurrency(s) === currency) return 1;
+  const change = fxAt(data, m) / fxAt(data, m - 1); // TWD per USD, this month over last
+  return currency === 'TWD' ? change : 1 / change;
+}
+
 /**
  * A basket of tickers with target weights. A ticker not yet listed holds its share as cash at
  * 0% and buys at its first close. Rebalancing resets every share, cash included, to its target.
@@ -150,6 +191,8 @@ function basket(
   topUp: number,
   rebalance: Rebalance,
   priceOnly: boolean,
+  /** The scenario currency, or undefined to leave out exchange-rate changes (TW-9). */
+  currency: Currency | undefined,
 ): { total: number[]; each: number[][]; flows: number[] } {
   const w = holdings.map((h) => h.weight / 100);
   const series = holdings.map((h) => data.series.get(h.ticker));
@@ -165,7 +208,8 @@ function basket(
       const now = close(s, m, priceOnly);
       const before = close(s, m - 1, priceOnly);
       // Listed and held through this month: grow; otherwise the share waits in cash.
-      if (now !== undefined && before !== undefined) value[i] *= now / before;
+      if (now !== undefined && before !== undefined)
+        value[i] *= (now / before) * (currency ? fxFactor(s, m, currency, data) : 1);
     }
     const add = topUp > 0 ? topUp : 0;
     for (let i = 0; i < holdings.length; i++) value[i] += w[i] * add;
@@ -230,54 +274,69 @@ function property(
   return { values, afterSelling: price * (1 - b.sellCost) - loan + cash };
 }
 
-/** Converts a USD line into TWD at each month's rate (TM-15). */
-function toTwd(values: readonly number[], fx: number[]): number[] {
-  return values.map((v, k) => v * fx[k]);
-}
-
 /** Runs a scenario: the portfolio, each holding and each benchmark, month by month. */
 export function simulate(sc: Scenario, data: MarketData): Simulation {
   const start = effectiveStart(sc, data);
   const end = Math.min(monthIndex(sc.end), lastMonth(data));
   const months = Math.max(0, end - start + 1);
-  const run = (holdings: readonly Holding[], rebalance: Rebalance) =>
-    basket(holdings, data, start, months, sc.amount, sc.topUp, rebalance, sc.priceOnly);
-
-  // TWD per USD at each point (point 0 uses the month before the start).
-  let fx: number[] | undefined;
-  if (sc.currency === 'TWD' && data.fx) {
-    const { first, v } = data.fx;
-    fx = [];
-    for (let k = 0; k <= months; k++) {
-      const i = Math.min(v.length - 1, Math.max(0, start - 1 + k - first));
-      fx.push(v[i]);
-    }
-  }
-  const usd = (values: number[]) => (fx ? toTwd(values, fx) : values);
+  if (needsFx(sc, data) && !data.fx) throw new Error('Exchange rates are needed for this scenario');
+  const run = (holdings: readonly Holding[], rebalance: Rebalance, withFx = true) =>
+    basket(
+      holdings,
+      data,
+      start,
+      months,
+      sc.amount,
+      sc.topUp,
+      rebalance,
+      sc.priceOnly,
+      withFx ? sc.currency : undefined,
+    );
+  /** Final value minus the same run with exchange rates held still (TW-9). */
+  const fxEffect = (holdings: readonly Holding[], rebalance: Rebalance, final: number) =>
+    needsFx({ ...sc, holdings: [...holdings], benchmarks: [] }, data)
+      ? final - run(holdings, rebalance, false).total[months]
+      : 0;
 
   const port = run(sc.holdings, sc.rebalance);
-  const flows = usd(port.flows);
+  const flows = port.flows;
   const portfolio: Line = {
     id: 'portfolio',
     kind: 'portfolio',
     name: 'portfolio',
-    values: usd(port.total),
+    values: port.total,
     flows,
+    fxEffect: fxEffect(sc.holdings, sc.rebalance, port.total[months]),
   };
-  const holdings: Line[] = sc.holdings.map((h, i) => ({
-    id: `holding:${h.ticker}`,
-    kind: 'holding',
-    name: h.ticker,
-    values: usd(port.each[i]),
-    flows: flows.map((f) => (f * h.weight) / 100),
-  }));
+  const holdings: Line[] = sc.holdings.map((h, i) => {
+    const one = [{ ticker: h.ticker, weight: 100 }];
+    const s = data.series.get(h.ticker);
+    // A holding's own exchange-rate part, on its own share of the money (no rebalancing).
+    const own = s && seriesCurrency(s) !== sc.currency ? run(one, 'none') : undefined;
+    return {
+      id: `holding:${h.ticker}`,
+      kind: 'holding',
+      name: h.ticker,
+      values: port.each[i],
+      flows: flows.map((f) => (f * h.weight) / 100),
+      fxEffect: own ? ((own.total[months] - run(one, 'none', false).total[months]) * h.weight) / 100 : 0,
+    };
+  });
 
-  // Cash, fixed and property lines grow at the rates as entered, in the display currency.
+  // Cash, fixed and property lines grow at the rates as entered, in the scenario currency.
   const benchmarks: Line[] = sc.benchmarks.map((b, i) => {
     const id = `bench:${i}`;
     if (b.kind === 'ticker') {
-      const r = run([{ ticker: b.ticker, weight: 100 }], 'none');
-      return { id, kind: 'ticker', name: b.ticker, values: usd(r.total), flows };
+      const one = [{ ticker: b.ticker, weight: 100 }];
+      const r = run(one, 'none');
+      return {
+        id,
+        kind: 'ticker',
+        name: b.ticker,
+        values: r.total,
+        flows,
+        fxEffect: fxEffect(one, 'none', r.total[months]),
+      };
     }
     if (b.kind === 'property') {
       const p = property(b, start, months, flows[0], flows);

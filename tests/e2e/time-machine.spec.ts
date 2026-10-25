@@ -6,7 +6,7 @@ const FIRST = 1999 * 12 + 11; // Dec 1999
 const LAST = 2026 * 12 + 8; // Sep 2026
 const name = (m: number) => `${Math.floor(m / 12)}-${String((m % 12) + 1).padStart(2, '0')}`;
 
-function file(ticker: string, first: number, drift: number, seed: number) {
+function file(ticker: string, first: number, drift: number, seed: number, c?: 'TWD') {
   const tr = [100];
   const p = [100];
   for (let m = first + 1; m <= LAST; m++) {
@@ -14,7 +14,7 @@ function file(ticker: string, first: number, drift: number, seed: number) {
     tr.push(Number((tr[tr.length - 1] * (1 + r + 0.0015)).toPrecision(6)));
     p.push(Number((p[p.length - 1] * (1 + r)).toPrecision(6)));
   }
-  return { t: ticker, s: name(first), tr, p };
+  return { t: ticker, s: name(first), tr, p, ...(c ? { c } : {}) };
 }
 
 const FILES: Record<string, ReturnType<typeof file>> = {
@@ -24,6 +24,9 @@ const FILES: Record<string, ReturnType<typeof file>> = {
   AAPL: file('AAPL', FIRST, 0.015, 4),
   MSFT: file('MSFT', FIRST, 0.01, 5),
   NEWCO: file('NEWCO', 2015 * 12 + 5, 0.012, 6),
+  '2330.TW': file('2330.TW', FIRST, 0.014, 7, 'TWD'),
+  '0050.TW': file('0050.TW', 2003 * 12 + 5, 0.007, 8, 'TWD'),
+  TAIEXTR: file('TAIEXTR', 2002 * 12 + 11, 0.007, 9, 'TWD'),
 };
 const INDEX = {
   asOf: name(LAST),
@@ -37,7 +40,15 @@ const INDEX = {
     ['AAPL', 'Apple', 'stock', 'tech'],
     ['MSFT', 'Microsoft', 'stock', 'tech'],
     ['NEWCO', 'New Company', 'stock', 'tech'],
-  ].map(([t, n, k, sec]) => ({ t, n, k, sec, f: FILES[t].s })),
+  ]
+    .map(([t, n, k, sec]) => ({ t, n, k, sec, f: FILES[t].s }))
+    .concat(
+      [
+        ['2330.TW', 'TSMC', '台積電', 'stock', 'tech'],
+        ['0050.TW', 'Yuanta Taiwan 50 ETF', '元大台灣50', 'etf', 'market'],
+        ['TAIEXTR', 'TAIEX total return', '加權報酬指數', 'index', 'market'],
+      ].map(([t, n, nz, k, sec]) => ({ t, n, nz, k, sec, f: FILES[t].s, c: 'TWD', m: 'TW' })),
+    ),
 };
 const FX = { s: name(FIRST), v: Array.from({ length: LAST - FIRST + 1 }, (_, i) => 30 + (i % 7) * 0.5) };
 
@@ -142,8 +153,10 @@ test('the Time Machine plays a portfolio against the S&P 500 without touching FI
 
   // TM-14, TM-15, TM-19: growth view, TWD view, the calendar grid.
   await page.getByRole('radio', { name: 'Growth (start = 100)' }).click();
-  await page.getByText('Options: rebalancing, top-ups, dividends, currency').click();
-  await page.getByRole('radio', { name: 'TWD' }).click();
+  await page
+    .getByRole('radiogroup', { name: 'Scenario currency' })
+    .getByRole('radio', { name: 'TWD' })
+    .click();
   await expect(page.getByTestId('tm-value')).toContainText('$');
   await expect(page.getByTestId('tm-value')).not.toHaveText(end);
   await page.getByRole('radio', { name: 'Calendar years' }).click();
@@ -167,5 +180,67 @@ test('the Time Machine plays a portfolio against the S&P 500 without touching FI
 
   // TM-3: nothing written to IndexedDB.
   expect(await dumpIndexedDb(page)).toBe(before);
+  expect(errors).toEqual([]);
+});
+
+test('Taiwan stocks: search in Chinese, mix currencies, and old links still open (PRD Part C)', async ({
+  page,
+  context,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await servePrices(context);
+  await page.goto('./#/tools/time-machine');
+  const results = page.getByRole('table', { name: 'Results' });
+  await expect(results.getByRole('cell', { name: 'Your portfolio' })).toBeVisible();
+
+  // TW-6: Chinese name search, market filter, badge.
+  await page.getByRole('radio', { name: 'Taiwan', exact: true }).click();
+  await page.getByLabel('Search tickers').fill('a');
+  await expect(page.getByRole('button', { name: /^Add AAPL/ })).toHaveCount(0);
+  await page.getByRole('radio', { name: 'All', exact: true }).click();
+  await page.getByLabel('Search tickers').fill('台積');
+  await page.getByRole('button', { name: 'Add 2330, TSMC' }).click();
+  const holdings = page.getByRole('list', { name: 'Holdings' });
+  await expect(holdings.getByText('TW · TWD')).toBeVisible();
+
+  // TW-9: a TWD holding in a USD scenario shows the exchange-rate part.
+  await expect(results.getByRole('columnheader', { name: 'From exchange rates' })).toBeVisible();
+
+  // TW-3: switching the scenario currency converts the amount.
+  await page
+    .getByRole('radiogroup', { name: 'Scenario currency' })
+    .getByRole('radio', { name: 'TWD' })
+    .click();
+  await expect(page.getByLabel('Amount', { exact: true })).not.toHaveValue('10000');
+  await expect(page.getByTestId('tm-value')).toContainText('NT$');
+
+  // TW-7: Taiwan benchmarks.
+  await page.getByLabel('Add a benchmark').selectOption('TAIEXTR');
+  await expect(results.getByRole('cell', { name: 'TAIEX total return' })).toBeVisible();
+
+  // TW-10: a link made before Part C (no version) opens with the same final value.
+  const legacy = {
+    amount: 10000,
+    start: '2010-01',
+    end: '2026-09',
+    holdings: [{ ticker: 'SPY', weight: 100 }],
+    late: 'cash',
+    rebalance: 'none',
+    topUp: 0,
+    priceOnly: false,
+    benchmarks: [],
+    currency: 'USD',
+  };
+  const link = (o: object) =>
+    `./#/tools/time-machine?s=${Buffer.from(JSON.stringify(o)).toString('base64url')}`;
+  // The page reads the link when it opens, so reload after changing it.
+  await page.goto(link(legacy));
+  await page.reload();
+  await expect(page.getByTestId('tm-value')).not.toContainText('NT$');
+  const oldValue = await page.getByTestId('tm-value').innerText();
+  await page.goto(link({ ...legacy, v: 2 }));
+  await page.reload();
+  await expect(page.getByTestId('tm-value')).toHaveText(oldValue);
   expect(errors).toEqual([]);
 });

@@ -13,7 +13,14 @@ import {
   type Scenario,
   type Series,
 } from './engine';
-import { decodeScenario, encodeScenario, equalWeights, sanitize } from './state';
+import {
+  convertAmount,
+  decodeScenario,
+  encodeScenario,
+  equalWeights,
+  sanitize,
+  upgradeLegacy,
+} from './state';
 
 /** A series from monthly returns, its first close in `first`. */
 function series(first: string, returns: number[], dividend = 0): Series {
@@ -302,17 +309,79 @@ describe('Time Machine engine (PRD Part B acceptance)', () => {
     expect(m.best?.year).toBe(2010);
     expect(m.volatility).toBeGreaterThan(0);
   });
+});
 
-  it('the TWD view converts each month at that month’s rate (TM-15)', () => {
-    const d: MarketData = {
-      series: new Map([['SPY', spy]]),
-      fx: { first: monthIndex('1999-12'), v: Array.from({ length: 320 }, (_, i) => 30 + (i % 5)) },
-    };
+describe('Time Machine currencies (PRD Part C)', () => {
+  const spy = series('1999-12', bumpy(320, 1), 0.0015);
+  const tw50 = { ...series('1999-12', bumpy(320, 7), 0.003), currency: 'TWD' as const };
+  // Month-end TWD per USD, wandering between about 27 and 35.
+  const fx = {
+    first: monthIndex('1999-12'),
+    v: Array.from({ length: 320 }, (_, i) => 31 + 4 * Math.sin(i / 9)),
+  };
+  const rate = (m: string) => fx.v[monthIndex(m) - fx.first];
+  const d: MarketData = {
+    series: new Map<string, Series>([
+      ['SPY', spy],
+      ['0050.TW', tw50],
+    ]),
+    fx,
+  };
+
+  it('$10,000 of SPY in a TWD scenario is the USD result times the change in the rate (TW-4)', () => {
     const usd = simulate(base, d);
-    const twd = simulate({ ...base, currency: 'TWD' }, d);
-    const k = 7;
-    const rate = d.fx!.v[monthIndex('2010-01') - 1 + k - monthIndex('1999-12')];
-    expect(twd.portfolio.values[k]).toBeCloseTo(usd.portfolio.values[k] * rate, 6);
+    const twd = simulate({ ...base, currency: 'TWD', amount: 10_000 }, d);
+    const expected = usd.portfolio.values[usd.months] * (rate('2020-12') / rate('2009-12'));
+    expect(Math.abs(twd.portfolio.values[twd.months] / expected - 1)).toBeLessThan(0.001);
+    // The currency part is the TWD result less the same run with the rate held still.
+    expect(twd.portfolio.fxEffect).toBeCloseTo(
+      twd.portfolio.values[twd.months] - usd.portfolio.values[usd.months],
+      6,
+    );
+    expect(usd.portfolio.fxEffect).toBe(0);
+  });
+
+  it('a TWD listing in a USD scenario converts by the inverse rate', () => {
+    const tw = simulate({ ...base, holdings: [{ ticker: '0050.TW', weight: 100 }], currency: 'TWD' }, d);
+    const us = simulate({ ...base, holdings: [{ ticker: '0050.TW', weight: 100 }], currency: 'USD' }, d);
+    const expected = tw.portfolio.values[tw.months] * (rate('2009-12') / rate('2020-12'));
+    expect(us.portfolio.values[us.months]).toBeCloseTo(expected, 6);
+    expect(tw.portfolio.fxEffect).toBe(0);
+  });
+
+  it('a 50/50 SPY + 0050 portfolio in TWD with yearly rebalancing matches a hand check (2015–2020)', () => {
+    const sim = simulate(
+      {
+        ...base,
+        start: '2015-01',
+        end: '2020-12',
+        currency: 'TWD',
+        amount: 300_000,
+        rebalance: 'yearly',
+        holdings: [
+          { ticker: 'SPY', weight: 50 },
+          { ticker: '0050.TW', weight: 50 },
+        ],
+      },
+      d,
+    );
+    let us = 150_000;
+    let tw = 150_000;
+    const at = (s: Series, m: number) => s.tr[m - s.first];
+    for (let m = monthIndex('2015-01'); m <= monthIndex('2020-12'); m++) {
+      us *= (at(spy, m) / at(spy, m - 1)) * (fx.v[m - fx.first] / fx.v[m - 1 - fx.first]);
+      tw *= at(tw50, m) / at(tw50, m - 1);
+      if (m % 12 === 11) us = tw = (us + tw) / 2;
+    }
+    expect(Math.abs(sim.portfolio.values[sim.months] / (us + tw) - 1)).toBeLessThan(1e-9);
+    expect(sim.holdings[1].fxEffect).toBe(0);
+    expect(sim.holdings[0].fxEffect).not.toBe(0);
+  });
+
+  it('needs exchange rates only when currencies are mixed', () => {
+    const noFx: MarketData = { series: d.series };
+    expect(() => simulate({ ...base, currency: 'TWD' }, noFx)).toThrow();
+    expect(() => simulate(base, noFx)).not.toThrow();
   });
 });
 
@@ -366,5 +435,26 @@ describe('Time Machine state (TM-6, TM-13)', () => {
       expect(Math.round(w.reduce((a, b) => a + b, 0) * 100) / 100).toBe(100);
     }
     expect(equalWeights(3)).toEqual([33.34, 33.33, 33.33]);
+  });
+
+  it('opens links made before Part C unchanged (TW-10)', () => {
+    // An old USD link has no version: it decodes to the same scenario and the same final value.
+    const old = encodeScenario(base);
+    const sc = decodeScenario(old, '2026-09')!;
+    expect(sc.v).toBeUndefined();
+    const up = upgradeLegacy(sc, undefined);
+    expect(up).toEqual({ ...base, v: 2 });
+    const d: MarketData = { series: new Map([['SPY', series('1999-12', bumpy(320, 1))]]) };
+    expect(simulate(up, d).portfolio.values.at(-1)).toBe(simulate(base, d).portfolio.values.at(-1));
+    // An old TWD link meant "USD shown in TWD": its amounts convert at the start rate.
+    const twd = upgradeLegacy({ ...base, currency: 'TWD', topUp: 100 }, 32);
+    expect(twd).toMatchObject({ v: 2, currency: 'TWD', amount: 320_000, topUp: 3_200 });
+    expect(upgradeLegacy({ ...base, currency: 'TWD' }, undefined).v).toBeUndefined();
+  });
+
+  it('converts amounts to round numbers when the currency changes', () => {
+    expect(convertAmount(10_000, 'USD', 'TWD', 32.4)).toBe(320_000);
+    expect(convertAmount(300_000, 'TWD', 'USD', 32.4)).toBe(9_300);
+    expect(convertAmount(500, 'USD', 'USD', 32.4)).toBe(500);
   });
 });

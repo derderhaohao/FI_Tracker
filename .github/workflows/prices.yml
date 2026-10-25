@@ -25,7 +25,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
@@ -41,7 +41,9 @@ jobs:
             "https://query1.finance.yahoo.com/v8/finance/chart/SPY?range=1mo&interval=1mo" \
             "https://stooq.com/q/d/l/?s=spy.us&i=m" \
             "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EXTAUS" \
-            "https://query1.finance.yahoo.com/v8/finance/chart/TWD=X?range=1mo&interval=1mo"; do
+            "https://query1.finance.yahoo.com/v8/finance/chart/TWD=X?range=1mo&interval=1mo" \
+            "https://query1.finance.yahoo.com/v8/finance/chart/2330.TW?range=1mo&interval=1mo" \
+            "https://www.twse.com.tw/rwd/zh/TAIEX/MFI94U?date=20240101&response=json"; do
             echo "$(curl -s -o /dev/null --max-time 20 -w '%{http_code}' -A 'Mozilla/5.0' "$url") $url"
           done
       - run: npx tsx scripts/build-prices.ts

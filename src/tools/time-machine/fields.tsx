@@ -108,6 +108,21 @@ export function Chips<T extends string | number>({
   );
 }
 
+/** A small US / TW market badge with the price currency (TW-6). */
+export function MarketBadge({ market, currency }: { market: 'US' | 'TW'; currency: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center rounded border px-1 text-[10px] font-semibold tracking-wide',
+        market === 'TW' ? 'border-tool-accent/50 text-tool-accent' : 'text-muted-foreground',
+      )}
+      title={currency}
+    >
+      {market} · {currency}
+    </span>
+  );
+}
+
 /** The tool's primary button colour (TM-2). */
 export const accentButton =
   'bg-tool-accent text-tool-accent-foreground hover:opacity-90 focus-visible:ring-tool-accent';

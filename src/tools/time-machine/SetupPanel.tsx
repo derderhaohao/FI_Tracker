@@ -5,13 +5,29 @@ import { Field, Input } from '@/components/ui/input';
 import { Notice, Segmented } from '@/components/ui/misc';
 import { cn } from '@/lib/cn';
 import { t } from '@/i18n';
-import { firstBuyMonth, monthIndex, monthName, type MarketData, type Scenario } from './engine';
+import {
+  firstBuyMonth,
+  monthIndex,
+  monthName,
+  type Currency,
+  type MarketData,
+  type Scenario,
+} from './engine';
 import type { PriceIndex } from './format';
-import { Chips, NumberInput } from './fields';
-import { kindLabel, monthText, sectorLabel } from './labels';
+import { Chips, MarketBadge, NumberInput } from './fields';
+import { entryName, kindLabel, monthText, sectorLabel } from './labels';
+import { marketOf, searchTickers, tickerText, type MarketFilter } from './search';
 import { equalWeights, FIRST_MONTH, MAX_HOLDINGS, weightTotal } from './state';
 
-const AMOUNTS = [1_000, 10_000, 100_000, 1_000_000];
+const AMOUNTS: Record<Currency, number[]> = {
+  USD: [1_000, 10_000, 100_000, 1_000_000],
+  TWD: [30_000, 300_000, 3_000_000, 30_000_000],
+};
+
+const presetLabel = (a: number, c: Currency) => {
+  const sign = c === 'USD' ? '$' : 'NT$';
+  return a >= 1e6 ? `${sign}${a / 1e6}M` : `${sign}${a / 1000}k`;
+};
 
 /** Amount, start and end (TM-5), the portfolio (TM-6, TM-7) and options (TM-15, TM-16, TM-21). */
 export function SetupPanel({
@@ -20,31 +36,31 @@ export function SetupPanel({
   data,
   late,
   onChange,
+  onCurrency,
 }: {
   scenario: Scenario;
   index: PriceIndex;
   data: MarketData;
   late: { ticker: string; first: number }[];
   onChange: (s: Scenario) => void;
+  /** Switches the scenario currency, converting the amounts (TW-3). */
+  onCurrency: (c: Currency) => void;
 }) {
   const [query, setQuery] = useState('');
+  const [market, setMarket] = useState<MarketFilter>('all');
   const set = (patch: Partial<Scenario>) => onChange({ ...scenario, ...patch });
   const last = monthIndex(index.asOf);
   const latestStart = monthName(last);
   const yearsAgo = (n: number) => monthName(last - n * 12 + 1);
   const total = weightTotal(scenario.holdings);
   const full = scenario.holdings.length >= MAX_HOLDINGS;
-  const q = query.trim().toLowerCase();
-  const results = q
-    ? index.tickers
-        .filter(
-          (e) =>
-            !scenario.holdings.some((h) => h.ticker === e.t) &&
-            (e.t.toLowerCase().startsWith(q) || e.n.toLowerCase().includes(q)),
-        )
-        .sort((a, b) => Number(b.t.toLowerCase().startsWith(q)) - Number(a.t.toLowerCase().startsWith(q)))
-        .slice(0, 8)
-    : [];
+  const q = query.trim();
+  const results = searchTickers(
+    index.tickers,
+    q,
+    market,
+    scenario.holdings.map((h) => h.ticker),
+  );
 
   const addHolding = (ticker: string) => {
     const holdings = [...scenario.holdings, { ticker, weight: 0 }];
@@ -60,22 +76,36 @@ export function SetupPanel({
         <h2 id="tm-amount" className="font-semibold">
           {t('1 · Amount and dates')}
         </h2>
-        <Field label={t('Amount (USD)')}>
+        <Field
+          label={t('Amount')}
+          hint={t('Every line is valued in this currency; foreign holdings convert at each month-end rate.')}
+        >
           {() => (
             <div className="flex flex-col gap-1.5">
-              <NumberInput
-                label={t('Amount (USD)')}
-                value={scenario.amount}
-                min={1}
-                max={1e12}
-                onChange={(amount) => set({ amount })}
-              />
+              <div className="flex items-center gap-2">
+                <NumberInput
+                  label={t('Amount')}
+                  value={scenario.amount}
+                  min={1}
+                  max={1e12}
+                  onChange={(amount) => set({ amount })}
+                />
+                <Segmented
+                  label={t('Scenario currency')}
+                  value={scenario.currency}
+                  onChange={(c) => (index.fx || c === scenario.currency ? onCurrency(c) : undefined)}
+                  options={[
+                    { value: 'USD', label: 'USD' },
+                    { value: 'TWD', label: 'TWD' },
+                  ]}
+                />
+              </div>
               <Chips
                 label={t('Amount presets')}
                 value={scenario.amount}
-                options={AMOUNTS.map((a) => ({
+                options={AMOUNTS[scenario.currency].map((a) => ({
                   value: a,
-                  label: a >= 1e6 ? `$${a / 1e6}M` : `$${a / 1000}k`,
+                  label: presetLabel(a, scenario.currency),
                 }))}
                 onPick={(amount) => set({ amount })}
               />
@@ -139,11 +169,23 @@ export function SetupPanel({
             {t('{n} of {max} holdings', { n: scenario.holdings.length, max: MAX_HOLDINGS })}
           </span>
         </div>
+        <Segmented
+          label={t('Market')}
+          value={market}
+          onChange={setMarket}
+          options={[
+            { value: 'all', label: t('All') },
+            { value: 'US', label: t('US') },
+            { value: 'TW', label: t('Taiwan') },
+          ]}
+        />
         <div className="relative">
           <Input
             type="search"
             aria-label={t('Search tickers')}
-            placeholder={full ? t('Up to 10 holdings') : t('Search by ticker or company')}
+            placeholder={
+              full ? t('Up to 10 holdings') : t('Search by code or company, such as 2330 or Apple')
+            }
             disabled={full}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -165,12 +207,13 @@ export function SetupPanel({
                   <button
                     type="button"
                     className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
-                    aria-label={t('Add {ticker}, {name}', { ticker: e.t, name: e.n })}
+                    aria-label={t('Add {ticker}, {name}', { ticker: tickerText(e.t), name: entryName(e) })}
                     onClick={() => addHolding(e.t)}
                   >
-                    <span className="w-14 shrink-0 font-semibold">{e.t}</span>
-                    <span className="min-w-0 flex-1 truncate">{e.n}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="w-14 shrink-0 font-semibold">{tickerText(e.t)}</span>
+                    <span className="min-w-0 flex-1 truncate">{entryName(e)}</span>
+                    <MarketBadge market={marketOf(e)} currency={e.c ?? 'USD'} />
+                    <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
                       {kindLabel(e.k)} · {sectorLabel(e.sec)}
                     </span>
                   </button>
@@ -186,9 +229,12 @@ export function SetupPanel({
             return (
               <li key={h.ticker} className="flex items-center gap-2 rounded-md border px-2 py-1.5">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm">
-                    <span className="font-semibold">{h.ticker}</span>{' '}
-                    <span className="text-muted-foreground">{entry?.n ?? t('Not in the price data')}</span>
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <span className="font-semibold">{tickerText(h.ticker)}</span>
+                    {entry && <MarketBadge market={marketOf(entry)} currency={entry.c ?? 'USD'} />}
+                    <span className="truncate text-muted-foreground">
+                      {entry ? entryName(entry) : t('Not in the price data')}
+                    </span>
                   </div>
                   {s && (
                     <div className="text-xs text-subtle">
@@ -197,7 +243,7 @@ export function SetupPanel({
                   )}
                 </div>
                 <NumberInput
-                  label={t('Weight of {ticker}', { ticker: h.ticker })}
+                  label={t('Weight of {ticker}', { ticker: tickerText(h.ticker) })}
                   className="w-24"
                   value={h.weight}
                   min={0}
@@ -210,7 +256,7 @@ export function SetupPanel({
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label={t('Remove {ticker}', { ticker: h.ticker })}
+                  aria-label={t('Remove {ticker}', { ticker: tickerText(h.ticker) })}
                   disabled={scenario.holdings.length === 1}
                   onClick={() => set({ holdings: scenario.holdings.filter((_, j) => j !== i) })}
                 >
@@ -250,7 +296,7 @@ export function SetupPanel({
           <div className="rounded-md border border-tool-accent/40 bg-tool-accent-bg p-2.5 text-sm">
             <p>
               {t('{tickers} started trading after {month}.', {
-                tickers: late.map((x) => x.ticker).join(', '),
+                tickers: late.map((x) => tickerText(x.ticker)).join(', '),
                 month: monthText(monthIndex(scenario.start)),
               })}
             </p>
@@ -271,7 +317,7 @@ export function SetupPanel({
 
       <details className="group rounded-md border px-3 py-2">
         <summary className="cursor-pointer text-sm font-medium">
-          {t('Options: rebalancing, top-ups, dividends, currency')}
+          {t('Options: rebalancing, top-ups, dividends')}
         </summary>
         <div className="mt-3 flex flex-col gap-3">
           <Field
@@ -292,12 +338,12 @@ export function SetupPanel({
             )}
           </Field>
           <Field
-            label={t('Monthly top-up (USD)')}
+            label={t('Monthly top-up')}
             hint={t('Added at each month-end, split by the weights. Every benchmark gets the same.')}
           >
             {() => (
               <NumberInput
-                label={t('Monthly top-up (USD)')}
+                label={t('Monthly top-up')}
                 value={scenario.topUp}
                 min={0}
                 onChange={(topUp) => set({ topUp })}
@@ -313,26 +359,6 @@ export function SetupPanel({
                 options={[
                   { value: 'reinvest', label: t('Reinvested') },
                   { value: 'price', label: t('Price only') },
-                ]}
-              />
-            )}
-          </Field>
-          <Field
-            label={t('Show values in')}
-            hint={
-              index.fx
-                ? t('TWD converts each month at that month’s USD/TWD rate.')
-                : t('USD/TWD history is not available yet.')
-            }
-          >
-            {() => (
-              <Segmented
-                label={t('Show values in')}
-                value={scenario.currency}
-                onChange={(currency) => index.fx && set({ currency })}
-                options={[
-                  { value: 'USD', label: 'USD' },
-                  { value: 'TWD', label: 'TWD' },
                 ]}
               />
             )}

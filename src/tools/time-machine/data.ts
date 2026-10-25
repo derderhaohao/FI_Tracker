@@ -30,6 +30,7 @@ export function loadSeries(ticker: string): Promise<Series> {
       first: monthIndex(f.s),
       tr: f.tr,
       p: f.p ?? f.tr,
+      currency: f.c ?? 'USD',
     }));
     p.catch(() => files.delete(ticker));
     files.set(ticker, p);

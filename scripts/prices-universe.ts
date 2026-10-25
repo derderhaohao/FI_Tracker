@@ -1,6 +1,6 @@
 // The Time Machine's ticker universe (PRD Part B, TM-4): a curated ~150 of the largest US
 // stocks, popular ETFs and major ADRs. Today's names only, so the data has survivorship bias.
-export type Kind = 'stock' | 'etf' | 'adr';
+export type Kind = 'stock' | 'etf' | 'adr' | 'index';
 export type Sector =
   | 'tech'
   | 'comms'
@@ -180,4 +180,126 @@ export const UNIVERSE: [string, string, Kind, Sector][] = [
   ['MMM', '3M', 'stock', 'industrial'],
   ['UPS', 'United Parcel Service', 'stock', 'industrial'],
   ['FDX', 'FedEx', 'stock', 'industrial'],
+];
+
+/**
+ * Taiwan Stock Exchange listings (PRD Part C, TW-1), priced in TWD: the FTSE TWSE Taiwan 50
+ * members, about 30 well-known mid caps and popular ETFs. [code, English name, Chinese name, kind,
+ * sector]; the Yahoo symbol is the code plus ".TW". TPEx (.TWO) listings are out of scope.
+ */
+export const TW_UNIVERSE: [string, string, string, Kind, Sector][] = [
+  // ETFs
+  ['0050', 'Yuanta Taiwan 50 ETF', '元大台灣50', 'etf', 'market'],
+  ['006208', 'Fubon Taiwan 50 ETF', '富邦台50', 'etf', 'market'],
+  ['0056', 'Yuanta Taiwan High Dividend ETF', '元大高股息', 'etf', 'market'],
+  ['00878', 'Cathay Sustainable High Dividend ETF', '國泰永續高股息', 'etf', 'market'],
+  ['00919', 'Capital Taiwan Select High Dividend ETF', '群益台灣精選高息', 'etf', 'market'],
+  ['00929', 'Fuh Hwa Taiwan Tech Dividend ETF', '復華台灣科技優息', 'etf', 'tech'],
+  ['00713', 'Yuanta Taiwan High Dividend Low Volatility ETF', '元大台灣高息低波', 'etf', 'market'],
+  ['00692', 'Fubon Taiwan Corporate Governance 100 ETF', '富邦公司治理', 'etf', 'market'],
+  ['00881', 'Cathay Taiwan 5G+ ETF', '國泰台灣5G+', 'etf', 'tech'],
+  ['00850', 'Yuanta Taiwan ESG Sustainability ETF', '元大臺灣ESG永續', 'etf', 'market'],
+  ['0052', 'Fubon Taiwan Technology ETF', '富邦科技', 'etf', 'tech'],
+  ['00900', 'Fubon Taiwan Select High Dividend 30 ETF', '富邦特選高股息30', 'etf', 'market'],
+  ['00940', 'Yuanta Taiwan Value High Dividend ETF', '元大台灣價值高息', 'etf', 'market'],
+  ['00679B', 'Yuanta US Treasury 20+ Year Bond ETF', '元大美債20年', 'etf', 'bonds'],
+  ['00687B', 'Cathay 20+ Year US Treasury Bond ETF', '國泰20年美債', 'etf', 'bonds'],
+  // Taiwan 50
+  ['2330', 'TSMC', '台積電', 'stock', 'tech'],
+  ['2317', 'Hon Hai (Foxconn)', '鴻海', 'stock', 'tech'],
+  ['2454', 'MediaTek', '聯發科', 'stock', 'tech'],
+  ['2308', 'Delta Electronics', '台達電', 'stock', 'tech'],
+  ['2382', 'Quanta Computer', '廣達', 'stock', 'tech'],
+  ['2412', 'Chunghwa Telecom', '中華電', 'stock', 'comms'],
+  ['2881', 'Fubon Financial', '富邦金', 'stock', 'finance'],
+  ['2882', 'Cathay Financial', '國泰金', 'stock', 'finance'],
+  ['2891', 'CTBC Financial', '中信金', 'stock', 'finance'],
+  ['2303', 'United Microelectronics (UMC)', '聯電', 'stock', 'tech'],
+  ['3711', 'ASE Technology', '日月光投控', 'stock', 'tech'],
+  ['2886', 'Mega Financial', '兆豐金', 'stock', 'finance'],
+  ['2884', 'E.Sun Financial', '玉山金', 'stock', 'finance'],
+  ['1216', 'Uni-President Enterprises', '統一', 'stock', 'staples'],
+  ['2357', 'ASUS', '華碩', 'stock', 'tech'],
+  ['2345', 'Accton Technology', '智邦', 'stock', 'tech'],
+  ['3231', 'Wistron', '緯創', 'stock', 'tech'],
+  ['2885', 'Yuanta Financial', '元大金', 'stock', 'finance'],
+  ['2892', 'First Financial', '第一金', 'stock', 'finance'],
+  ['2002', 'China Steel', '中鋼', 'stock', 'materials'],
+  ['2880', 'Hua Nan Financial', '華南金', 'stock', 'finance'],
+  ['5880', 'Taiwan Cooperative Financial', '合庫金', 'stock', 'finance'],
+  ['2887', 'Taishin Financial', '台新金', 'stock', 'finance'],
+  ['2890', 'SinoPac Financial', '永豐金', 'stock', 'finance'],
+  ['2883', 'KGI Financial', '凱基金', 'stock', 'finance'],
+  ['3045', 'Taiwan Mobile', '台灣大', 'stock', 'comms'],
+  ['4904', 'Far EasTone', '遠傳', 'stock', 'comms'],
+  ['1301', 'Formosa Plastics', '台塑', 'stock', 'materials'],
+  ['1303', 'Nan Ya Plastics', '南亞', 'stock', 'materials'],
+  ['1326', 'Formosa Chemicals & Fibre', '台化', 'stock', 'materials'],
+  ['6505', 'Formosa Petrochemical', '台塑化', 'stock', 'energy'],
+  ['2603', 'Evergreen Marine', '長榮', 'stock', 'industrial'],
+  ['2609', 'Yang Ming Marine', '陽明', 'stock', 'industrial'],
+  ['2615', 'Wan Hai Lines', '萬海', 'stock', 'industrial'],
+  ['3008', 'Largan Precision', '大立光', 'stock', 'tech'],
+  ['2327', 'Yageo', '國巨', 'stock', 'tech'],
+  ['2379', 'Realtek', '瑞昱', 'stock', 'tech'],
+  ['3034', 'Novatek', '聯詠', 'stock', 'tech'],
+  ['3037', 'Unimicron', '欣興', 'stock', 'tech'],
+  ['2395', 'Advantech', '研華', 'stock', 'tech'],
+  ['6669', 'Wiwynn', '緯穎', 'stock', 'tech'],
+  ['2912', 'President Chain Store', '統一超', 'stock', 'staples'],
+  ['1101', 'Taiwan Cement', '台泥', 'stock', 'materials'],
+  ['2207', 'Hotai Motor', '和泰車', 'stock', 'consumer'],
+  ['5871', 'Chailease', '中租-KY', 'stock', 'finance'],
+  ['2301', 'Lite-On Technology', '光寶科', 'stock', 'tech'],
+  ['3661', 'Alchip Technologies', '世芯-KY', 'stock', 'tech'],
+  ['2059', 'King Slide Works', '川湖', 'stock', 'tech'],
+  ['3017', 'Asia Vital Components', '奇鋐', 'stock', 'tech'],
+  ['2360', 'Chroma ATE', '致茂', 'stock', 'tech'],
+  ['4938', 'Pegatron', '和碩', 'stock', 'tech'],
+  ['1590', 'Airtac', '亞德客-KY', 'stock', 'industrial'],
+  ['2408', 'Nanya Technology', '南亞科', 'stock', 'tech'],
+  ['2376', 'Gigabyte', '技嘉', 'stock', 'tech'],
+  ['2801', 'Chang Hwa Bank', '彰銀', 'stock', 'finance'],
+  ['5876', 'Shanghai Commercial & Savings Bank', '上海商銀', 'stock', 'finance'],
+  // Popular mid caps
+  ['9921', 'Giant Manufacturing', '巨大', 'stock', 'consumer'],
+  ['9910', 'Feng Tay', '豐泰', 'stock', 'consumer'],
+  ['9904', 'Pou Chen', '寶成', 'stock', 'consumer'],
+  ['1402', 'Far Eastern New Century', '遠東新', 'stock', 'industrial'],
+  ['2105', 'Cheng Shin Rubber', '正新', 'stock', 'consumer'],
+  ['1476', 'Eclat Textile', '儒鴻', 'stock', 'consumer'],
+  ['2474', 'Catcher Technology', '可成', 'stock', 'tech'],
+  ['2347', 'Synnex Technology', '聯強', 'stock', 'tech'],
+  ['2356', 'Inventec', '英業達', 'stock', 'tech'],
+  ['2353', 'Acer', '宏碁', 'stock', 'tech'],
+  ['2324', 'Compal Electronics', '仁寶', 'stock', 'tech'],
+  ['2409', 'AUO', '友達', 'stock', 'tech'],
+  ['3481', 'Innolux', '群創', 'stock', 'tech'],
+  ['2344', 'Winbond Electronics', '華邦電', 'stock', 'tech'],
+  ['2337', 'Macronix', '旺宏', 'stock', 'tech'],
+  ['3443', 'Global Unichip', '創意', 'stock', 'tech'],
+  ['2449', 'King Yuan Electronics', '京元電子', 'stock', 'tech'],
+  ['3036', 'WT Microelectronics', '文曄', 'stock', 'tech'],
+  ['2618', 'EVA Airways', '長榮航', 'stock', 'industrial'],
+  ['2610', 'China Airlines', '華航', 'stock', 'industrial'],
+  ['1102', 'Asia Cement', '亞泥', 'stock', 'materials'],
+  ['1605', 'Walsin Lihwa', '華新', 'stock', 'industrial'],
+  ['2006', 'Tung Ho Steel', '東和鋼鐵', 'stock', 'materials'],
+  ['1504', 'TECO Electric', '東元', 'stock', 'industrial'],
+  ['1519', 'Fortune Electric', '華城', 'stock', 'industrial'],
+  ['1513', 'Chung-Hsin Electric', '中興電', 'stock', 'industrial'],
+  ['2834', 'Taiwan Business Bank', '臺企銀', 'stock', 'finance'],
+  ['2723', 'Gourmet Master (85°C)', '美食-KY', 'stock', 'consumer'],
+  ['8454', 'momo.com', '富邦媒', 'stock', 'consumer'],
+  ['2915', 'Ruentex Industries', '潤泰全', 'stock', 'industrial'],
+  ['6176', 'Radiant Opto-Electronics', '瑞儀', 'stock', 'tech'],
+];
+
+/**
+ * Benchmark-only series (TW-7), not offered as holdings. TAIEX is the price index (^TWII on
+ * Yahoo); TAIEXTR is the total-return index, built from TWSE's return index or 0050.
+ */
+export const TW_INDEXES: { ticker: string; yahoo?: string; name: string; nameZh: string }[] = [
+  { ticker: 'TAIEX', yahoo: '^TWII', name: 'TAIEX (price only)', nameZh: '加權指數（不含股利）' },
+  { ticker: 'TAIEXTR', name: 'TAIEX total return', nameZh: '加權報酬指數' },
 ];
