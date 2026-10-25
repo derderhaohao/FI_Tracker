@@ -32,8 +32,8 @@ export interface PriceFile {
   s: string;
   /** Total-return index: dividends reinvested, split adjusted. */
   tr: number[];
-  /** Price only: split adjusted, dividends not reinvested. */
-  p: number[];
+  /** Price only: split adjusted, dividends not reinvested. Missing when the source had none. */
+  p?: number[];
 }
 
 /** Monthly average TWD per USD from `s`. */

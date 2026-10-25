@@ -39,9 +39,12 @@ const CURRENT = monthIndex(ym(new Date()));
 
 async function get(url: string): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: '*/*' } });
-    if (res.ok || attempt >= 3 || res.status === 404) return res;
-    await sleep(2000 * 2 ** attempt);
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA, Accept: '*/*' },
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (res.ok || attempt >= 1 || res.status === 404) return res;
+    await sleep(1500);
   }
 }
 
@@ -49,18 +52,23 @@ interface Monthly {
   first: number;
   adj: number[];
   close: number[];
+  /** False when the source has no unadjusted close: price only then equals total return. */
+  priceOnly: boolean;
 }
 
-/** Monthly closes from Yahoo, keyed by calendar month, complete months only. */
-async function yahoo(symbol: string): Promise<Monthly> {
+type Rows = Map<number, { adj: number; close: number }>;
+
+/** Monthly bars from Yahoo Finance's chart endpoint: adjusted and split-adjusted closes. */
+async function yahoo(symbol: string): Promise<Rows> {
   const p1 = Math.floor(Date.UTC(1999, 11, 1) / 1000);
   const p2 = Math.floor(Date.now() / 1000);
-  const host = ['query1', 'query2'];
   let body: unknown;
-  for (const h of host) {
+  const statuses: number[] = [];
+  for (const h of ['query1', 'query2']) {
     const res = await get(
       `https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${p1}&period2=${p2}&interval=1mo&events=div%2Csplit&includeAdjustedClose=true`,
     );
+    statuses.push(res.status);
     if (res.ok) {
       body = await res.json();
       break;
@@ -76,9 +84,9 @@ async function yahoo(symbol: string): Promise<Monthly> {
     };
   };
   const r = (body as Chart | undefined)?.chart?.result?.[0];
-  if (!r?.timestamp?.length) throw new Error('no data');
+  if (!r?.timestamp?.length) throw new Error(`Yahoo ${statuses.join('/')}`);
   const offset = r.meta.gmtoffset ?? 0;
-  const rows = new Map<number, { adj: number; close: number }>();
+  const rows: Rows = new Map();
   const closes = r.indicators.quote[0].close;
   const adjs = r.indicators.adjclose?.[0]?.adjclose ?? closes;
   r.timestamp.forEach((ts, i) => {
@@ -89,7 +97,47 @@ async function yahoo(symbol: string): Promise<Monthly> {
     if (close == null || adj == null || !(close > 0) || !(adj > 0)) return;
     rows.set(m, { adj, close });
   });
-  if (rows.size === 0) throw new Error('no complete months');
+  return rows;
+}
+
+/** Monthly bars from Stooq (closes adjusted for splits and dividends), the fallback source. */
+async function stooq(symbol: string): Promise<Rows> {
+  const res = await get(`https://stooq.com/q/d/l/?s=${symbol.toLowerCase().replace('-', '.')}.us&i=m`);
+  const text = res.ok ? await res.text() : '';
+  if (!text.startsWith('Date')) throw new Error(`Stooq ${res.status}`);
+  const rows: Rows = new Map();
+  for (const line of text.trim().split('\n').slice(1)) {
+    const [date, , , , close] = line.split(',');
+    const m = monthIndex(date);
+    const v = Number(close);
+    if (m >= monthIndex(FIRST) && m < CURRENT && v > 0) rows.set(m, { adj: v, close: v });
+  }
+  return rows;
+}
+
+async function monthly(symbol: string): Promise<Monthly & { source: string }> {
+  let rows: Rows | undefined;
+  let source = 'Yahoo';
+  const errors: string[] = [];
+  try {
+    rows = await yahoo(symbol);
+  } catch (e) {
+    errors.push(e instanceof Error ? e.message : String(e));
+  }
+  if (!rows?.size) {
+    source = 'Stooq';
+    try {
+      rows = await stooq(symbol);
+    } catch (e) {
+      errors.push(e instanceof Error ? e.message : String(e));
+    }
+  }
+  if (!rows?.size) throw new Error(errors.join(', ') || 'no complete months');
+  return { ...fill(symbol, rows), priceOnly: source === 'Yahoo', source };
+}
+
+/** Consecutive months from the first close, gaps carried forward. */
+function fill(symbol: string, rows: Rows): Omit<Monthly, 'priceOnly'> {
   const months = [...rows.keys()].sort((a, b) => a - b);
   const first = months[0];
   const last = months[months.length - 1];
@@ -138,6 +186,7 @@ async function main() {
     ? (JSON.parse(readFileSync(indexPath, 'utf8')) as PriceIndex)
     : undefined;
   const entries: IndexEntry[] = [];
+  const sources = new Set<string>();
   let asOf = 0;
 
   for (const [ticker, name, kind, sector] of UNIVERSE) {
@@ -155,7 +204,8 @@ async function main() {
       continue;
     }
     try {
-      const m = await yahoo(ticker);
+      const m = await monthly(ticker);
+      sources.add(m.source);
       for (let i = 1; i < m.adj.length; i++) {
         const move = m.adj[i] / m.adj[i - 1] - 1;
         if (Math.abs(move) > 0.6)
@@ -165,17 +215,21 @@ async function main() {
         t: ticker,
         s: monthName(m.first),
         tr: m.adj.map((v) => round((v / m.adj[0]) * 100)),
-        p: m.close.map((v) => round((v / m.close[0]) * 100)),
+        // Without an unadjusted close, the app uses the total-return index for price only too.
+        ...(m.priceOnly ? { p: m.close.map((v) => round((v / m.close[0]) * 100)) } : {}),
       };
       const text = JSON.stringify(data);
       if (text.length > MAX_FILE) warn(`${ticker}: ${text.length} bytes, above 8 KB`);
       writeFileSync(file, text);
       entries.push({ t: ticker, n: name, k: kind, sec: sector, f: data.s });
       asOf = Math.max(asOf, m.first + m.adj.length - 1);
-      console.log(`${ticker}: ${data.s} to ${monthName(m.first + m.adj.length - 1)}`);
+      console.log(`${ticker}: ${data.s} to ${monthName(m.first + m.adj.length - 1)} (${m.source})`);
     } catch (e) {
       warn(`${ticker}: download failed (${e instanceof Error ? e.message : String(e)}), kept the old file`);
       keep();
+      // The default benchmark is first in the list: if it fails, every source is blocked.
+      if (ticker === 'SPY' && !entries.some((x) => x.t === 'SPY'))
+        throw new Error('SPY could not be downloaded');
     }
     await sleep(400);
   }
@@ -194,7 +248,7 @@ async function main() {
   const index: PriceIndex = {
     asOf: monthName(asOf),
     built: new Date().toISOString().slice(0, 10),
-    source: 'Yahoo Finance monthly adjusted closes; USD/TWD from FRED (EXTAUS)',
+    source: `${[...sources].map((x) => (x === 'Yahoo' ? 'Yahoo Finance' : x)).join(' and ') || previous?.source.split(';')[0] || 'Yahoo Finance'} monthly adjusted closes; USD/TWD from FRED (EXTAUS)`,
     tickers: entries,
     fx,
   };
