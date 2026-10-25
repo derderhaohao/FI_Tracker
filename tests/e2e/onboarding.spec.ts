@@ -10,6 +10,8 @@ test('a new user sets up their data with the wizard and lands on a projection', 
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('./');
+  // A first visit asks who is using the app (KD-1).
+  await page.getByRole('button', { name: /A grown-up planning money \(Pro\)/ }).click();
   await expect(page.getByRole('heading', { name: 'Welcome to FI Tracker' })).toBeVisible();
   await page.getByRole('button', { name: 'Start setup' }).click();
 
@@ -79,6 +81,7 @@ test('a new user sets up their data with the wizard and lands on a projection', 
 test('the welcome screen offers demo data and returns after deleting all data', async ({ page }) => {
   page.on('dialog', (d) => void d.accept());
   await page.goto('./');
+  await page.getByRole('button', { name: /A grown-up planning money \(Pro\)/ }).click();
   await page.getByRole('button', { name: 'Load demo data' }).click();
   await expect(page.getByLabel('Plan health')).toBeVisible();
   await page.goto('./#/settings');

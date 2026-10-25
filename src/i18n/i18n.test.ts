@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { formatMoney } from '@/domain/money';
 import { monthLabel } from '@/lib/format';
 import { getLang, setLang, t, tn } from './index';
-import { ZH_TW } from './zh-TW';
+import { KIDS_ZH_TW } from '@/kids/zh-TW';
+import { ZH_TW as MAIN_ZH_TW } from './zh-TW';
+
+/** The main dictionary plus Beginner mode's, which loads with its lazy chunk. */
+const ZH_TW: Record<string, string> = { ...MAIN_ZH_TW, ...KIDS_ZH_TW };
 
 /** The app source as text, test files and this folder excluded. */
 const SOURCES = import.meta.glob<string>(

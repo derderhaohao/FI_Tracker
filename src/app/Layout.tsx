@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/cn';
 import { BackupBanner } from './BackupBanner';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { ModeSwitch } from '@/components/ModeSwitch';
 import { t } from '@/i18n';
 
 const NAV = [
@@ -99,6 +100,7 @@ function MobileNav() {
                 <SandboxBadge />
               </NavLink>
             ))}
+            <ModeSwitch className="w-full border-t px-3 py-3" />
             <LanguageSwitch className="border-t px-3 pt-3 pb-1" />
           </nav>
         </div>
@@ -185,6 +187,7 @@ export function Layout() {
             ))}
           </div>
         </nav>
+        <ModeSwitch className="mx-4 mt-3" />
         <LanguageSwitch className="px-4 pt-3" />
         <p className="px-4 py-3 text-xs text-subtle">{t('Data stays in this browser.')}</p>
       </aside>

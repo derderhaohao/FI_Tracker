@@ -59,9 +59,17 @@ export function useLang(): Lang {
 /** Values left empty render as nothing, as they would in JSX. */
 export type Vars = Record<string, string | number | null | undefined | false>;
 
+/** Translations a lazy part of the app brings with it, so the main bundle stays small. */
+const extra: Record<string, string> = {};
+
+/** Adds Traditional Chinese text for a lazily loaded part (Beginner mode). */
+export function addTranslations(zh: Record<string, string>): void {
+  Object.assign(extra, zh);
+}
+
 /** Translates English text; `{name}` placeholders are filled from `vars`. */
 export function t(text: string, vars?: Vars): string {
-  const s = current === 'zh-TW' ? (ZH_TW[text] ?? text) : text;
+  const s = current === 'zh-TW' ? (ZH_TW[text] ?? extra[text] ?? text) : text;
   if (!vars) return s;
   return s.replace(/\{(\w+)\}/g, (m, k: string) => {
     if (!(k in vars)) return m;

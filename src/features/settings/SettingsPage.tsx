@@ -43,6 +43,7 @@ import { Checkbox, Field, Input, Select } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Table } from '@/components/ui/misc';
 import { t } from '@/i18n';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { ModeSwitch } from '@/components/ModeSwitch';
 
 function Section({
   id,
@@ -1227,6 +1228,15 @@ export function SettingsPage() {
       <Section id="general" title={t('General')}>
         <LanguageSwitch className="mb-4" />
         <GeneralSettings s={settings} />
+      </Section>
+      <Section
+        id="mode"
+        title={t('Beginner / Pro')}
+        description={t(
+          'Beginner mode is a separate space for children: jars, goals, a money tree and lessons. It keeps its own data and never shows or changes your plan.',
+        )}
+      >
+        <ModeSwitch className="h-10 rounded-md border px-3 text-foreground" />
       </Section>
       <AssumptionSets />
       <Categories />

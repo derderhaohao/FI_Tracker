@@ -65,4 +65,46 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Beginner mode never reads or changes the plan (PRD Part D, KD-2). Shared UI, cn, download,
+    // the mode switch and i18n are the only app imports allowed.
+    files: ['src/kids/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@/app',
+                '@/app/*',
+                '@/db',
+                '@/db/*',
+                '@/domain',
+                '@/domain/*',
+                '@/state',
+                '@/state/*',
+                '@/io',
+                '@/io/*',
+                '@/features',
+                '@/features/*',
+                '@/hooks',
+                '@/hooks/*',
+                '@/workers',
+                '@/workers/*',
+                '@/tools',
+                '@/tools/*',
+              ],
+              message: 'Beginner mode must not use FI Tracker data or logic (PRD Part D, KD-2).',
+            },
+            {
+              regex: '^@/(lib/(?!cn$|download$|mode$)|components/(?!ui/))',
+              message:
+                'Allowed shared imports: @/components/ui/*, @/lib/cn, @/lib/download, @/lib/mode, @/i18n.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
