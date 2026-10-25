@@ -285,9 +285,10 @@ async function twseReturnIndex(known: Map<number, number>): Promise<Map<number, 
  *   first two years are dropped;
  * - a share split the source did not adjust (or adjusted at the wrong month): a one-month fall to
  *   within 5% of 1/n (n = 2…10) in both series. The history before it is scaled by that ratio.
+ * - for funds, a dividend around such a split that is recorded on the other share count.
  * Other large moves stay as warnings for review.
  */
-function repairTaiwan(ticker: string, m: Monthly) {
+function repairTaiwan(ticker: string, m: Monthly, etf: boolean) {
   // The last month of three equal closes in a row within the first two years ends the placeholders.
   let flat = -1;
   for (let i = 2; i < Math.min(24, m.close.length - 1); i++)
@@ -310,6 +311,18 @@ function repairTaiwan(ticker: string, m: Monthly) {
     for (let j = 0; j < i; j++) {
       m.close[j] /= n;
       m.adj[j] /= n;
+    }
+    // A fund's dividend around that split may be on the other share count: a month whose dividend
+    // part is over 8% but plausible once divided by n (0050's Oct 2014) is scaled down to match.
+    // Funds only: companies do pay large special dividends.
+    for (let j = 1; etf && j < m.adj.length; j++) {
+      const g = m.adj[j] / m.adj[j - 1] / (m.close[j] / m.close[j - 1]) - 1;
+      if (g <= 0.08 || g / n < 0.005 || g / n > 0.08) continue;
+      warn(
+        `${ticker}: ${monthName(m.first + j)} dividend of ${(g * 100).toFixed(1)}% looks ${n}× too big: scaled`,
+      );
+      const fix = (1 + g / n) / (1 + g);
+      for (let k = j; k < m.adj.length; k++) m.adj[k] *= fix;
     }
   }
 }
@@ -437,7 +450,7 @@ async function main() {
     }
     try {
       const m = await monthly(symbol);
-      if (market === 'TW' && kind !== 'index') repairTaiwan(ticker, m);
+      if (market === 'TW' && kind !== 'index') repairTaiwan(ticker, m, kind === 'etf');
       sources.add(m.source);
       for (let i = 1; i < m.adj.length; i++) {
         const move = m.adj[i] / m.adj[i - 1] - 1;

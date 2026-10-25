@@ -371,7 +371,12 @@ TW-10 (saved as [prd-taiwan-stocks-and-beginner-mode.md](prd-taiwan-stocks-and-b
     split and the earlier history is rescaled.
   - Placeholder rows before a listing: months up to the last run of three equal closes in the
     first two years are dropped (Pegatron's history starts at its June 2010 listing).
+  - For funds with such a split, a one-month dividend over 8% that is plausible once divided by
+    the split ratio is scaled down: 0050's October 2014 dividend showed as 10.5% (it paid about
+    2.5%). Companies are left alone, since their large special dividends are real.
   - Yahoo's 0050 history starts in 2009; the TAIEX total-return benchmark covers 2003 onwards.
+  - Comparing 0050 and 006208 with the TAIEX total return shows the remaining yearly gaps are
+    real (Taiwan 50 large caps against the whole market, such as 2024's TSMC-led +17 points).
 - **Taiwan validation (TW-8)**: no published per-stock total-return figures can be fetched
   reliably from the runner, so the generator checks consistency instead:
   - Each Taiwan listing's yearly gap between total return and price return must look like a
