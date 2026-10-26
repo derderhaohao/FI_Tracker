@@ -2332,4 +2332,8 @@ export const ZH_TW: Record<string, string> = {
   'Beginner / Pro': '新手／專業模式',
   'Beginner mode is a separate space for children: jars, goals, a money tree and lessons. It keeps its own data and never shows or changes your plan.':
     '新手模式是給小朋友的獨立空間：存錢罐、目標、金錢樹和課程。它有自己的資料，不會顯示或變更你的計畫。',
+  'Plan health details': '計畫狀態說明',
+  'Enter a name, a start age and an amount first': '請先輸入名稱、起始年齡和金額',
+  'Enter a name first': '請先輸入名稱',
+  Replay: '重播',
 };

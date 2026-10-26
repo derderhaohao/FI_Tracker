@@ -66,10 +66,13 @@ export function MoneyInput({
 
   const parsedNow = parseMoneyInput(text);
   const showTwd = currency !== 'TWD' && twdRate !== undefined && parsedNow !== null;
+  // TWD, the plan's currency, is named in the label or column header, not inside every field
+  // (UI-20). A foreign currency keeps its code, since lists mix currencies.
+  const prefix = !compact && currency !== 'TWD';
   return (
     <div className={cn('flex flex-col', className)}>
       <div className="relative">
-        {!compact && (
+        {prefix && (
           <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-subtle">
             {currency}
           </span>
@@ -79,8 +82,8 @@ export function MoneyInput({
           inputMode="decimal"
           size={10}
           className={cn(
-            'h-8 w-full min-w-0 rounded-md border border-input bg-surface pr-2 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-critical',
-            compact ? 'pl-2' : 'pl-11',
+            'h-8 w-full min-w-0 rounded-md border border-input bg-surface pr-2 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-critical touch:h-11',
+            prefix ? 'pl-11' : 'pl-2',
           )}
           value={text}
           placeholder={placeholder ?? '—'}
@@ -94,7 +97,7 @@ export function MoneyInput({
         />
       </div>
       {showTwd && (
-        <span className="mt-0.5 text-right text-[11px] text-subtle tabular">
+        <span className="mt-0.5 text-right text-xs text-subtle tabular">
           ≈ {formatMoney(fromMinor(parsedNow) * twdRate, 'TWD')}
         </span>
       )}
@@ -145,7 +148,7 @@ export function PercentInput({
         type="number"
         step={step}
         aria-label={ariaLabel}
-        className="h-9 w-full rounded-md border border-input bg-surface pr-7 pl-2.5 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-8 w-full rounded-md border border-input bg-surface pr-7 pl-2.5 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring touch:h-11"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onBlur={commit}
@@ -206,7 +209,7 @@ export function NumberInput({
       aria-label={ariaLabel}
       placeholder={placeholder}
       className={cn(
-        'h-9 w-full rounded-md border border-input bg-surface px-2.5 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'h-8 w-full rounded-md border border-input bg-surface px-2.5 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring touch:h-11',
         className,
       )}
       value={text}

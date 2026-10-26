@@ -405,7 +405,7 @@ export function PlaybackView() {
       <div className="min-w-0 flex-1">
         <div className="font-semibold">{toast.title}</div>
         <div className="text-xs">{toast.text}</div>
-        {toast.detail && <div className="text-[11px] text-muted-foreground">{toast.detail}</div>}
+        {toast.detail && <div className="text-xs text-muted-foreground">{toast.detail}</div>}
       </div>
       <button
         type="button"

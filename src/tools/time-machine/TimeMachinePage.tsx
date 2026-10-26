@@ -276,7 +276,7 @@ export function TimeMachinePage() {
             <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
               <Hourglass className="size-5 text-tool-accent" aria-hidden />
               {t('Investment Time Machine')}
-              <span className="rounded bg-tool-accent px-1.5 py-0.5 text-[11px] font-medium text-tool-accent-foreground">
+              <span className="rounded bg-tool-accent px-1.5 py-0.5 text-xs font-medium text-tool-accent-foreground">
                 {t('Sandbox')}
               </span>
             </h1>

@@ -38,7 +38,7 @@ const TOOLS = [{ to: '/tools/time-machine', label: t('Time Machine'), icon: Hour
 
 function SandboxBadge() {
   return (
-    <span className="ml-auto rounded bg-tool-accent-bg px-1.5 py-0.5 text-[10px] font-medium text-tool-accent">
+    <span className="ml-auto shrink-0 rounded bg-tool-accent-bg px-1 py-0.5 text-xs font-medium text-tool-accent">
       {t('Sandbox')}
     </span>
   );
@@ -54,7 +54,7 @@ function MobileNav() {
   const tabs = NAV.filter((n) => PHONE_TABS.includes(n.to));
   const more = NAV.filter((n) => !PHONE_TABS.includes(n.to));
   const moreActive = [...more, ...TOOLS].some((n) => pathname.startsWith(n.to));
-  const item = 'flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px]';
+  const item = 'flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-xs';
   return (
     <>
       {open && (
@@ -181,7 +181,7 @@ export function Layout() {
                 }
               >
                 <Icon className="size-4 text-tool-accent" aria-hidden />
-                {label}
+                <span className="whitespace-nowrap">{label}</span>
                 <SandboxBadge />
               </NavLink>
             ))}

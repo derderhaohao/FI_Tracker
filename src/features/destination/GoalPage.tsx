@@ -47,7 +47,7 @@ function BudgetRow({ c, actual, loans }: { c: Category; actual: number; loans: L
     <tr>
       <td className="font-medium">
         {c.name}
-        {loanNote && <div className="text-[11px] font-normal text-subtle">{loanNote}</div>}
+        {loanNote && <div className="text-xs font-normal text-subtle">{loanNote}</div>}
       </td>
       <td>
         <Checkbox
@@ -204,6 +204,7 @@ function IncomeStreams() {
             <Button
               size="sm"
               disabled={!valid}
+              title={valid ? undefined : t('Enter a name, a start age and an amount first')}
               onClick={() => {
                 if (!valid || annual === null) return;
                 void save(db.incomeStreams, {

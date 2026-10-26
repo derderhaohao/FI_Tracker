@@ -1,9 +1,9 @@
 import type { MonteCarloSummary } from '@/domain/montecarlo/runner';
 import { chanceDots, chanceText } from '@/domain/planStatus';
 import type { GlossaryParams } from '@/lib/glossary';
-import { STATUS_TONE } from '@/components/PlanHealthCard';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge, Notice } from '@/components/ui/misc';
+import { Notice } from '@/components/ui/misc';
 import { Term } from '@/components/ui/term';
 import { pct } from '@/lib/format';
 import { Dots } from './Dots';
@@ -38,7 +38,7 @@ export function VerdictCard({
       <CardContent className="p-5">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-lg font-semibold">{row.name}</h2>
-          {v.tier && <Badge tone={STATUS_TONE[v.tier]}>{TIER_LABELS[v.tier]}</Badge>}
+          {v.tier && <StatusBadge status={v.tier}>{TIER_LABELS[v.tier]}</StatusBadge>}
           {stale && <span className="text-xs text-subtle">{t('Updating…')}</span>}
         </div>
         <p className="mt-2 text-base">

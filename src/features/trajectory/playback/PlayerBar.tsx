@@ -157,7 +157,7 @@ export function PlayerBar({
             {item(t('Skip to end'), () => onJump(months))}
             {item(t('Undo last event'), onUndo, !canUndo)}
             {item(t('Clear live events'), onClearLive, !hasLive)}
-            <p className="px-3 pt-1 pb-0.5 text-[11px] text-subtle">
+            <p className="px-3 pt-1 pb-0.5 text-xs text-subtle">
               {t('Keys: Space plays, ← → move a month, Shift a year, Ctrl+Z undoes.')}
             </p>
           </div>

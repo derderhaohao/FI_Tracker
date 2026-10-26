@@ -6,17 +6,33 @@ import type {
   ReactNode,
 } from 'react';
 import { useId } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
+// 32 px controls on desktop, 44 px on touch (size scale); the border meets 3:1 (UI-2).
 const field =
-  'h-9 w-full rounded-md border border-input bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 aria-invalid:border-critical';
+  'h-8 w-full rounded-md border border-input bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-critical touch:h-11';
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(field, className)} {...props} />;
 }
 
+/**
+ * A native select (kept for accessibility) drawn like the other controls: no browser arrow, a
+ * chevron 8 px from the right, same height and border as Input (UI-19). Width classes on
+ * `className` size the whole control.
+ */
 export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cn(field, 'pr-7', className)} {...props} />;
+  const width = className?.split(/\s+/).filter((c) => /^(w-|min-w-|max-w-|flex-|shrink|grow|basis-)/.test(c));
+  return (
+    <span className={cn('relative inline-flex w-full', width)}>
+      <select className={cn(field, 'appearance-none pr-8', className)} {...props} />
+      <ChevronDown
+        className="pointer-events-none absolute top-1/2 right-2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
+    </span>
+  );
 }
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -62,7 +78,11 @@ export function Checkbox({
 }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { label: ReactNode }) {
   return (
     <label className={cn('inline-flex items-center gap-2 text-sm', className)}>
-      <input type="checkbox" className="size-4 accent-[var(--primary)]" {...props} />
+      <input
+        type="checkbox"
+        className="size-4 rounded border-input accent-[var(--primary)] touch:size-5"
+        {...props}
+      />
       {label}
     </label>
   );

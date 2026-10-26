@@ -816,6 +816,7 @@ function Categories() {
               <Button
                 size="sm"
                 disabled={!name.trim()}
+                title={name.trim() ? undefined : t('Enter a name first')}
                 onClick={() => {
                   void save(db.categories, { id: newId(), name: name.trim(), kind, essential: false });
                   setName('');

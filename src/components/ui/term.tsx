@@ -58,7 +58,7 @@ export function Term({
       <button
         ref={ref}
         type="button"
-        className="cursor-help border-b border-dotted border-current text-left"
+        className="min-h-6 cursor-help border-b border-dotted border-current text-left"
         aria-describedby={id}
         onClick={show}
         onMouseEnter={show}

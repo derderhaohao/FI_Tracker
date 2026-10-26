@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import { useLayoutEffect, useRef, type HTMLAttributes, type ReactNode } from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/cn';
@@ -6,8 +6,14 @@ import { cn } from '@/lib/cn';
 export function Badge({
   className,
   tone = 'neutral',
+  icon,
+  children,
   ...props
-}: HTMLAttributes<HTMLSpanElement> & { tone?: 'neutral' | 'good' | 'warning' | 'critical' | 'primary' }) {
+}: HTMLAttributes<HTMLSpanElement> & {
+  tone?: 'neutral' | 'good' | 'warning' | 'critical' | 'primary';
+  /** Status is never colour alone (UI accessibility): an icon goes with the word. */
+  icon?: ReactNode;
+}) {
   const tones = {
     neutral: 'bg-surface-2 text-muted-foreground',
     good: 'bg-surface-2 text-good',
@@ -18,12 +24,15 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium',
+        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium [&_svg]:size-3.5 [&_svg]:shrink-0',
         tones[tone],
         className,
       )}
       {...props}
-    />
+    >
+      {icon}
+      {children}
+    </span>
   );
 }
 
@@ -58,7 +67,7 @@ export function Notice({
   );
 }
 
-/** Stat tile: label, value, optional sub-line. */
+/** Stat tile (UI-21): label, a number or short status as the value, and an optional sub-line. */
 export function Stat({
   label,
   value,
@@ -71,10 +80,17 @@ export function Stat({
   className?: string;
 }) {
   return (
-    <div className={cn('rounded-lg border bg-surface p-4', className)}>
+    <div className={cn('min-w-0 rounded-lg border bg-surface p-4', className)}>
       <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-semibold">{value}</div>
-      {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
+      <div className="mt-1 text-2xl font-semibold tabular">{value}</div>
+      {sub && (
+        <div
+          className="mt-1 line-clamp-2 text-xs text-muted-foreground"
+          title={typeof sub === 'string' ? sub : undefined}
+        >
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
@@ -126,20 +142,54 @@ export function PageHeader({
   );
 }
 
-/** Segmented control for a small set of options. */
+/**
+ * Segmented control for a small set of options (UI-3). The selected option is a raised pill on a
+ * darker track, set apart by fill, weight and an outline as well as colour; the pill slides to a
+ * new option. Options never wrap: on a narrow screen the control scrolls sideways.
+ */
 export function Segmented<T extends string>({
   value,
   options,
   onChange,
   label,
+  className,
 }: {
   value: T;
   options: { value: T; label: string }[];
   onChange: (v: T) => void;
   label: string;
+  className?: string;
 }) {
+  const track = useRef<HTMLDivElement>(null);
+  const pill = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = track.current?.querySelector<HTMLElement>('[aria-checked="true"]');
+    const p = pill.current;
+    if (!p) return;
+    if (!el) {
+      p.style.opacity = '0';
+      return;
+    }
+    p.style.opacity = '1';
+    p.style.width = `${el.offsetWidth}px`;
+    p.style.height = `${el.offsetHeight}px`;
+    p.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
+  });
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-md border bg-surface p-0.5">
+    <div
+      ref={track}
+      role="radiogroup"
+      aria-label={label}
+      className={cn(
+        'relative inline-flex max-w-full overflow-x-auto rounded-md border border-input bg-surface-2 p-0.5',
+        className,
+      )}
+    >
+      <span
+        ref={pill}
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 rounded bg-segment-selected opacity-0 shadow-xs ring-1 ring-input transition-transform duration-150 ease-out"
+      />
       {options.map((o) => (
         <button
           key={o.value}
@@ -148,10 +198,10 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'rounded px-2.5 py-1 text-xs font-medium',
+            'relative z-10 h-7 shrink-0 rounded px-2.5 text-xs whitespace-nowrap touch:h-10 touch:px-3 touch:text-sm',
             value === o.value
-              ? 'bg-surface-2 text-foreground'
-              : 'text-muted-foreground hover:text-foreground',
+              ? 'font-semibold text-foreground'
+              : 'font-medium text-muted-foreground hover:text-foreground',
           )}
         >
           {o.label}

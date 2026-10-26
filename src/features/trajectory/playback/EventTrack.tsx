@@ -164,10 +164,10 @@ export function EventTrack({
               >
                 <Icon className="size-3.5 shrink-0" aria-hidden />
                 <span>{label(c)}</span>
-                {c.live && <span className="rounded bg-surface-2 px-1 text-[10px]">{t('live')}</span>}
+                {c.live && <span className="rounded bg-surface-2 px-1 text-xs">{t('live')}</span>}
               </button>
               {drag?.uid === c.uid && drag.moved && (
-                <span className="absolute -top-6 left-0 rounded bg-foreground px-1.5 py-0.5 text-[11px] whitespace-nowrap text-background">
+                <span className="absolute -top-6 left-0 rounded bg-foreground px-1.5 py-0.5 text-xs whitespace-nowrap text-background">
                   {t('Age {age} · {year}', { age: ageOf(drag.month), year: yearOf(drag.month) })}
                 </span>
               )}
@@ -208,7 +208,7 @@ export function EventTrack({
             title={x.label}
             aria-label={t('{label}, age {age}', { label: x.label, age: ageOf(x.month) })}
             className={cn(
-              'absolute bottom-0 h-4 border-l pl-1 text-[11px] leading-4 whitespace-nowrap text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+              'absolute bottom-0 h-4 border-l pl-1 text-xs leading-4 whitespace-nowrap text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
               x.kind === 'runOut' && 'border-critical text-critical',
             )}
             style={{ left: xOf(x.month) }}

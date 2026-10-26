@@ -132,6 +132,8 @@ export function Stage({
     return [Math.max(0, lo - pad), hi + pad] as [number, number];
   }, [sim, view, growth]); // eslint-disable-line react-hooks/exhaustive-deps
   const port = sim.portfolio;
+  // At the end, Play starts again, so it says so (UI-16).
+  const atEnd = !playing && pos >= sim.months;
   const m = metrics(port, sim.startMonth, pos);
   const value = port.values[pos];
   const ticks = useMemo(() => {
@@ -301,7 +303,7 @@ export function Stage({
         </Button>
         <Button
           className={cn('h-10 px-5 text-base', accentButton)}
-          aria-label={playing ? t('Pause') : t('Play')}
+          aria-label={playing ? t('Pause') : atEnd ? t('Replay') : t('Play')}
           disabled={reduced}
           title={
             reduced
@@ -310,7 +312,8 @@ export function Stage({
           }
           onClick={onToggle}
         >
-          {playing ? <Pause aria-hidden /> : <Play aria-hidden />} {playing ? t('Pause') : t('Play')}
+          {playing ? <Pause aria-hidden /> : atEnd ? <RotateCcw aria-hidden /> : <Play aria-hidden />}{' '}
+          {playing ? t('Pause') : atEnd ? t('Replay') : t('Play')}
         </Button>
         <input
           type="range"
