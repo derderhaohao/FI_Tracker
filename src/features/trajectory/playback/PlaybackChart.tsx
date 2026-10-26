@@ -15,6 +15,7 @@ import type { PlaybackPath } from '@/domain/playback/engine';
 import { allGroupKeys, groupRows, type Grouping } from '@/domain/playback/analysis';
 import { ChartLegend, TooltipBox } from '@/components/charts/ChartParts';
 import { axisTick, useChartTheme } from '@/components/charts/theme';
+import { ageTicks, niceTicks, trimZeros } from '@/components/charts/ticks';
 import { twdCompact } from '@/lib/format';
 import type { Fade } from './usePlayback';
 import { ICONS } from './icons';
@@ -142,8 +143,28 @@ export const PlaybackChart = memo(function PlaybackChart({
 
   const bands = path.events.filter((e) => e.source !== 'backdrop' && e.shocks.length > 0);
   const age = (m: number) => Math.round(path.startAge + m / 12);
-  const ticks: number[] = [];
-  for (let m = 0; m <= path.months; m += 60) ticks.push(m);
+  // Round ages every 5 years (UI-7), placed at their month.
+  const ticks = ageTicks(path.startAge, path.startAge + path.months / 12)
+    .map((a) => Math.round((a - path.startAge) * 12))
+    .filter((m) => m >= 0 && m <= path.months);
+  // A fixed, round y-axis for the whole story so the scale doesn't jump while it plays (UI-7).
+  const y = useMemo(() => {
+    let hi = 0;
+    let lo = 0;
+    for (const r of base) {
+      let stack = 0;
+      for (const [k, v] of Object.entries(r)) {
+        if (typeof v !== 'number' || k === 'm') continue;
+        if (k.startsWith('g:')) stack += v;
+        else {
+          hi = Math.max(hi, v);
+          lo = Math.min(lo, v);
+        }
+      }
+      hi = Math.max(hi, stack);
+    }
+    return niceTicks(lo, hi);
+  }, [base]);
   const c = theme.series[0];
   const ghostOpacity = fade ? Math.max(0, 1 - fadeT) * 0.8 : 0;
 
@@ -169,7 +190,7 @@ export const PlaybackChart = memo(function PlaybackChart({
         {overlay}
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 16, right: insets.right, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke={theme.grid} vertical={false} />
+            <CartesianGrid stroke={theme.grid} vertical={false} horizontalValues={[0]} />
             <XAxis
               dataKey="m"
               type="number"
@@ -182,11 +203,15 @@ export const PlaybackChart = memo(function PlaybackChart({
             />
             <YAxis
               tick={axisTick(theme)}
-              tickFormatter={twdCompact}
+              tickFormatter={(v: number) => trimZeros(twdCompact(v))}
               stroke={theme.axis}
               tickLine={false}
               axisLine={false}
               width={insets.left}
+              ticks={y.ticks}
+              domain={y.domain}
+              interval={0}
+              allowDataOverflow
             />
             {bands.map((e) => (
               <ReferenceArea

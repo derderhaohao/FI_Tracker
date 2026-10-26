@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pause, Play, RotateCcw, SkipForward, X } from 'lucide-react';
 import {
   CartesianGrid,
@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/misc';
 import { axisTick, useChartTheme } from '@/components/charts/theme';
+import { niceTicks, trimZeros, yearTicks } from '@/components/charts/ticks';
 import { cn } from '@/lib/cn';
 import { t } from '@/i18n';
 import {
@@ -119,28 +120,36 @@ export function Stage({
     return out;
   }, [sim, pos, view, growth]);
 
-  // A fixed scale for the whole run, so the chart does not jump while it plays.
-  const domain = useMemo(() => {
-    let lo = Infinity;
+  // A fixed, round scale for the whole run (UI-7), so the chart does not jump while it plays.
+  // Values start at zero; the growth index fits its range.
+  const y = useMemo(() => {
+    let lo = view === 'growth' ? Infinity : 0;
     let hi = -Infinity;
     for (const l of lines)
       for (const v of view === 'growth' ? growth.get(l.id)! : l.values) {
         lo = Math.min(lo, v);
         hi = Math.max(hi, v);
       }
-    const pad = (hi - lo) * 0.04;
-    return [Math.max(0, lo - pad), hi + pad] as [number, number];
+    return niceTicks(Math.max(0, lo), hi);
   }, [sim, view, growth]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [plotWidth, setPlotWidth] = useState(0);
   const port = sim.portfolio;
   // At the end, Play starts again, so it says so (UI-16).
   const atEnd = !playing && pos >= sim.months;
   const m = metrics(port, sim.startMonth, pos);
   const value = port.values[pos];
+  // January of round years (UI-7).
   const ticks = useMemo(() => {
-    const years: number[] = [];
-    for (let k = 0; k <= sim.months; k++) if (pointMonth(sim, k + 1) % 12 === 0) years.push(k);
-    const every = Math.max(1, Math.ceil(years.length / 8));
-    return years.filter((_, i) => i % every === 0);
+    const januaries = new Map<number, number>();
+    for (let k = 0; k <= sim.months; k++) {
+      const pm = pointMonth(sim, k + 1);
+      if (pm % 12 === 0) januaries.set(Math.floor(pm / 12), k);
+    }
+    const years = [...januaries.keys()];
+    if (years.length === 0) return [];
+    return yearTicks(Math.min(...years), Math.max(...years)).flatMap((yr) =>
+      januaries.has(yr) ? [januaries.get(yr)!] : [],
+    );
   }, [sim]);
   const bands = events.flatMap((e) => {
     const from = monthIndex(e.from) - sim.startMonth;
@@ -220,19 +229,20 @@ export function Stage({
           />
         </div>
         <div className="relative mt-2 h-[280px] lg:h-[380px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" onResize={(w) => setPlotWidth(w - 76)}>
             <LineChart data={rows} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-              <CartesianGrid stroke={theme.grid} vertical={false} />
+              <CartesianGrid stroke={theme.grid} vertical={false} horizontalValues={[0]} />
+              {/* Event bands: a clear tint with a 12 px name when the band is 24 px or wider (UI-16). */}
               {bands.map(({ e, x1, x2 }) => (
                 <ReferenceArea
                   key={e.id}
                   x1={x1}
                   x2={x2}
-                  fill={theme.critical}
-                  fillOpacity={0.08}
+                  fill={theme.series[7]}
+                  fillOpacity={0.1}
                   label={
-                    x2 - x1 >= Math.max(12, sim.months * 0.08)
-                      ? { value: e.name, position: 'insideTopLeft', fontSize: 11, fill: theme.text }
+                    ((x2 - x1) / Math.max(1, sim.months)) * plotWidth >= 24
+                      ? { value: e.name, position: 'insideTopLeft', fontSize: 12, fill: theme.text }
                       : undefined
                   }
                 />
@@ -245,13 +255,19 @@ export function Stage({
                 tickFormatter={(k: number) => String(Math.floor(pointMonth(sim, k + 1) / 12))}
                 tick={axisTick(theme)}
                 stroke={theme.axis}
+                tickLine={false}
+                interval={0}
               />
               <YAxis
                 width={64}
                 tick={axisTick(theme)}
                 stroke={theme.axis}
-                tickFormatter={fmt}
-                domain={domain}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: number) => trimZeros(fmt(v))}
+                ticks={y.ticks}
+                domain={y.domain}
+                interval={0}
                 allowDataOverflow
               />
               <Tooltip

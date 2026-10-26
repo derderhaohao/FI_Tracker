@@ -93,7 +93,6 @@ export function BacktestCard({ row, slot, advanced }: { row: LabRow; slot: numbe
               ? TECHNICAL_BAND_LABELS
               : { ...PLAIN_BAND_LABELS, median: t('Typical start year'), band: t('8 in 10 start years') }
           }
-          capAge={70}
         />
         <details className="mt-3 text-sm">
           <summary className="cursor-pointer text-muted-foreground">{t('Hardest five start years')}</summary>

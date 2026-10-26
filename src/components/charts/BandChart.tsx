@@ -12,8 +12,9 @@ import {
   YAxis,
 } from 'recharts';
 import { twdCompact } from '@/lib/format';
-import { ChartLegend, TooltipBox } from './ChartParts';
+import { BandLabel, ChartLegend, LABEL_ROW, TooltipBox } from './ChartParts';
 import { axisTick, useChartTheme } from './theme';
+import { ageTicks, labelWidth, niceTicks, staggerLabels, trimZeros } from './ticks';
 import { TECHNICAL_BAND_LABELS, type BandLabels } from './bandLabels';
 import { getLang, t } from '@/i18n';
 
@@ -53,14 +54,33 @@ export function BandChart({
 }) {
   const theme = useChartTheme();
   const [showAll, setShowAll] = useState(false);
+  const [width, setWidth] = useState(0);
   const c = theme.series[slot];
   const target = theme.series[1];
   const hasTypical = data.some((r) => r.typical !== undefined);
 
   const capRow = capAge !== undefined ? (data.find((r) => r.age === capAge) ?? data.at(-1)) : undefined;
   const peak = Math.max(...data.map((r) => Math.max(r.p50, r.target ?? 0, r.typical ?? 0)), 0);
-  const cap = capRow ? Math.max(capRow.p90, peak) * 1.1 : undefined;
+  // The cap and the full range both end on a round tick (UI-7).
+  const cap = capRow ? niceTicks(0, Math.max(capRow.p90, peak) * 1.05).domain[1] : undefined;
   const capped = cap !== undefined && !showAll && data.some((r) => r.p90 > cap);
+  const top = capped ? cap : Math.max(...data.map((r) => Math.max(r.p90, r.target ?? 0, r.typical ?? 0)), 0);
+  const y = niceTicks(Math.min(0, ...data.map((r) => r.p10)), top);
+  const ages = data.map((r) => r.age);
+  const minAge = Math.min(...ages);
+  const maxAge = Math.max(...ages);
+
+  // Marker labels in a band above the plot; ones that would overlap go on a second row (UI-8).
+  const yWidth = getLang() === 'zh-TW' ? 76 : 68;
+  const plotWidth = Math.max(1, width - yWidth - 12);
+  const sorted = [...markers].sort((a, b) => a.age - b.age);
+  const rows = staggerLabels(
+    sorted.map((m) => ({
+      x: yWidth + ((m.age - minAge) / Math.max(1, maxAge - minAge)) * plotWidth,
+      width: labelWidth(m.label),
+    })),
+  );
+  const labelRows = sorted.length ? Math.max(...rows) + 1 : 0;
 
   const firstOut = shadeRunsOut
     ? data.find((r, k) => k > 0 && r.p10 <= 0 && data[k - 1].p10 > 0)?.age
@@ -92,26 +112,32 @@ export function BandChart({
         )}
       </div>
       <div style={{ height }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke={theme.grid} vertical={false} />
+        <ResponsiveContainer width="100%" height="100%" onResize={(w) => setWidth(w)}>
+          <ComposedChart
+            data={data}
+            margin={{ top: 8 + labelRows * LABEL_ROW, right: 12, bottom: 0, left: 0 }}
+          >
+            <CartesianGrid stroke={theme.grid} vertical={false} horizontalValues={[0]} />
             <XAxis
               dataKey="age"
               type="number"
               domain={['dataMin', 'dataMax']}
+              ticks={ageTicks(minAge, maxAge)}
+              interval={0}
               tick={axisTick(theme)}
               stroke={theme.axis}
               tickLine={false}
-              minTickGap={24}
             />
             <YAxis
               tick={axisTick(theme)}
-              tickFormatter={twdCompact}
+              tickFormatter={(v: number) => trimZeros(twdCompact(v))}
               stroke={theme.axis}
               tickLine={false}
               axisLine={false}
-              width={getLang() === 'zh-TW' ? 76 : 64}
-              domain={capped ? [0, cap] : [0, 'auto']}
+              width={yWidth}
+              ticks={y.ticks}
+              interval={0}
+              domain={y.domain}
               allowDataOverflow={capped}
             />
             {firstOut !== undefined && lastAge !== undefined && (
@@ -123,24 +149,15 @@ export function BandChart({
                 stroke="none"
               />
             )}
-            {[...markers]
-              .sort((a, b) => a.age - b.age)
-              .map((m, i) => (
-                <ReferenceLine
-                  key={m.label}
-                  x={m.age}
-                  stroke={theme.axis}
-                  strokeOpacity={0.5}
-                  strokeDasharray="2 3"
-                  label={{
-                    value: m.label,
-                    position: 'insideTopLeft',
-                    fill: theme.text,
-                    fontSize: 11,
-                    dy: i * 14,
-                  }}
-                />
-              ))}
+            {sorted.map((m, i) => (
+              <ReferenceLine
+                key={m.label}
+                x={m.age}
+                stroke={theme.axis}
+                strokeDasharray="2 3"
+                label={<BandLabel text={m.label} row={rows[i]} fill={theme.text} />}
+              />
+            ))}
             <Tooltip
               cursor={{ stroke: theme.axis, strokeWidth: 1 }}
               content={({ active, payload }) => {

@@ -6,6 +6,8 @@ export interface ChartTheme {
   axis: string;
   muted: string;
   text: string;
+  /** Axis tick labels (UI-9). */
+  tick: string;
   surface: string;
   good: string;
   critical: string;
@@ -20,6 +22,7 @@ function read(): ChartTheme {
     axis: v('--axis'),
     muted: v('--subtle'),
     text: v('--muted-foreground'),
+    tick: v('--chart-tick'),
     surface: v('--surface'),
     good: v('--good-mark'),
     critical: v('--critical'),
@@ -39,4 +42,5 @@ export function useChartTheme(): ChartTheme {
   return theme;
 }
 
-export const axisTick = (theme: ChartTheme) => ({ fill: theme.muted, fontSize: 11 });
+/** Tick text: 12 px in the tick token, so it never picks up the faint axis colour (UI-9). */
+export const axisTick = (theme: ChartTheme) => ({ fill: theme.tick, fontSize: 12 });
