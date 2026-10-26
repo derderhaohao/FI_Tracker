@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BigButton, Celebrate, Keypad, Panel, PickCard } from './ui';
 import { SplitEditor } from './split';
@@ -100,25 +100,44 @@ describe('SplitEditor', () => {
     );
   }
 
-  it('keeps the three parts adding to 100, Grow taking the rest', () => {
+  it('moves the line between two jars one coin of every 10 per arrow key (UI-23)', async () => {
     const onSplit = vi.fn();
     render(<Harness start={{ spend: 50, save: 30, grow: 20 }} onSplit={onSplit} />);
-    const [spend, save] = screen.getAllByRole('slider');
-    expect(spend).toHaveAttribute('aria-valuetext', '5 of every 10 coins');
+    const [first, second] = screen.getAllByRole('slider');
+    expect(first).toHaveAttribute('aria-label', 'Between Spend and Savings');
+    expect(first).toHaveAttribute('aria-valuenow', '50');
+    expect(second).toHaveAttribute('aria-valuenow', '80');
+    expect(screen.getByTestId('split-words')).toHaveTextContent(
+      'Spend 5 · Savings 3 · Grow 2 of every 10 coins',
+    );
 
-    fireEvent.change(spend, { target: { value: '80' } });
-    expect(onSplit).toHaveBeenLastCalledWith({ spend: 80, save: 20, grow: 0 });
+    first.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(onSplit).toHaveBeenLastCalledWith({ spend: 60, save: 20, grow: 20 });
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}');
+    expect(onSplit).toHaveBeenLastCalledWith({ spend: 30, save: 50, grow: 20 });
 
-    fireEvent.change(spend, { target: { value: '30' } });
-    expect(onSplit).toHaveBeenLastCalledWith({ spend: 30, save: 20, grow: 50 });
-
-    fireEvent.change(save, { target: { value: '40' } });
-    expect(onSplit).toHaveBeenLastCalledWith({ spend: 30, save: 40, grow: 30 });
-    expect(screen.getByText(/Grow: 3 of every 10 coins/)).toBeInTheDocument();
+    await userEvent.tab();
+    expect(screen.getAllByRole('slider')[1]).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(onSplit).toHaveBeenLastCalledWith({ spend: 30, save: 60, grow: 10 });
+    expect(screen.getByTestId('split-words')).toHaveTextContent(
+      'Spend 3 · Savings 6 · Grow 1 of every 10 coins',
+    );
   });
 
-  it('limits Savings to what Spend leaves', () => {
-    render(<Harness start={{ spend: 70, save: 30, grow: 0 }} onSplit={() => {}} />);
-    expect(screen.getAllByRole('slider')[1]).toHaveAttribute('max', '30');
+  it('never lets one handle pass the other, and Home / End go to the ends', async () => {
+    const onSplit = vi.fn();
+    render(<Harness start={{ spend: 70, save: 30, grow: 0 }} onSplit={onSplit} />);
+    const [first, second] = screen.getAllByRole('slider');
+    expect(first).toHaveAttribute('aria-valuemax', '100');
+    first.focus();
+    await userEvent.keyboard('{End}');
+    expect(onSplit).toHaveBeenLastCalledWith({ spend: 100, save: 0, grow: 0 });
+    await userEvent.keyboard('{Home}');
+    expect(onSplit).toHaveBeenLastCalledWith({ spend: 0, save: 100, grow: 0 });
+    second.focus();
+    await userEvent.keyboard('{Home}');
+    expect(onSplit).toHaveBeenLastCalledWith({ spend: 0, save: 0, grow: 100 });
   });
 });
