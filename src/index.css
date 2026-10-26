@@ -1,7 +1,14 @@
 @import 'tailwindcss';
 
 /* Phones and touch screens get 44 px controls (UI-4): a coarse pointer or a narrow window. */
-@custom-variant touch (@media (pointer: coarse), (width < 48rem));
+@custom-variant touch {
+  @media (pointer: coarse) {
+    @slot;
+  }
+  @media (width < 48rem) {
+    @slot;
+  }
+}
 
 /* Light and dark themes follow the system setting. Chart colors are the validated
    reference palette (categorical slots in fixed order, never cycled). */
@@ -53,7 +60,7 @@
     --surface-2: #232321;
     --foreground: #f0efec;
     --muted-foreground: #c3c2b7;
-    --subtle: #898781;
+    --subtle: #9a9890;
     --border: #2c2c2a;
     --input: #6e6d68;
     --primary: #2dd4bf;
@@ -137,6 +144,48 @@
   input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+  /* Minimum hit areas (UI-4): 24 px on desktop, 44 px on touch. A checkbox inside its label is
+     hit through the label. */
+  button,
+  a[href],
+  select,
+  summary,
+  [role='slider'],
+  [role='tab'],
+  input[type='range'],
+  label:has(> input[type='checkbox']),
+  label:has(> input[type='radio']) {
+    min-height: 1.5rem;
+  }
+  button,
+  [role='slider'] {
+    min-width: 1.5rem;
+  }
+  summary {
+    display: list-item;
+    line-height: 1.5rem;
+  }
+  @media (pointer: coarse), (width < 48rem) {
+    button,
+    a[href],
+    select,
+    summary,
+    [role='slider'],
+    [role='tab'],
+    input:not([type='checkbox'], [type='radio'], [type='hidden']),
+    label:has(> input[type='checkbox']),
+    label:has(> input[type='radio']) {
+      min-height: 2.75rem;
+    }
+    button,
+    [role='slider'],
+    input:not([type='checkbox'], [type='radio'], [type='hidden'], [type='range']) {
+      min-width: 2.75rem;
+    }
+    summary {
+      line-height: 2.75rem;
+    }
   }
   /* One visible focus style on every interactive element (UI-6). */
   :focus-visible {

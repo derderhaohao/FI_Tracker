@@ -61,7 +61,7 @@ describe('big buttons and cards', () => {
     );
     const button = screen.getByRole('button', { name: 'I got money' });
     expect(button.className).toContain('min-h-12');
-    expect(button.className).toContain('bg-good');
+    expect(button.className).toContain('text-white');
     await userEvent.click(button);
     expect(onClick).toHaveBeenCalled();
   });

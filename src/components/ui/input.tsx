@@ -71,13 +71,23 @@ export function Field({
   );
 }
 
+/**
+ * A checkbox hit through its label: at least 24 px tall, 44 px on touch (UI-4). Without a visible
+ * label (a table cell), pass `aria-label`; the box still gets the full hit area.
+ */
 export function Checkbox({
   label,
   className,
   ...props
-}: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { label: ReactNode }) {
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { label?: ReactNode }) {
   return (
-    <label className={cn('inline-flex items-center gap-2 text-sm', className)}>
+    <label
+      className={cn(
+        'inline-flex min-h-6 min-w-6 cursor-pointer items-center gap-2 text-sm touch:min-h-11 touch:min-w-11',
+        !label && 'justify-center',
+        className,
+      )}
+    >
       <input
         type="checkbox"
         className="size-4 rounded border-input accent-[var(--primary)] touch:size-5"

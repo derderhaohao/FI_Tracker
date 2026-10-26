@@ -14,7 +14,7 @@ import { LineChart } from '@/components/charts/LineChart';
 import { useChartTheme } from '@/components/charts/theme';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Select } from '@/components/ui/input';
+import { Checkbox, Select } from '@/components/ui/input';
 import { Badge, LabeledControl, Notice, PageHeader, Segmented, Table } from '@/components/ui/misc';
 import { Term } from '@/components/ui/term';
 import { chanceDots, chanceText } from '@/domain/planStatus';
@@ -416,8 +416,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                     <tr key={r.id} className={r.id === selected.id ? 'bg-surface-2' : undefined}>
                       <td>
                         {s && (
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             aria-label={t('Compare {name}', { name: s.name })}
                             checked={s.id in compare}
                             disabled={!(s.id in compare) && Object.keys(compare).length >= MAX_COMPARE}

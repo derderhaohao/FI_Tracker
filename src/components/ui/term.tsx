@@ -59,7 +59,7 @@ export function Term({
       <button
         ref={ref}
         type="button"
-        className="min-h-6 cursor-help border-b border-dotted border-current text-left"
+        className="cursor-help border-b border-dotted border-current text-left"
         aria-describedby={id}
         onClick={show}
         onMouseEnter={show}
@@ -107,7 +107,7 @@ export function InfoTip({ label, children }: { label: string; children: ReactNod
         type="button"
         aria-label={label}
         aria-describedby={id}
-        className="inline-flex min-h-6 min-w-6 cursor-help items-center justify-center rounded text-muted-foreground hover:text-foreground"
+        className="inline-flex cursor-help items-center justify-center rounded text-muted-foreground hover:text-foreground"
         onClick={show}
         onMouseEnter={show}
         onMouseLeave={hide}

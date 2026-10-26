@@ -141,8 +141,7 @@ function IncomeStreams() {
               />
             </td>
             <td>
-              <input
-                type="checkbox"
+              <Checkbox
                 aria-label={t('Inflation-linked')}
                 checked={s.inflationLinked}
                 onChange={(e) => void patch(db.incomeStreams, s.id, { inflationLinked: e.target.checked })}
@@ -199,8 +198,7 @@ function IncomeStreams() {
             />
           </td>
           <td>
-            <input
-              type="checkbox"
+            <Checkbox
               aria-label={t('New stream inflation-linked')}
               checked={draft.inflationLinked}
               onChange={(e) => setDraft({ ...draft, inflationLinked: e.target.checked })}

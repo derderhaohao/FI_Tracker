@@ -772,8 +772,7 @@ function Categories() {
                 <td>{c.kind === 'income' ? t('income') : t('expense')}</td>
                 <td>
                   {c.kind === 'expense' && (
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       aria-label={t('Essential')}
                       checked={c.essential}
                       onChange={(e) => void patch(db.categories, c.id, { essential: e.target.checked })}
