@@ -1,4 +1,13 @@
-import { budgetVsActual, dateAfterYears, monthLabel, pct, twd, twdCompact } from './format';
+import {
+  budgetVsActual,
+  dateAfterYears,
+  formatDate,
+  formatMonth,
+  monthLabel,
+  pct,
+  twd,
+  twdCompact,
+} from './format';
 import { monthlyReminderIcs, nextReminderDate, downloadMonthlyReminder } from './ics';
 import { inflationIndex, toMode } from './valueMode';
 import { getMode, setMode } from './mode';
@@ -29,6 +38,16 @@ describe('format helpers', () => {
     setLang('zh-TW');
     expect(monthLabel('2030-12')).toMatch(/2030/);
     expect(monthLabel('2030-12')).toMatch(/12/);
+  });
+
+  it('formats dates one way everywhere (UI-18)', () => {
+    expect(formatDate('2026-09-30')).toBe('30 Sep 2026');
+    expect(formatDate('2026-01-05T10:00:00.000Z')).toBe('5 Jan 2026');
+    expect(formatMonth('2026-09')).toBe('Sep 2026');
+    expect(formatDate('not a date')).toBe('not a date');
+    setLang('zh-TW');
+    expect(formatDate('2026-09-30')).toBe('2026/9/30');
+    expect(formatMonth('2026-09')).toBe('2026年9月');
   });
 
   it('compares the FI budget with current spending in words', () => {

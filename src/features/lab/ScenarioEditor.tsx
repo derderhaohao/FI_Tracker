@@ -20,7 +20,7 @@ import { Field, Input, Select, Textarea } from '@/components/ui/input';
 import { Notice, Table } from '@/components/ui/misc';
 import { Term } from '@/components/ui/term';
 import type { GlossaryParams } from '@/lib/glossary';
-import { pct, twd } from '@/lib/format';
+import { formatDate, pct, twd } from '@/lib/format';
 import { nameCheck, savingsRateOf, spendingNow, stopAge, type LabRow } from './model';
 import { t } from '@/i18n';
 
@@ -309,7 +309,7 @@ function Events({ s }: { s: Scenario }) {
         <tbody>
           {s.events.map((e, i) => (
             <tr key={i}>
-              <td>{e.date}</td>
+              <td className="whitespace-nowrap">{formatDate(e.date)}</td>
               <td>{e.description}</td>
               <td className="text-right">{formatMinor(e.amountMinor)}</td>
               <td className="text-right">

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
-import { budgetVsActual, monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { budgetVsActual, formatDate, monthLabel, pct, twd, twdCompact } from '@/lib/format';
 import { addMonths } from '@/domain/dates';
 import { LOAN_CATEGORY, loanTarget, type LoanSchedule } from '@/domain/loans';
 import { t } from '@/i18n';
@@ -281,7 +281,7 @@ function GoalHistoryCard() {
                     const change = prev ? fromMinor(r.fiNumberMinor - prev.fiNumberMinor) : undefined;
                     return (
                       <tr key={r.id}>
-                        <td>{r.date}</td>
+                        <td className="whitespace-nowrap">{formatDate(r.date)}</td>
                         <td>{TIER_LABELS[r.fiTier]}</td>
                         <td className="text-right">{twd(fromMinor(r.fiSpendingMinor))}</td>
                         <td className="text-right">{twdCompact(fromMinor(r.guaranteedIncomeMinor))}</td>

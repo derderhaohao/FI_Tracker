@@ -19,7 +19,7 @@ import {
 import { accountDefaults } from '@/domain/accounts';
 import { formatMoney, fromMinor, parseMoneyInput } from '@/domain/money';
 import { addMonths, monthOf, monthsBetween, today } from '@/domain/dates';
-import { monthLabel } from '@/lib/format';
+import { formatDate, monthLabel } from '@/lib/format';
 import { ensureLoanCategory } from '@/db/loanCategory';
 import { LoanNotice } from '@/components/LoanNotice';
 import { db } from '@/db/db';
@@ -185,7 +185,7 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
         'Worked out from the balance of {balance} on {date}, the rate and the payment; it updates with each new balance.',
         {
           balance: formatMoney(term.balance, currency),
-          date: term.date ?? '',
+          date: term.date ? formatDate(term.date) : '',
         },
       )
     );

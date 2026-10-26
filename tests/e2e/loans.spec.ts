@@ -26,7 +26,7 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   // No term to type: it is worked out from the latest balance, the rate and the payment.
   await expect(page.getByLabel('Remaining term (months)')).toHaveCount(0);
   await expect(page.getByTestId('loan-term')).toContainText(
-    'Paid off in 14 months · last payment Nov 2027. Worked out from the balance of NT$170,000 on 2026-09-30',
+    'Paid off in 14 months · last payment Nov 2027. Worked out from the balance of NT$170,000 on 30 Sep 2026',
   );
   // "Add it for me" into Housing: each month's Housing gains the payment beside what was typed.
   await page.getByLabel('In Cash flow, this payment is').selectOption('auto');
@@ -61,7 +61,7 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   await page.goto('./#/snapshots');
   await page.getByLabel('Snapshot date').fill('2026-10-31');
   await page.getByRole('button', { name: 'Copy last period' }).click();
-  const owed = page.getByLabel('Car loan on 2026-10-31');
+  const owed = page.getByLabel('Car loan on 31 Oct 2026');
   await owed.fill('50,000');
   await owed.press('Enter');
   await page.goto('./#/accounts');

@@ -16,7 +16,7 @@ import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { PlaybackView } from './playback/PlaybackView';
 import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { toMode } from '@/lib/valueMode';
-import { dateAfterYears, monthLabel, twd, twdCompact } from '@/lib/format';
+import { dateAfterYears, formatDate, monthLabel, twd, twdCompact } from '@/lib/format';
 import { addMonths } from '@/domain/dates';
 import { t } from '@/i18n';
 
@@ -256,7 +256,10 @@ export function ProjectionPage() {
                     [
                       [
                         t('Start'),
-                        t('{asOfDate} · age {startAge}', { asOfDate: ctx.asOfDate, startAge: ctx.startAge }),
+                        t('{asOfDate} · age {startAge}', {
+                          asOfDate: formatDate(ctx.asOfDate),
+                          startAge: ctx.startAge,
+                        }),
                       ],
                       [
                         t('Net income now'),

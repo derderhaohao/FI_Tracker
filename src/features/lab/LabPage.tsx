@@ -19,7 +19,7 @@ import { Badge, LabeledControl, Notice, PageHeader, Segmented, Table } from '@/c
 import { Term } from '@/components/ui/term';
 import { chanceDots, chanceText } from '@/domain/planStatus';
 import type { GlossaryParams } from '@/lib/glossary';
-import { pct, twdCompact } from '@/lib/format';
+import { formatDate, pct, twdCompact } from '@/lib/format';
 import { inflationIndex } from '@/lib/valueMode';
 import { ScenarioEditor } from './ScenarioEditor';
 import { lockPlanOfRecord, newScenarioDraft } from './actions';
@@ -593,7 +593,9 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                   </Button>
                 ) : (
                   <Badge tone="primary">
-                    {t('My plan since {lockedAt}', { lockedAt: selected.scenario.lockedAt })}
+                    {t('My plan since {lockedAt}', {
+                      lockedAt: formatDate(selected.scenario.lockedAt ?? ''),
+                    })}
                   </Badge>
                 )
               }

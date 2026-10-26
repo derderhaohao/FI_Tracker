@@ -30,12 +30,12 @@ test('the monthly update on a phone, then why the FI date moved', async ({ page 
   await expect(page.getByRole('heading', { name: 'USD/TWD rate' })).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Save balances' }).click();
-  await expect(page.getByRole('heading', { name: /^Saved \d+ balances for 2026-10-31$/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Saved \d+ balances for 31 Oct 2026$/ })).toBeVisible();
   await expect(page.getByText(/^Done in /)).toBeVisible();
 
   await page.getByRole('link', { name: 'See what moved' }).click();
   const move = page.getByLabel('Why did my FI date move');
-  await expect(move.getByText(/on 2026-09-30 → .* on 2026-10-31/)).toBeVisible();
+  await expect(move.getByText(/on 30 Sep 2026 → .* on 31 Oct 2026/)).toBeVisible();
   await expect(move.getByText('A month went by')).toBeVisible();
   await expect(move.getByText('What you saved')).toBeVisible();
   await expect(

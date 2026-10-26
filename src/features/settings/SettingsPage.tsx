@@ -10,6 +10,7 @@ import {
   type TaiwanSettings,
 } from '@/domain/entities';
 import { correlationKey, defaultAssumptionSet } from '@/domain/assumptions';
+import { formatDate } from '@/lib/format';
 import { today } from '@/domain/dates';
 import { db } from '@/db/db';
 import { ensureDefaults, requestPersistence } from '@/db/defaults';
@@ -1139,7 +1140,9 @@ function Backup() {
         <li>
           {t('Last backup:')}{' '}
           <strong className="text-foreground">
-            {settings.lastBackupAt ? settings.lastBackupAt.slice(0, 16).replace('T', ' ') : t('never')}
+            {settings.lastBackupAt
+              ? `${formatDate(settings.lastBackupAt)} ${settings.lastBackupAt.slice(11, 16)}`
+              : t('never')}
           </strong>
         </li>
         <li>

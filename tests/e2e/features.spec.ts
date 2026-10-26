@@ -49,7 +49,7 @@ test('imports balances into the snapshot grid', async ({ page }) => {
   await expect(page.getByText('1 account names skipped')).toBeVisible();
   await page.getByRole('button', { name: 'Import 2 balances' }).click();
   await expect(page.getByText('Imported 2 balances')).toBeVisible();
-  await expect(page.getByLabel('Emergency fund on 2026-10-31')).toHaveValue('445,000');
+  await expect(page.getByLabel('Emergency fund on 31 Oct 2026')).toHaveValue('445,000');
   expect(errors).toEqual([]);
 });
 
@@ -102,7 +102,7 @@ test('goal history, offline manifest and loading fallback', async ({ page, reque
   const errors = await loadDemo(page);
   await page.goto('./#/goal');
   await expect(page.getByRole('heading', { name: 'Goal history' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: '2025-01-31' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '31 Jan 2025' })).toBeVisible();
 
   const manifest = await request.get('./manifest.webmanifest');
   expect(manifest.ok()).toBe(true);

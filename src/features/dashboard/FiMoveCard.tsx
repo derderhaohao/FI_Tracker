@@ -3,6 +3,7 @@ import { fiDateMove, monthIndexLabel, MOVE_LABELS } from '@/domain/fiDateMove';
 import { useAppData } from '@/app/data';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
+import { formatDate } from '@/lib/format';
 import { t } from '@/i18n';
 
 function months(m: number): string {
@@ -29,9 +30,9 @@ export function FiMoveCard() {
         title={t('Why did my FI date move?')}
         description={t('Most likely FI date {fromFi} on {fromDate} → {toFi} on {toDate}: {totalMonths}.', {
           fromFi: monthIndexLabel(move.fromFi),
-          fromDate: move.fromDate,
+          fromDate: formatDate(move.fromDate),
           toFi: monthIndexLabel(move.toFi),
-          toDate: move.toDate,
+          toDate: formatDate(move.toDate),
           totalMonths: months(move.totalMonths),
         })}
       />

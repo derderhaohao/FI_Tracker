@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { EmptyState, Notice, PageHeader, Stat } from '@/components/ui/misc';
-import { monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { formatDate, monthLabel, pct, twd, twdCompact } from '@/lib/format';
 import { t } from '@/i18n';
 
 export function DashboardPage() {
@@ -100,7 +100,9 @@ export function DashboardPage() {
     <>
       <PageHeader
         title={t('Dashboard')}
-        description={t('As of the snapshot on {asOfDate}. All amounts in TWD.', { asOfDate: ctx.asOfDate })}
+        description={t('As of the snapshot on {asOfDate}. All amounts in TWD.', {
+          asOfDate: formatDate(ctx.asOfDate),
+        })}
         actions={
           <>
             <Link to="/update" className={buttonVariants({ size: 'sm' })}>
