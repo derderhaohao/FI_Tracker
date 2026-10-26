@@ -48,6 +48,7 @@ test('the monthly update on a phone, then why the FI date moved', async ({ page 
 
 test('a monthly calendar reminder and tap-to-explain terms', async ({ page }) => {
   const errors = await loadDemo(page);
+  await page.goto('./#/settings/reminder');
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Add to calendar (.ics)' }).click();
   expect((await download).suggestedFilename()).toBe('fi-tracker-monthly-update.ics');

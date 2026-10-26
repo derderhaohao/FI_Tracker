@@ -73,7 +73,15 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
         {t('Your plan')} {badge}
       </div>
       <div className={cn('mt-1 font-semibold tracking-tight', age !== undefined ? 'text-4xl' : 'text-3xl')}>
-        {headline}
+        {age !== undefined ? (
+          // Wraps after the age, never mid-phrase (UI-11).
+          <>
+            <span className="whitespace-nowrap">{t('Most likely age {age}', { age })}</span>{' '}
+            <span className="whitespace-nowrap">· {date}</span>
+          </>
+        ) : (
+          headline
+        )}
       </div>
       {range && <div className="mt-1 text-sm text-muted-foreground">{range}</div>}
       {summary ? (

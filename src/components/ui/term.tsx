@@ -15,6 +15,7 @@ function useGlossaryParams(): GlossaryParams {
     swr: baselineInput.swr,
   };
 }
+import { Info } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 const WIDTH = 256;
@@ -80,6 +81,52 @@ export function Term({
         )}
       >
         {entry.tooltip(params ?? defaults)}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * A small info button with a one-paragraph tooltip on hover, focus or tap, for notes that would
+ * otherwise crowd a table cell (UI-14). Same look and behaviour as a glossary term.
+ */
+export function InfoTip({ label, children }: { label: string; children: ReactNode }) {
+  const id = useId();
+  const ref = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number }>();
+  const show = () => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    setPos({ top: r.bottom + 4, left: Math.max(8, Math.min(r.left, window.innerWidth - WIDTH - 8)) });
+  };
+  const hide = () => setPos(undefined);
+  return (
+    <span className="inline-flex align-middle">
+      <button
+        ref={ref}
+        type="button"
+        aria-label={label}
+        aria-describedby={id}
+        className="inline-flex min-h-6 min-w-6 cursor-help items-center justify-center rounded text-muted-foreground hover:text-foreground"
+        onClick={show}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        onKeyDown={(e) => e.key === 'Escape' && hide()}
+      >
+        <Info className="size-4" aria-hidden />
+      </button>
+      <span
+        id={id}
+        role="tooltip"
+        style={pos ? { top: pos.top, left: pos.left, width: WIDTH } : undefined}
+        className={cn(
+          'fixed z-50 rounded-md border bg-surface p-2 text-left text-xs font-normal text-foreground normal-case shadow-lg',
+          pos ? 'block' : 'hidden',
+        )}
+      >
+        {children}
       </span>
     </span>
   );

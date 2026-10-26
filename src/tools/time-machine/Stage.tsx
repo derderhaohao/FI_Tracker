@@ -186,15 +186,16 @@ export function Stage({
           {sim.benchmarks.map((b) => {
             const d = value - b.values[pos];
             return (
-              <div key={b.id} className="truncate text-xs tabular" data-testid="tm-lead">
-                <span className={d >= 0 ? 'text-good' : 'text-critical'}>
+              // The amount on one line, the benchmark on the next, nothing cut off (UI-16).
+              <div key={b.id} className="text-sm tabular" data-testid="tm-lead">
+                <div className={cn('font-semibold', d >= 0 ? 'text-good' : 'text-critical')}>
                   {d >= 0
                     ? t('{amount} ahead', { amount: money(d, currency, true) })
                     : t('{amount} behind', { amount: money(-d, currency, true) })}
-                </span>{' '}
-                <span className="text-muted-foreground">
+                </div>
+                <div className="text-xs text-muted-foreground">
                   {t('vs {name}', { name: lineLabel(b, benchmarks) })}
-                </span>
+                </div>
               </div>
             );
           })}
@@ -256,7 +257,8 @@ export function Stage({
                 tick={axisTick(theme)}
                 stroke={theme.axis}
                 tickLine={false}
-                interval={0}
+                interval="preserveStartEnd"
+                minTickGap={8}
               />
               <YAxis
                 width={64}

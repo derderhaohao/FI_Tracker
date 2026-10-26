@@ -76,6 +76,8 @@ export function DashboardPage() {
       ),
     });
   }
+  const driftAlerts = alerts.filter((a) => a.id.startsWith('drift-'));
+  const otherAlerts = alerts.filter((a) => !a.id.startsWith('drift-'));
   const targetSum = Object.values(settings.targetAllocation).reduce((a, b) => a + (b ?? 0), 0);
   const byClass = (Object.keys(nw.byAssetClass) as AssetClass[])
     .filter((c) => nw.balances.some((b) => b.account.assetClass === c && b.bucket === 'liquid'))
@@ -129,9 +131,8 @@ export function DashboardPage() {
         }
       />
 
-      <FiMoveCard />
-
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Section order (UI-10): plan, KPIs, alerts, net worth and allocation, FI-date move, backup. */}
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label={t('Total net worth')}
           value={twdCompact(nw.total)}
@@ -179,9 +180,9 @@ export function DashboardPage() {
         />
       </div>
 
-      {alerts.length > 0 && (
+      {otherAlerts.length > 0 && (
         <div className="mb-4 flex flex-col gap-2">
-          {alerts.map((a) => (
+          {otherAlerts.map((a) => (
             <Notice key={a.id} tone="warning">
               {a.message}
             </Notice>
@@ -189,8 +190,8 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <Card>
           <CardHeader
             title={t('Net worth over time')}
             description={t("Total and investable (incl. locked pension), TWD at each snapshot's FX rate")}
@@ -209,10 +210,27 @@ export function DashboardPage() {
                 { key: 'total', label: t('Total net worth'), slot: 0 },
                 { key: 'investable', label: t('Investable + locked'), slot: 2 },
               ]}
+              height={300}
             />
           </CardContent>
         </Card>
         <div className="flex flex-col gap-4">
+          {driftAlerts.map((a) => (
+            <Notice
+              key={a.id}
+              tone="warning"
+              action={
+                <Link
+                  to="/settings/general#allocation"
+                  className="text-sm font-medium whitespace-nowrap text-primary hover:underline"
+                >
+                  {t('Review allocation')}
+                </Link>
+              }
+            >
+              {a.message}
+            </Notice>
+          ))}
           <Card>
             <CardHeader
               title={t('Allocation')}
@@ -220,7 +238,7 @@ export function DashboardPage() {
             />
             <CardContent>
               <ShareBars rows={byClass} ariaLabel={t('Allocation by asset class')} />
-              <p className="mt-3 text-xs text-subtle">
+              <p className="mt-3 text-xs text-muted-foreground">
                 {t('Total {investable}{v}', {
                   investable: twd(nw.investable),
                   v:
@@ -236,21 +254,24 @@ export function DashboardPage() {
               <ShareBars rows={byCurrency} ariaLabel={t('Assets by currency')} />
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader title={t('Backup')} />
-            <CardContent className="pt-2 text-sm text-muted-foreground">
-              {backupAge === undefined
-                ? t('Never backed up.')
-                : backupAge === 0
-                  ? t('Last backup today.')
-                  : t('Last backup {backupAge} days ago.', { backupAge })}{' '}
-              <Link to="/settings#backup" className="text-primary hover:underline">
-                {t('Backup & restore')}
-              </Link>
-            </CardContent>
-          </Card>
         </div>
       </div>
+
+      <FiMoveCard />
+
+      <Card className="mt-4">
+        <CardHeader title={t('Backup')} />
+        <CardContent className="pt-2 text-sm text-muted-foreground">
+          {backupAge === undefined
+            ? t('Never backed up.')
+            : backupAge === 0
+              ? t('Last backup today.')
+              : t('Last backup {backupAge} days ago.', { backupAge })}{' '}
+          <Link to="/settings/backup" className="text-primary hover:underline">
+            {t('Backup & restore')}
+          </Link>
+        </CardContent>
+      </Card>
     </>
   );
 }

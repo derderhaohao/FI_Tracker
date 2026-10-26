@@ -325,7 +325,7 @@ export function CashFlowPage() {
     return (
       <>
         <PageHeader title={t('Cash flow')} />
-        <EmptyState title={t('No categories')} to="/settings#categories" action={t('Add categories')} />
+        <EmptyState title={t('No categories')} to="/settings/categories" action={t('Add categories')} />
       </>
     );
   }

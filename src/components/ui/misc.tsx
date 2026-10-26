@@ -163,17 +163,27 @@ export function Segmented<T extends string>({
   const track = useRef<HTMLDivElement>(null);
   const pill = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
-    const el = track.current?.querySelector<HTMLElement>('[aria-checked="true"]');
+    const box = track.current;
     const p = pill.current;
-    if (!p) return;
-    if (!el) {
-      p.style.opacity = '0';
-      return;
-    }
-    p.style.opacity = '1';
-    p.style.width = `${el.offsetWidth}px`;
-    p.style.height = `${el.offsetHeight}px`;
-    p.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
+    if (!box || !p) return;
+    // Measured, then re-measured whenever the control resizes (fonts, wrapping, zoom).
+    const place = () => {
+      const el = box.querySelector<HTMLElement>('[aria-checked="true"]');
+      if (!el) {
+        p.style.opacity = '0';
+        return;
+      }
+      p.style.opacity = '1';
+      p.style.width = `${el.offsetWidth}px`;
+      p.style.height = `${el.offsetHeight}px`;
+      p.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
+    };
+    place();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(place);
+    ro.observe(box);
+    for (const child of box.children) ro.observe(child);
+    return () => ro.disconnect();
   });
   return (
     <div
@@ -211,16 +221,31 @@ export function Segmented<T extends string>({
   );
 }
 
+/**
+ * A table that scrolls sideways inside its card, never the page (UI-17). On phones the first
+ * column stays put while the rest scrolls.
+ */
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
     <div className="w-full overflow-x-auto">
       <table
         className={cn(
           'w-full border-collapse text-sm tabular [&_td]:border-t [&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-muted-foreground',
+          'max-md:[&_td:first-child]:sticky max-md:[&_td:first-child]:left-0 max-md:[&_td:first-child]:z-[1] max-md:[&_td:first-child]:bg-surface max-md:[&_th:first-child]:sticky max-md:[&_th:first-child]:left-0 max-md:[&_th:first-child]:z-[1] max-md:[&_th:first-child]:bg-surface',
           className,
         )}
         {...props}
       />
+    </div>
+  );
+}
+
+/** A control with a small visible label above it, so a row of toggles reads as settings (UI-13). */
+export function LabeledControl({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      {children}
     </div>
   );
 }

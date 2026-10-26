@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { deleteAllData } from './helpers';
 import { fileURLToPath } from 'node:url';
 
 const fixture = (name: string) => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url));
@@ -54,6 +55,7 @@ test('imports balances into the snapshot grid', async ({ page }) => {
 
 test('exports and restores an encrypted backup', async ({ page }) => {
   const errors = await loadDemo(page);
+  await page.goto('./#/settings/backup');
   await page.getByRole('button', { name: 'Export encrypted backup' }).click();
   await page.getByLabel('Passphrase', { exact: true }).fill('a long passphrase');
   await page.getByLabel('Repeat passphrase').fill('a long passphrase');
@@ -63,8 +65,9 @@ test('exports and restores an encrypted backup', async ({ page }) => {
   expect(file.suggestedFilename()).toMatch(/\.encrypted\.fi\.json$/);
   const path = await file.path();
 
-  await page.getByRole('button', { name: 'Delete all data' }).click();
-  // Clearing re-creates the defaults and remounts the page; wait until it is back.
+  await deleteAllData(page);
+  await page.goto('./#/settings/backup');
+  // Clearing re-creates the defaults; the backup section shows no backup yet.
   await expect(page.getByText('never', { exact: true })).toBeVisible();
   await page.getByLabel('Backup file').setInputFiles(path);
   await page.getByLabel('Passphrase', { exact: true }).fill('wrong passphrase');

@@ -5,7 +5,7 @@ import { t } from '@/i18n';
 
 const STEPS: { to: string; title: string; text: string }[] = [
   {
-    to: '/settings#backup',
+    to: '/settings/backup',
     title: t('Back up your data'),
     text: t('It lives only in this browser. Export a backup, or turn on auto-save to a file.'),
   },

@@ -123,7 +123,8 @@ export function BandChart({
               type="number"
               domain={['dataMin', 'dataMax']}
               ticks={ageTicks(minAge, maxAge)}
-              interval={0}
+              interval="preserveStartEnd"
+              minTickGap={8}
               tick={axisTick(theme)}
               stroke={theme.axis}
               tickLine={false}

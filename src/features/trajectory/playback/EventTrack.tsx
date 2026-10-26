@@ -4,6 +4,7 @@ import type { Milestone } from '@/domain/playback/analysis';
 import type { PlaybackPath } from '@/domain/playback/engine';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
+import { labelWidth, staggerLabels } from '@/components/charts/ticks';
 import { t } from '@/i18n';
 import { ICONS } from './icons';
 import { assignLanes, monthAt, plotInsets } from './trackModel';
@@ -73,18 +74,14 @@ export function EventTrack({
   });
   const lanes = assignLanes(placed.map((p) => ({ x: p.x, width: p.w })));
   const rows = Math.max(1, ...lanes.map((l) => l + 1));
-  // Milestone labels on one line, left aligned at their age; one that would overlap shows as a tick.
+  // Milestone labels left aligned at their age; ones that would overlap move to a second row
+  // (UI-8). A third would show as a tick only.
   const marks = milestones
     .filter((x) => x.kind !== 'eventStart' && x.kind !== 'eventEnd')
     .sort((a, b) => a.month - b.month);
-  const markLabels: boolean[] = [];
-  let labelEnd = -Infinity;
-  for (const x of marks) {
-    const at = xOf(x.month);
-    const fits = at >= labelEnd + 4 && at + 8 + x.label.length * 6 <= width + 2;
-    if (fits) labelEnd = at + 8 + x.label.length * 6;
-    markLabels.push(fits);
-  }
+  const markRows = staggerLabels(marks.map((x) => ({ x: xOf(x.month), width: labelWidth(x.label) + 4 })));
+  const markLabels = marks.map((x, i) => markRows[i] < 2 && xOf(x.month) + labelWidth(x.label) <= width + 2);
+  const labelRows = Math.max(1, ...markRows.filter((r) => r < 2).map((r) => r + 1));
 
   const onPointerDown = (e: PointerEvent<HTMLButtonElement>, c: TrackChip) => {
     if (c.live || e.button !== 0) return;
@@ -132,7 +129,7 @@ export function EventTrack({
         role="group"
         aria-label={t('Event timeline')}
         className="relative"
-        style={{ height: (chips.length ? rows * 30 : 0) + 18 }}
+        style={{ height: (chips.length ? rows * 30 : 0) + 18 * labelRows }}
       >
         {placed.map(({ c, m, x }, i) => {
           const Icon = ICONS[c.icon] ?? Sparkles;
@@ -208,10 +205,10 @@ export function EventTrack({
             title={x.label}
             aria-label={t('{label}, age {age}', { label: x.label, age: ageOf(x.month) })}
             className={cn(
-              'absolute bottom-0 h-4 border-l pl-1 text-xs leading-4 whitespace-nowrap text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+              'absolute h-4 border-l pl-1 text-xs leading-4 whitespace-nowrap text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
               x.kind === 'runOut' && 'border-critical text-critical',
             )}
-            style={{ left: xOf(x.month) }}
+            style={{ left: xOf(x.month), bottom: Math.min(1, markRows[i]) * 18 }}
             onClick={() => onGo(x.month)}
           >
             {markLabels[i] ? x.label : ''}

@@ -79,12 +79,12 @@ export function LineChart<T extends object>({
               type={numericX ? 'number' : 'category'}
               domain={numericX ? ['dataMin', 'dataMax'] : undefined}
               ticks={xTicks}
-              interval={xTicks ? 0 : 'preserveEnd'}
+              interval="preserveStartEnd"
               tick={axisTick(theme)}
               tickFormatter={xFormat}
               stroke={theme.axis}
               tickLine={false}
-              minTickGap={numericX ? 4 : 24}
+              minTickGap={12}
             />
             <YAxis
               tick={axisTick(theme)}

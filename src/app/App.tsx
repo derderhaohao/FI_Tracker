@@ -134,6 +134,7 @@ export function App() {
                 <Route path="lab" element={<LabPage />} />
                 <Route path="reviews" element={<ReviewsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings/:section" element={<SettingsPage />} />
                 <Route path="setup" element={<SetupPage />} />
                 <Route path="update" element={<UpdatePage />} />
                 <Route

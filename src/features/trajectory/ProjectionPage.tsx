@@ -11,7 +11,8 @@ import { LineChart } from '@/components/charts/LineChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select } from '@/components/ui/input';
-import { Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
+import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { PlaybackView } from './playback/PlaybackView';
 import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { toMode } from '@/lib/valueMode';
@@ -158,8 +159,17 @@ export function ProjectionPage() {
             />
             <Stat
               label={t('Overseas income (AMT)')}
+              // A status, not a number: a chip at body size (UI-12).
               value={
-                result.amtAges.length ? t('From age {age}', { age: result.amtAges[0] }) : t('Below threshold')
+                result.amtAges.length ? (
+                  <Badge tone="warning" icon={<AlertTriangle aria-hidden />} className="text-sm">
+                    {t('From age {age}', { age: result.amtAges[0] })}
+                  </Badge>
+                ) : (
+                  <Badge tone="good" icon={<CheckCircle2 aria-hidden />} className="text-sm">
+                    {t('Below threshold')}
+                  </Badge>
+                )
               }
               sub={t('Flags years when overseas dividends may count toward the basic income tax')}
             />
