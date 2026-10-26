@@ -474,3 +474,35 @@ From the same PRD, Part D, KD-1 to KD-9 (Release 5).
   - Thresholds sit just under the levels reached, so CI fails if coverage drops.
   - The calculations, backups and the kids' coin logic have higher thresholds than the screens.
   - CI posts a coverage table in the job summary and keeps the HTML report for a week.
+
+### Design polish (UI-1 to UI-25, docs/ui-polish-spec.md)
+
+- **Contrast:**
+  - `--subtle` is #6b6a65 in light mode, as specified.
+  - The spec kept dark `--subtle` at #898781, but axe measured 4.38:1 on dark surface-2, so it is
+    #9a9890.
+  - The Beginner "good" button uses a fixed #166534 behind white text in both themes.
+- **Touch size:**
+  - A `touch:` Tailwind variant means a coarse pointer or a window narrower than 768 px.
+  - Base styles give every button, link, select, summary and slider a 24 px minimum (44 px on touch).
+    Inline links inside a sentence are exempt, as WCAG 2.5.8 allows.
+  - The spec asked for 40 px segmented options on touch. They follow the 44 px acceptance check
+    instead.
+- **Currency in fields (UI-20):** TWD is named in labels and headers. A foreign-currency amount keeps
+  its code inside the field, because snapshot rows mix currencies.
+- **Settings (UI-15):**
+  - Each section has its own address, `#/settings/<section>`, and `/settings` opens General.
+  - Old `#/settings#backup` anchors redirect.
+  - The "Review allocation" link opens General at the target allocation, since there is no separate
+    allocation section.
+- **Chart axes:**
+  - Money axes start at zero and end on the next round tick.
+  - The Time Machine growth index fits its range.
+  - Tick labels drop zeros a round tick does not need: NT$5M, not NT$5.00M.
+- **Strategy Lab:**
+  - The "Your plan today" explainer card is gone; its "Make a copy to edit" sits in the table row.
+  - The scenario editor stays full width when a what-if is selected.
+- **Beginner (UI-25):** "Use for new children too" is on when the child's split equals the default
+  split. Turning it off resets the default to 50 / 30 / 20.
+- **Screenshots:** before and after images of Dashboard, Strategy Lab, Settings and Time Machine, at
+  1280×800 and 390×844, are in `docs/screenshots/ui-polish/`.

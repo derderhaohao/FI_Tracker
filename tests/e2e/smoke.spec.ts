@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { deleteAllData } from './helpers';
 import { readFileSync } from 'node:fs';
 
 async function trackErrors(page: Page) {
@@ -15,7 +16,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
     if (!r.url().startsWith('http://localhost')) external.push(r.url());
   });
 
-  await page.goto('./#/settings');
+  await page.goto('./#/settings/backup');
   page.on('dialog', (d) => void d.accept());
   await page.getByRole('button', { name: 'Load demo data' }).click();
   await expect(page.getByText('Demo data loaded.')).toBeVisible();
@@ -28,7 +29,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await page.getByRole('link', { name: 'Snapshots' }).first().click();
   await page.getByLabel('Snapshot date').fill('2026-10-31');
   await page.getByRole('button', { name: 'Copy last period' }).click();
-  const cell = page.getByLabel('Everyday account on 2026-10-31');
+  const cell = page.getByLabel('Everyday account on 31 Oct 2026');
   await expect(cell).toBeVisible();
   await cell.fill('150,000');
   await cell.press('Enter');
@@ -38,7 +39,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await page.getByRole('link', { name: 'Projection' }).first().click();
   await expect(page.getByText('Investable net worth against the FI target')).toBeVisible();
   await expect(page.getByText('Start', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('2026-10-31 · age 35')).toBeVisible();
+  await expect(page.getByText('31 Oct 2026 · age 35')).toBeVisible();
 
   // Strategy Lab: simulated futures run on their own and lead with a plain verdict.
   await page.getByRole('link', { name: 'Strategy Lab' }).first().click();
@@ -49,6 +50,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
 
   // Export, wipe, and re-import.
   await page.getByRole('link', { name: 'Settings' }).first().click();
+  await page.getByRole('link', { name: 'Backup' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export backup (JSON)' }).click();
   const download = await downloadPromise;
@@ -57,15 +59,15 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   const exported = JSON.parse(readFileSync(path, 'utf8'));
   expect(exported.data.snapshots.some((s: { date: string }) => s.date === '2026-10-31')).toBe(true);
 
-  await page.getByRole('button', { name: 'Delete all data' }).click();
+  await deleteAllData(page);
   await page.getByRole('link', { name: 'Dashboard' }).first().click();
   await expect(page.getByRole('heading', { name: 'Welcome to FI Tracker' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Settings' }).first().click();
+  await page.goto('./#/settings/backup');
   await page.getByLabel('Backup file').setInputFiles(path);
   await expect(page.getByText('Backup loaded.')).toBeVisible();
   await page.getByRole('link', { name: 'Snapshots' }).first().click();
-  await expect(page.getByLabel('Everyday account on 2026-10-31')).toHaveValue('150,000');
+  await expect(page.getByLabel('Everyday account on 31 Oct 2026')).toHaveValue('150,000');
 
   expect(external).toEqual([]);
   expect(errors).toEqual([]);

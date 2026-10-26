@@ -402,4 +402,9 @@ export const KIDS_ZH_TW: Record<string, string> = {
   'Progress loaded.': '進度已載入。',
   'That file could not be loaded. Is it a saved progress file, with room for one more child?':
     '無法載入這個檔案。請確認它是儲存的進度檔，而且還能再加一位小朋友。',
+  'Use for new children too': '新加入的小朋友也用這個分法',
+  'Between Spend and Savings': '花用和儲蓄之間',
+  'Between Savings and Grow': '儲蓄和種樹之間',
+  'Spend {a} · Savings {b} · Grow {c} of every 10 coins': '每 10 元：花用 {a}・儲蓄 {b}・種樹 {c}',
+  '{n} coin for every 100 each year': '每 100 元每年長出 {n} 元',
 };

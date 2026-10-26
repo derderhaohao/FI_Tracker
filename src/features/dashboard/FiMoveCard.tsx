@@ -3,6 +3,7 @@ import { fiDateMove, monthIndexLabel, MOVE_LABELS } from '@/domain/fiDateMove';
 import { useAppData } from '@/app/data';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/cn';
+import { formatDate } from '@/lib/format';
 import { t } from '@/i18n';
 
 function months(m: number): string {
@@ -24,14 +25,14 @@ export function FiMoveCard() {
     return null;
   const max = Math.max(...(move.parts ?? []).map((p) => Math.abs(p.months)), 0.5);
   return (
-    <Card className="mb-4" aria-label={t('Why did my FI date move')}>
+    <Card className="mt-4" aria-label={t('Why did my FI date move')}>
       <CardHeader
         title={t('Why did my FI date move?')}
         description={t('Most likely FI date {fromFi} on {fromDate} → {toFi} on {toDate}: {totalMonths}.', {
           fromFi: monthIndexLabel(move.fromFi),
-          fromDate: move.fromDate,
+          fromDate: formatDate(move.fromDate),
           toFi: monthIndexLabel(move.toFi),
-          toDate: move.toDate,
+          toDate: formatDate(move.toDate),
           totalMonths: months(move.totalMonths),
         })}
       />
@@ -43,14 +44,20 @@ export function FiMoveCard() {
                 <span>{MOVE_LABELS[p.key]}</span>
                 <span className="relative h-2 rounded bg-surface-2" aria-hidden>
                   <span
-                    className={cn(
-                      'absolute top-0 h-2 rounded',
-                      p.months > 0 ? 'left-1/2 bg-critical' : 'right-1/2 bg-good',
-                    )}
-                    style={{ width: `${(Math.abs(p.months) / max) * 50}%` }}
+                    className={cn('absolute top-0 h-2 rounded', p.months > 0 ? 'left-1/2' : 'right-1/2')}
+                    // Time passing is expected, not an alarm (UI-10): later is amber, earlier green.
+                    style={{
+                      width: `${(Math.abs(p.months) / max) * 50}%`,
+                      background: p.months > 0 ? 'var(--series-4)' : 'var(--good-mark)',
+                    }}
                   />
                 </span>
-                <span className={cn('text-right', Math.abs(p.months) < 0.05 && 'text-subtle')}>
+                <span
+                  className={cn(
+                    'text-right',
+                    Math.abs(p.months) < 0.05 ? 'text-subtle' : p.months > 0 && 'text-warning',
+                  )}
+                >
                   {months(p.months)}
                 </span>
               </li>

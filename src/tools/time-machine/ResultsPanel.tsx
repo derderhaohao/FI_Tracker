@@ -121,8 +121,8 @@ export function ResultsPanel({
               const m = metrics(l, sim.startMonth);
               return (
                 <tr key={l.id} className={cn(l.kind === 'portfolio' && 'font-medium')}>
-                  <td>{label(l.id)}</td>
-                  <td className="text-right">
+                  <td className="min-w-32">{label(l.id)}</td>
+                  <td className="text-right whitespace-nowrap">
                     {money(m.final, currency)}
                     {l.afterSelling !== undefined && (
                       <div className="text-xs font-normal text-muted-foreground">
@@ -130,15 +130,20 @@ export function ResultsPanel({
                       </div>
                     )}
                   </td>
-                  <td className={cn('text-right', m.gain >= 0 ? 'text-good' : 'text-critical')}>
+                  <td
+                    className={cn(
+                      'text-right whitespace-nowrap',
+                      m.gain >= 0 ? 'text-good' : 'text-critical',
+                    )}
+                  >
                     {pct(m.gainPct, 1, true)}
                   </td>
                   <td className="text-right">{pct(m.yearly)}</td>
-                  <td className="text-right">
+                  <td className="text-right whitespace-nowrap">
                     {m.fall.depth < 0 ? (
                       <>
                         {pct(m.fall.depth)}
-                        <div className="text-xs font-normal text-muted-foreground">
+                        <div className="text-xs font-normal whitespace-nowrap text-muted-foreground">
                           {fallDates(m.fall.peak)} – {fallDates(m.fall.trough)}
                         </div>
                       </>
@@ -149,12 +154,19 @@ export function ResultsPanel({
                   <td className="text-right">
                     {m.fall.depth >= 0 ? '—' : m.fall.recovery !== undefined ? m.fall.recovery : t('Not yet')}
                   </td>
-                  <td className="text-right">
-                    {m.best ? `${m.best.year} · ${pct(m.best.ret, 0, true)}` : '—'}
-                  </td>
-                  <td className="text-right">
-                    {m.worst ? `${m.worst.year} · ${pct(m.worst.ret, 0, true)}` : '—'}
-                  </td>
+                  {/* Value on the first line, the year on the second (UI-16). */}
+                  {[m.best, m.worst].map((y, i) => (
+                    <td key={i} className="text-right whitespace-nowrap">
+                      {y ? (
+                        <>
+                          {pct(y.ret, 0, true)}
+                          <div className="text-xs font-normal text-muted-foreground">{y.year}</div>
+                        </>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                  ))}
                   <td className="text-right">{pct(m.volatility)}</td>
                   {showFx && (
                     <td

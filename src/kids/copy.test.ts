@@ -61,3 +61,12 @@ describe('Beginner mode copy', () => {
     expect(bad).toEqual([]);
   });
 });
+
+describe('rate words (UI-24)', () => {
+  it('says "1 coin", not "1 coins"', async () => {
+    const { rateWords } = await import('./copy');
+    expect(rateWords(1)).toBe('1 coin for every 100 each year');
+    expect(rateWords(6)).toBe('6 coins for every 100 each year');
+    expect(rateWords(0)).toBe('Coins stay the same');
+  });
+});

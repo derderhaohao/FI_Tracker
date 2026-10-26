@@ -72,7 +72,7 @@ export function Welcome() {
 
       <p className="mt-6 text-sm text-muted-foreground">
         {t('Everything stays in this browser; nothing is sent anywhere. Moving from another device?')}{' '}
-        <Link to="/settings#backup" className="text-primary hover:underline">
+        <Link to="/settings/backup" className="text-primary hover:underline">
           {t('Restore a backup')}
         </Link>
         .

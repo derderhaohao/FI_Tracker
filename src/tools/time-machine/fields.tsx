@@ -113,7 +113,7 @@ export function MarketBadge({ market, currency }: { market: 'US' | 'TW'; currenc
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center rounded border px-1 text-[10px] font-semibold tracking-wide',
+        'inline-flex shrink-0 items-center rounded border px-1 text-xs font-semibold tracking-wide',
         market === 'TW' ? 'border-tool-accent/50 text-tool-accent' : 'text-muted-foreground',
       )}
       title={currency}

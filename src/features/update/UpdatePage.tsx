@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, ChevronLeft } from 'lucide-react';
+import { formatDate } from '@/lib/format';
 import { today } from '@/domain/dates';
 import { downloadMonthlyReminder } from '@/lib/ics';
 import { formatMoney, fromMinor } from '@/domain/money';
@@ -146,7 +147,7 @@ export function UpdatePage() {
           <CardContent className="flex flex-col gap-3 p-6 text-sm">
             <Check className="size-8 text-good" aria-hidden />
             <h2 className="text-lg font-semibold">
-              {t('Saved {count} balances for {date}', { count: done.count, date })}
+              {t('Saved {count} balances for {date}', { count: done.count, date: formatDate(date) })}
             </h2>
             <p className="text-muted-foreground">{t('Done in {ms}.', { ms: durationText(done.ms) })}</p>
             <p>{t("Last step: add last month's pay and spending, so savings and the FI date stay right.")}</p>
@@ -222,12 +223,14 @@ export function UpdatePage() {
               <p className="text-sm text-muted-foreground">
                 {t('Last: {lastMinor}{v}', {
                   lastMinor: money(step.item.lastMinor, step.item.account.currency),
-                  v: step.item.lastDate ? t(' on {lastDate}', { lastDate: step.item.lastDate }) : '',
+                  v: step.item.lastDate
+                    ? t(' on {lastDate}', { lastDate: formatDate(step.item.lastDate) })
+                    : '',
                 })}
                 {step.item.account.type === 'liability' ? t(' owed') : ''}
                 {step.item.savedMinor !== undefined &&
                   t('. Already saved for {date}: {savedMinor}', {
-                    date,
+                    date: formatDate(date),
                     savedMinor: money(step.item.savedMinor, step.item.account.currency),
                   })}
               </p>
@@ -299,7 +302,7 @@ export function UpdatePage() {
               <p className="text-sm text-muted-foreground">
                 {t("TWD per 1 {currency} on {date}{v}. Your bank's or a public rate is fine.", {
                   currency: step.currency,
-                  date,
+                  date: formatDate(date),
                   v: step.last !== undefined ? t('; last time {last}', { last: step.last }) : '',
                 })}
               </p>

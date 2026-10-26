@@ -1,4 +1,4 @@
-import { locale, t } from '@/i18n';
+import { locale, t, tn } from '@/i18n';
 import type { Category, GoalPicture, Source } from './db';
 import type { Jar } from './math';
 
@@ -51,7 +51,9 @@ export function goalName(p: GoalPicture): string {
 
 /** "6 coins for every 100 each year", the only way a rate is shown. */
 export function rateWords(g: number): string {
-  return g === 0 ? t('Coins stay the same') : t('{n} coins for every 100 each year', { n: g });
+  return g === 0
+    ? t('Coins stay the same')
+    : tn(g, '{n} coin for every 100 each year', '{n} coins for every 100 each year');
 }
 
 /** Split shown as coins of every 10: "5 of every 10 coins". */

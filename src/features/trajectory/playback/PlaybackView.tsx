@@ -268,10 +268,13 @@ export function PlaybackView() {
     else pb.changeStory({ ...pb.story, events: pb.story.events.filter((e) => e.uid !== c.uid) }, true);
   };
 
+  // Once a story plays, the list folds to the chosen card plus "Change story" (UI-12).
+  const [storiesOpen, setStoriesOpen] = useState(true);
   const togglePlay = useCallback(() => {
     if (reduced) return;
     if (monthRef.current >= path.months) jump(0);
     setPlaying((p) => !p);
+    setStoriesOpen(false);
     hints.dismiss('play');
   }, [reduced, path.months, jump, hints]);
 
@@ -405,7 +408,7 @@ export function PlaybackView() {
       <div className="min-w-0 flex-1">
         <div className="font-semibold">{toast.title}</div>
         <div className="text-xs">{toast.text}</div>
-        {toast.detail && <div className="text-[11px] text-muted-foreground">{toast.detail}</div>}
+        {toast.detail && <div className="text-xs text-muted-foreground">{toast.detail}</div>}
       </div>
       <button
         type="button"
@@ -660,6 +663,8 @@ export function PlaybackView() {
             <StoryCards
               saved={data.settings.stories ?? []}
               selected={card}
+              onlySelected={!storiesOpen}
+              onExpand={() => setStoriesOpen(true)}
               normal={normal}
               onPick={pickStory}
               onBuild={() => {

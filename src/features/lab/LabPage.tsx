@@ -14,16 +14,17 @@ import { LineChart } from '@/components/charts/LineChart';
 import { useChartTheme } from '@/components/charts/theme';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Select } from '@/components/ui/input';
-import { Badge, Notice, PageHeader, Segmented, Table } from '@/components/ui/misc';
+import { Checkbox, Select } from '@/components/ui/input';
+import { Badge, LabeledControl, Notice, PageHeader, Segmented, Table } from '@/components/ui/misc';
 import { Term } from '@/components/ui/term';
 import { chanceDots, chanceText } from '@/domain/planStatus';
 import type { GlossaryParams } from '@/lib/glossary';
-import { pct, twdCompact } from '@/lib/format';
+import { formatDate, pct, twdCompact } from '@/lib/format';
 import { inflationIndex } from '@/lib/valueMode';
 import { ScenarioEditor } from './ScenarioEditor';
 import { lockPlanOfRecord, newScenarioDraft } from './actions';
 import { BacktestCard } from './BacktestCard';
+import { LabNav } from './LabNav';
 import { BuyVsRentPanel } from './BuyVsRent';
 import { ChecksPanel } from './ChecksPanel';
 import { Dots } from './Dots';
@@ -76,6 +77,15 @@ export function LabPage() {
   }
   return <ScenarioLab tabs={<LabTabs tab={tab} onChange={setTab} />} />;
 }
+
+const LAB_SECTIONS = [
+  { id: 'lab-plan', label: t('Your plan') },
+  { id: 'lab-compare', label: t('Compare') },
+  { id: 'lab-range', label: t('Range') },
+  { id: 'lab-safer', label: t('Make it safer') },
+  { id: 'lab-past', label: t('Past markets') },
+  { id: 'lab-assumptions', label: t('Assumptions') },
+];
 
 function ScenarioLab({ tabs }: { tabs: ReactNode }) {
   const data = useAppData();
@@ -247,18 +257,22 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
           'Will your plan work, and what would make it safer? Try a what-if and compare it with your plan today.',
         )}
         actions={
-          <>
-            {tabs}
-            <Segmented
-              label={t('Simple or advanced view')}
-              value={labView}
-              onChange={setLabView}
-              options={[
-                { value: 'simple', label: t('Simple') },
-                { value: 'advanced', label: t('Advanced') },
-              ]}
-            />
-            <ValueModeToggle />
+          <div className="flex flex-wrap items-end gap-3">
+            <LabeledControl label={t('Tool')}>{tabs}</LabeledControl>
+            <LabeledControl label={t('Detail')}>
+              <Segmented
+                label={t('Simple or advanced view')}
+                value={labView}
+                onChange={setLabView}
+                options={[
+                  { value: 'simple', label: t('Simple') },
+                  { value: 'advanced', label: t('Advanced') },
+                ]}
+              />
+            </LabeledControl>
+            <LabeledControl label={t('Show amounts in')}>
+              <ValueModeToggle />
+            </LabeledControl>
             {!showStarter && (
               <Button size="sm" variant="ghost" onClick={() => setLabStarter('shown')}>
                 <HelpCircle aria-hidden /> {t('How this works')}
@@ -269,9 +283,10 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
                 set={assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id)}
               />
             )}
-          </>
+          </div>
         }
       />
+      <LabNav sections={LAB_SECTIONS} />
       <p className="-mt-2 mb-4 text-xs text-muted-foreground">
         {valueMode === 'real'
           ? t("All amounts in today's money (inflation removed).")
@@ -295,313 +310,317 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
         />
       )}
 
-      <VerdictCard
-        row={selected}
-        mc={selectedMc?.summary}
-        stale={!fresh(selected)}
-        asOfDate={ctx.asOfDate}
-        params={params}
-        advanced={advanced}
-      />
-
-      <Card className="mb-4">
-        <CardHeader
-          title={t('Compare what-ifs')}
-          description={t(
-            'Tick up to {MAX_COMPARE} scenarios. Every one replays the same simulated futures, so differences come from the plan, not from luck.',
-            { MAX_COMPARE },
-          )}
-          actions={
-            advanced ? (
-              <>
-                <Select
-                  aria-label={t('Monte Carlo runs')}
-                  className="h-8 w-32"
-                  value={mcRuns}
-                  onChange={(e) => setMcRuns(Number(e.target.value))}
-                >
-                  {[1000, 2000, 5000, MAX_RUNS].map((n) => (
-                    <option key={n} value={n}>
-                      {t('{toLocaleString} runs', { toLocaleString: n.toLocaleString() })}
-                    </option>
-                  ))}
-                </Select>
-                <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Term k="simulationId" params={params} advanced />
-                  <input
-                    aria-label={t('Comparison seed')}
-                    type="number"
-                    className="h-8 w-20 rounded-md border border-input bg-surface px-2 text-right text-sm"
-                    value={mcSeed}
-                    onChange={(e) =>
-                      Number.isFinite(Number(e.target.value)) && setMcSeed(Math.round(Number(e.target.value)))
-                    }
-                  />
-                </label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={mc.running}
-                  onClick={() => void mc.run(jobs, mcRuns, mcSeed)}
-                >
-                  <Play aria-hidden /> {mc.running ? t('Running…') : t('Rerun')}
-                </Button>
-              </>
-            ) : undefined
-          }
+      <section id="lab-plan" className="scroll-mt-16">
+        <VerdictCard
+          row={selected}
+          mc={selectedMc?.summary}
+          stale={!fresh(selected)}
+          asOfDate={ctx.asOfDate}
+          params={params}
+          advanced={advanced}
         />
-        <CardContent>
-          <Table>
-            <thead>
-              <tr>
-                <th className="w-8" />
-                <th className="min-w-48">{t('Scenario')}</th>
-                <th className="text-right">
-                  <Term k="stopAge" params={params} advanced={advanced} />
-                </th>
-                <th className="text-right">
-                  <Term k="chanceLasts" params={params} advanced={advanced} />
-                </th>
-                <th className="text-right">
-                  <Term k="pastMarkets" params={params} advanced={advanced} />
-                </th>
-                <th className="text-right">{t('vs your plan')}</th>
-                {advanced && (
-                  <>
-                    <th className="text-right">
-                      <Term k="stopRange" params={params} advanced />
-                    </th>
-                    <th className="text-right">
-                      <Term k="investAtStop" params={params} advanced />
-                    </th>
-                    <th className="text-right">
-                      <Term k="leftAtHorizon" params={params} advanced />
-                    </th>
-                  </>
-                )}
-                <th className="w-24" />
-              </tr>
-            </thead>
-            <tbody>
-              {rowsInTable.map((r) => {
-                const isToday = r.id === TODAY_ID;
-                const s = r.stored;
-                const shown = isToday || (s && s.id in compare);
-                const m = resultFor(r);
-                const chance = shown && fresh(r) ? m?.summary.successRate : undefined;
-                const diff =
-                  !isToday && shown ? explainDifference(today, r, chanceOf(today), chance) : undefined;
-                const warning = !isToday && shown && s ? nameCheck(s.name, today, r) : undefined;
-                const age = stopAge(r.result);
-                return (
-                  <tr key={r.id} className={r.id === selected.id ? 'bg-surface-2' : undefined}>
-                    <td>
-                      {s && (
-                        <input
-                          type="checkbox"
-                          aria-label={t('Compare {name}', { name: s.name })}
-                          checked={s.id in compare}
-                          disabled={!(s.id in compare) && Object.keys(compare).length >= MAX_COMPARE}
-                          onChange={() => toggleCompare(s.id)}
-                        />
-                      )}
-                    </td>
-                    <td className="max-w-xs min-w-48">
-                      <button
-                        className="flex items-center gap-2 text-left font-medium hover:underline"
-                        onClick={() => selectScenario(isToday ? undefined : r.id)}
-                      >
-                        <span
-                          className="inline-block size-2.5 shrink-0 rounded-full"
-                          style={{
-                            background: isToday
-                              ? theme.axis
-                              : r.slot !== undefined && s && s.id in compare
-                                ? theme.series[r.slot]
-                                : 'transparent',
-                          }}
-                          aria-hidden
-                        />
-                        {r.name}
-                      </button>
-                      {isToday && (
-                        <div className="text-xs text-subtle">{t('Always uses your latest data')}</div>
-                      )}
-                      {s?.isPlanOfRecord && (
-                        <Badge tone="primary" className="mt-0.5">
-                          <Lock className="size-3" aria-hidden /> {t('My plan')}
-                        </Badge>
-                      )}
-                      {diff?.cause && (
-                        <div className="mt-0.5 text-xs text-muted-foreground">{diff.cause}</div>
-                      )}
-                      {warning && <div className="mt-0.5 text-xs text-warning">{warning}</div>}
-                    </td>
-                    {shown ? (
-                      <>
-                        <td className="text-right">
-                          {age !== undefined ? (
-                            <>
-                              {age}
-                              <div className="text-xs text-subtle">
-                                {stopDate(r.input, r.result, ctx.asOfDate)}
-                              </div>
-                            </>
-                          ) : (
-                            t('Not reached')
-                          )}
-                        </td>
-                        <td className="text-right">
-                          {m ? (
-                            <span className={fresh(r) ? undefined : 'text-subtle'}>
-                              {pct(m.summary.successRate, 0)}
-                              <div>
-                                <Dots
-                                  small
-                                  filled={chanceDots(m.summary.successRate)}
-                                  label={chanceText(m.summary.successRate)}
-                                />
-                              </div>
-                            </span>
-                          ) : (
-                            <span className="text-subtle">…</span>
-                          )}
-                        </td>
-                        <td className="text-right">{pct(r.backtest.successRate, 0)}</td>
-                        <td className="text-right whitespace-nowrap">{isToday ? '—' : diff?.short}</td>
-                        {advanced && (
-                          <>
-                            <td className="text-right">
-                              {m?.summary.fiAgeP10 !== undefined
-                                ? `${Math.round(m.summary.fiAgeP10)}–${Math.round(m.summary.fiAgeP90!)}`
-                                : '—'}
-                            </td>
-                            <td className="text-right">
-                              {r.result.netWorthAtFi !== undefined ? twdCompact(r.result.netWorthAtFi) : '—'}
-                            </td>
-                            <td className="text-right">{twdCompact(r.result.balanceAtHorizon)}</td>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <td colSpan={advanced ? 7 : 4} className="text-right text-subtle">
-                        {t('Tick to compare')}
-                      </td>
-                    )}
-                    <td>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          aria-label={
-                            isToday
-                              ? t('Copy your plan today to edit')
-                              : t('Duplicate {name}', { name: r.name })
-                          }
-                          onClick={() => void duplicate(s)}
-                        >
-                          <Copy />
-                        </Button>
+      </section>
+
+      <section id="lab-compare" className="scroll-mt-16">
+        <Card className="mb-4">
+          <CardHeader
+            title={t('Compare what-ifs')}
+            description={t(
+              'Tick up to {MAX_COMPARE} scenarios. Every one replays the same simulated futures, so differences come from the plan, not from luck.',
+              { MAX_COMPARE },
+            )}
+            actions={
+              advanced ? (
+                <>
+                  <Select
+                    aria-label={t('Monte Carlo runs')}
+                    className="h-8 w-32"
+                    value={mcRuns}
+                    onChange={(e) => setMcRuns(Number(e.target.value))}
+                  >
+                    {[1000, 2000, 5000, MAX_RUNS].map((n) => (
+                      <option key={n} value={n}>
+                        {t('{toLocaleString} runs', { toLocaleString: n.toLocaleString() })}
+                      </option>
+                    ))}
+                  </Select>
+                  <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Term k="simulationId" params={params} advanced />
+                    <input
+                      aria-label={t('Comparison seed')}
+                      type="number"
+                      className="h-8 w-20 rounded-md border border-input bg-surface px-2 text-right text-sm"
+                      value={mcSeed}
+                      onChange={(e) =>
+                        Number.isFinite(Number(e.target.value)) &&
+                        setMcSeed(Math.round(Number(e.target.value)))
+                      }
+                    />
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={mc.running}
+                    onClick={() => void mc.run(jobs, mcRuns, mcSeed)}
+                  >
+                    <Play aria-hidden /> {mc.running ? t('Running…') : t('Rerun')}
+                  </Button>
+                </>
+              ) : undefined
+            }
+          />
+          <CardContent>
+            <Table>
+              <thead>
+                <tr>
+                  <th className="w-8" />
+                  <th className="min-w-48">{t('Scenario')}</th>
+                  <th className="text-right">
+                    <Term k="stopAge" params={params} advanced={advanced} />
+                  </th>
+                  <th className="text-right">
+                    <Term k="chanceLasts" params={params} advanced={advanced} />
+                  </th>
+                  <th className="text-right">
+                    <Term k="pastMarkets" params={params} advanced={advanced} />
+                  </th>
+                  <th className="text-right">{t('vs your plan')}</th>
+                  {advanced && (
+                    <>
+                      <th className="text-right">
+                        <Term k="stopRange" params={params} advanced />
+                      </th>
+                      <th className="text-right">
+                        <Term k="investAtStop" params={params} advanced />
+                      </th>
+                      <th className="text-right">
+                        <Term k="leftAtHorizon" params={params} advanced />
+                      </th>
+                    </>
+                  )}
+                  <th className="w-24" />
+                </tr>
+              </thead>
+              <tbody>
+                {rowsInTable.map((r) => {
+                  const isToday = r.id === TODAY_ID;
+                  const s = r.stored;
+                  const shown = isToday || (s && s.id in compare);
+                  const m = resultFor(r);
+                  const chance = shown && fresh(r) ? m?.summary.successRate : undefined;
+                  const diff =
+                    !isToday && shown ? explainDifference(today, r, chanceOf(today), chance) : undefined;
+                  const warning = !isToday && shown && s ? nameCheck(s.name, today, r) : undefined;
+                  const age = stopAge(r.result);
+                  return (
+                    <tr key={r.id} className={r.id === selected.id ? 'bg-surface-2' : undefined}>
+                      <td>
                         {s && (
+                          <Checkbox
+                            aria-label={t('Compare {name}', { name: s.name })}
+                            checked={s.id in compare}
+                            disabled={!(s.id in compare) && Object.keys(compare).length >= MAX_COMPARE}
+                            onChange={() => toggleCompare(s.id)}
+                          />
+                        )}
+                      </td>
+                      <td className="max-w-xs min-w-48">
+                        <button
+                          className="flex items-center gap-2 text-left font-medium hover:underline"
+                          onClick={() => selectScenario(isToday ? undefined : r.id)}
+                        >
+                          <span
+                            className="inline-block size-2.5 shrink-0 rounded-full"
+                            style={{
+                              background: isToday
+                                ? theme.axis
+                                : r.slot !== undefined && s && s.id in compare
+                                  ? theme.series[r.slot]
+                                  : 'transparent',
+                            }}
+                            aria-hidden
+                          />
+                          {r.name}
+                        </button>
+                        {isToday && (
+                          <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                            {t('Always uses your latest data')}
+                            <Button
+                              size="sm"
+                              variant="link"
+                              className="h-6 px-0 text-xs"
+                              onClick={() => void duplicate()}
+                            >
+                              {t('Make a copy to edit')}
+                            </Button>
+                          </div>
+                        )}
+                        {s?.isPlanOfRecord && (
+                          <Badge tone="primary" className="mt-0.5">
+                            <Lock className="size-3" aria-hidden /> {t('My plan')}
+                          </Badge>
+                        )}
+                        {diff?.cause && (
+                          <div className="mt-0.5 text-xs text-muted-foreground">{diff.cause}</div>
+                        )}
+                        {warning && <div className="mt-0.5 text-xs text-warning">{warning}</div>}
+                      </td>
+                      {shown ? (
+                        <>
+                          <td className="text-right">
+                            {age !== undefined ? (
+                              <>
+                                {age}
+                                <div className="text-xs text-subtle">
+                                  {stopDate(r.input, r.result, ctx.asOfDate)}
+                                </div>
+                              </>
+                            ) : (
+                              t('Not reached')
+                            )}
+                          </td>
+                          <td className="text-right">
+                            {m ? (
+                              <span className={fresh(r) ? undefined : 'text-subtle'}>
+                                {pct(m.summary.successRate, 0)}
+                                <div>
+                                  <Dots
+                                    small
+                                    filled={chanceDots(m.summary.successRate)}
+                                    label={chanceText(m.summary.successRate)}
+                                  />
+                                </div>
+                              </span>
+                            ) : (
+                              <span className="text-subtle">…</span>
+                            )}
+                          </td>
+                          <td className="text-right">{pct(r.backtest.successRate, 0)}</td>
+                          <td className="text-right whitespace-nowrap">{isToday ? '—' : diff?.short}</td>
+                          {advanced && (
+                            <>
+                              <td className="text-right">
+                                {m?.summary.fiAgeP10 !== undefined
+                                  ? `${Math.round(m.summary.fiAgeP10)}–${Math.round(m.summary.fiAgeP90!)}`
+                                  : '—'}
+                              </td>
+                              <td className="text-right">
+                                {r.result.netWorthAtFi !== undefined
+                                  ? twdCompact(r.result.netWorthAtFi)
+                                  : '—'}
+                              </td>
+                              <td className="text-right">{twdCompact(r.result.balanceAtHorizon)}</td>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <td colSpan={advanced ? 7 : 4} className="text-right text-subtle">
+                          {t('Tick to compare')}
+                        </td>
+                      )}
+                      <td>
+                        <div className="flex justify-end gap-1">
                           <Button
                             size="icon"
                             variant="ghost"
-                            aria-label={t('Delete {name}', { name: s.name })}
-                            onClick={() => void remove(s)}
+                            aria-label={
+                              isToday
+                                ? t('Copy your plan today to edit')
+                                : t('Duplicate {name}', { name: r.name })
+                            }
+                            onClick={() => void duplicate(s)}
                           >
-                            <Trash2 />
+                            <Copy />
                           </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-          {!showStarter && (
-            <div className="mt-4">
-              <div className="mb-2 text-sm font-medium">{t('Try a what-if')}</div>
-              <TemplatePicker today={today} onCreate={fromTemplate} />
-              <Button size="sm" variant="ghost" className="mt-2" onClick={() => void duplicate()}>
-                <Plus aria-hidden /> {t('Blank copy of your plan')}
-              </Button>
-            </div>
-          )}
-          <div className="mt-4">
-            <div className="mb-1 text-sm font-medium">
-              {t('Investments by age,')} <Term k="typicalPath" params={params} advanced={advanced} />
-            </div>
-            <LineChart
-              ariaLabel={t('Investments by scenario')}
-              data={chartRows}
-              xKey="age"
-              tooltipTitle={(r) => t('Age {age}', { age: r.age })}
-              series={[
-                { key: TODAY_ID, label: today.name, slot: 0, color: theme.axis, dashed: true },
-                ...compared.map((c) => ({ key: c.id, label: c.name, slot: c.slot })),
-              ]}
-              height={280}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-5">
-        <Card className="xl:col-span-3">
-          {selected.scenario ? (
-            <>
-              <CardHeader
-                title={t('Edit: {name}', { name: selected.scenario.name })}
-                actions={
-                  !selected.scenario.isPlanOfRecord ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void lockPlanOfRecord(data, selected.scenario!)}
-                    >
-                      <Lock aria-hidden /> {t('Set as my plan')}
-                    </Button>
-                  ) : (
-                    <Badge tone="primary">
-                      {t('My plan since {lockedAt}', { lockedAt: selected.scenario.lockedAt })}
-                    </Badge>
-                  )
-                }
-              />
-              <CardContent>
-                <p className="-mt-2 mb-3 text-xs text-muted-foreground">
-                  {t(
-                    "“Set as my plan” saves this scenario's projection; the Dashboard then tracks your real progress against it.",
-                  )}
-                </p>
-                <ScenarioEditor
-                  key={selected.scenario.id}
-                  s={selected.scenario}
-                  today={today}
-                  row={selected}
-                  advanced={advanced}
-                  params={params}
-                />
-              </CardContent>
-            </>
-          ) : (
-            <>
-              <CardHeader title={t('Your plan today')} />
-              <CardContent className="text-sm">
-                <p className="text-muted-foreground">
-                  {t(
-                    "This row always follows your latest balances, cash flow and FI budget, so it can't be edited here. To try changes, start a what-if or make a copy.",
-                  )}
-                </p>
-                <Button size="sm" className="mt-3" onClick={() => void duplicate()}>
-                  <Copy aria-hidden /> {t('Make a copy to edit')}
+                          {s && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={t('Delete {name}', { name: s.name })}
+                              onClick={() => void remove(s)}
+                            >
+                              <Trash2 />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+            {!showStarter && (
+              <div className="mt-4">
+                <div className="mb-2 text-sm font-medium">{t('Try a what-if')}</div>
+                <TemplatePicker today={today} onCreate={fromTemplate} />
+                <Button size="sm" variant="ghost" className="mt-2" onClick={() => void duplicate()}>
+                  <Plus aria-hidden /> {t('Blank copy of your plan')}
                 </Button>
-              </CardContent>
-            </>
-          )}
+              </div>
+            )}
+            <div className="mt-4">
+              <div className="mb-1 text-sm font-medium">
+                {t('Investments by age,')} <Term k="typicalPath" params={params} advanced={advanced} />
+              </div>
+              <LineChart
+                ariaLabel={t('Investments by scenario')}
+                data={chartRows}
+                xKey="age"
+                tooltipTitle={(r) => t('Age {age}', { age: r.age })}
+                series={[
+                  { key: TODAY_ID, label: today.name, slot: 0, color: theme.axis, dashed: true },
+                  ...compared.map((c) => ({ key: c.id, label: c.name, slot: c.slot })),
+                ]}
+                height={280}
+              />
+            </div>
+          </CardContent>
         </Card>
-        <Card className="xl:col-span-2">
+
+        {selected.scenario && (
+          <Card className="mb-4">
+            <CardHeader
+              title={t('Edit: {name}', { name: selected.scenario.name })}
+              actions={
+                !selected.scenario.isPlanOfRecord ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void lockPlanOfRecord(data, selected.scenario!)}
+                  >
+                    <Lock aria-hidden /> {t('Set as my plan')}
+                  </Button>
+                ) : (
+                  <Badge tone="primary">
+                    {t('My plan since {lockedAt}', {
+                      lockedAt: formatDate(selected.scenario.lockedAt ?? ''),
+                    })}
+                  </Badge>
+                )
+              }
+            />
+            <CardContent>
+              <p className="-mt-2 mb-3 text-xs text-muted-foreground">
+                {t(
+                  "“Set as my plan” saves this scenario's projection; the Dashboard then tracks your real progress against it.",
+                )}
+              </p>
+              <ScenarioEditor
+                key={selected.scenario.id}
+                s={selected.scenario}
+                today={today}
+                row={selected}
+                advanced={advanced}
+                params={params}
+              />
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* Range of futures runs the full width under the comparison (UI-13). */}
+      <section id="lab-range" className="scroll-mt-16">
+        <Card>
           <CardHeader
             title={t('Range of futures: {name}', { name: selected.name })}
             description={
@@ -662,21 +681,29 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
             )}
           </CardContent>
         </Card>
-      </div>
+      </section>
 
-      <SaferCard
-        row={selected}
-        chance={fresh(selected) ? chanceOf(selected) : undefined}
-        runs={mcRuns}
-        seed={mcSeed}
-        onSave={(name, overrides) => addScenario(name, overrides, selected.spec.events)}
-      />
-      <BacktestCard row={selected} slot={selected.slot} advanced={advanced} />
-      <ChecksPanel
-        row={selected}
-        runs={mcRuns}
-        setName={assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id).name}
-      />
+      <section id="lab-safer" className="scroll-mt-16">
+        <SaferCard
+          row={selected}
+          chance={fresh(selected) ? chanceOf(selected) : undefined}
+          runs={mcRuns}
+          seed={mcSeed}
+          onSave={(name, overrides) => addScenario(name, overrides, selected.spec.events)}
+        />
+      </section>
+      <section id="lab-past" className="scroll-mt-16">
+        <BacktestCard row={selected} slot={selected.slot} advanced={advanced} />
+      </section>
+      <section id="lab-assumptions" className="scroll-mt-16">
+        <ChecksPanel
+          row={selected}
+          runs={mcRuns}
+          setName={
+            assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id).name
+          }
+        />
+      </section>
       <p className="mt-4 text-xs text-subtle">
         {t(
           'Defaults: {horizonAge} is the age your money must last to (Settings). Results are what-ifs, not advice.',

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { CalendarPlus, Copy, Download, Lock, Plus, Trash2, Upload } from 'lucide-react';
 import { downloadMonthlyReminder } from '@/lib/ics';
 import {
@@ -10,6 +10,7 @@ import {
   type TaiwanSettings,
 } from '@/domain/entities';
 import { correlationKey, defaultAssumptionSet } from '@/domain/assumptions';
+import { formatDate } from '@/lib/format';
 import { today } from '@/domain/dates';
 import { db } from '@/db/db';
 import { ensureDefaults, requestPersistence } from '@/db/defaults';
@@ -34,6 +35,7 @@ import {
 import { disableAutosave, enableAutosave, resumeAutosave, useAutosave } from '@/lib/autosave';
 import { buildDemoBackup } from '@/io/demo';
 import { downloadText } from '@/lib/download';
+import { cn } from '@/lib/cn';
 import { useAppData } from '@/app/data';
 import { downloadBackup } from '@/lib/backupActions';
 import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
@@ -42,7 +44,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input, Select } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Table } from '@/components/ui/misc';
 import { t } from '@/i18n';
-import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { ModeSwitch } from '@/components/ModeSwitch';
 
 function Section({
@@ -174,7 +175,9 @@ function GeneralSettings({ s }: { s: Settings }) {
           )}
         </Field>
       </div>
-      <h3 className="mt-5 mb-2 text-sm font-semibold">{t('Target allocation for investable assets')}</h3>
+      <h3 id="allocation" className="mt-5 mb-2 scroll-mt-4 text-sm font-semibold">
+        {t('Target allocation for investable assets')}
+      </h3>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
         {ASSET_CLASSES.map((c) => (
           <Field key={c} label={ASSET_CLASS_LABELS[c]}>
@@ -631,7 +634,8 @@ const COLUMN_LABELS = {
   dividendYield: t('Dividend yield'),
 };
 
-function AssumptionSets() {
+/** Assumption sets and their Taiwan rules: two Settings sections that edit the same set. */
+function AssumptionSets({ part }: { part: 'assumptions' | 'taiwan' }) {
   const { assumptionSets, settings, scenarios } = useAppData();
   const [selectedId, setSelectedId] = useState(settings.activeAssumptionSetId);
   const selected = assumptionSets.find((a) => a.id === selectedId) ?? assumptionSets[0];
@@ -658,65 +662,71 @@ function AssumptionSets() {
     });
     setSelectedId(fallback.id);
   };
-  return (
-    <>
-      <Section
-        id="assumptions"
-        title={t('Assumption sets')}
-        description={t(
-          'Expected return, volatility, fees and dividend yield per asset class, plus inflation, salary growth and FX. Shown on every projection.',
-        )}
-        actions={
-          <>
-            <Select
-              aria-label={t('Assumption set to edit')}
-              className="h-8 w-44"
-              value={selected.id}
-              onChange={(e) => setSelectedId(e.target.value)}
-            >
-              {assumptionSets.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                  {a.id === settings.activeAssumptionSetId ? t(' (in use)') : ''}
-                </option>
-              ))}
-            </Select>
-            <Button size="sm" variant="outline" onClick={() => void duplicate()}>
-              <Copy aria-hidden /> {t('Duplicate')}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                void save(db.assumptionSets, defaultAssumptionSet(newId())).then((s) => setSelectedId(s.id))
-              }
-            >
-              <Plus aria-hidden /> {t('New from defaults')}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              aria-label={t('Delete assumption set')}
-              disabled={assumptionSets.length <= 1}
-              onClick={() => void remove()}
-            >
-              <Trash2 />
-            </Button>
-          </>
-        }
-      >
-        <AssumptionEditor key={selected.id} set={selected} />
-      </Section>
+  const picker = (
+    <Select
+      aria-label={t('Assumption set to edit')}
+      className="h-8 w-44"
+      value={selected.id}
+      onChange={(e) => setSelectedId(e.target.value)}
+    >
+      {assumptionSets.map((a) => (
+        <option key={a.id} value={a.id}>
+          {a.name}
+          {a.id === settings.activeAssumptionSetId ? t(' (in use)') : ''}
+        </option>
+      ))}
+    </Select>
+  );
+  if (part === 'taiwan')
+    return (
       <Section
         id="taiwan"
         title={t('Taiwan settings · {name}', { name: selected.name })}
         description={t(
           'Every rate, threshold and age is a setting, never hard-coded. Part of the assumption set.',
         )}
+        actions={picker}
       >
         <TaiwanEditor key={selected.id} set={selected} />
       </Section>
-    </>
+    );
+  return (
+    <Section
+      id="assumptions"
+      title={t('Assumption sets')}
+      description={t(
+        'Expected return, volatility, fees and dividend yield per asset class, plus inflation, salary growth and FX. Shown on every projection.',
+      )}
+      actions={
+        <>
+          {picker}
+          <Button size="sm" variant="outline" onClick={() => void duplicate()}>
+            <Copy aria-hidden /> {t('Duplicate')}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              void save(db.assumptionSets, defaultAssumptionSet(newId())).then((s) => setSelectedId(s.id))
+            }
+          >
+            <Plus aria-hidden /> {t('New from defaults')}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={t('Delete assumption set')}
+            disabled={assumptionSets.length <= 1}
+            title={assumptionSets.length <= 1 ? t('Keep at least one assumption set') : undefined}
+            onClick={() => void remove()}
+          >
+            <Trash2 />
+          </Button>
+        </>
+      }
+    >
+      <AssumptionEditor key={selected.id} set={selected} />
+    </Section>
   );
 }
 
@@ -762,8 +772,7 @@ function Categories() {
                 <td>{c.kind === 'income' ? t('income') : t('expense')}</td>
                 <td>
                   {c.kind === 'expense' && (
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       aria-label={t('Essential')}
                       checked={c.essential}
                       onChange={(e) => void patch(db.categories, c.id, { essential: e.target.checked })}
@@ -816,6 +825,7 @@ function Categories() {
               <Button
                 size="sm"
                 disabled={!name.trim()}
+                title={name.trim() ? undefined : t('Enter a name first')}
                 onClick={() => {
                   void save(db.categories, { id: newId(), name: name.trim(), kind, essential: false });
                   setName('');
@@ -1129,7 +1139,9 @@ function Backup() {
         <li>
           {t('Last backup:')}{' '}
           <strong className="text-foreground">
-            {settings.lastBackupAt ? settings.lastBackupAt.slice(0, 16).replace('T', ' ') : t('never')}
+            {settings.lastBackupAt
+              ? `${formatDate(settings.lastBackupAt)} ${settings.lastBackupAt.slice(11, 16)}`
+              : t('never')}
           </strong>
         </li>
         <li>
@@ -1162,23 +1174,43 @@ function Backup() {
   );
 }
 
+/** Deleting everything sits in its own section behind a typed confirmation (UI-15). */
 function DangerZone() {
+  const [typed, setTyped] = useState('');
+  const word = t('DELETE');
+  const ready = typed.trim() === word;
   return (
     <Section
       id="danger"
-      title={t('Clear data')}
+      title={t('Danger zone')}
       description={t('Deletes everything stored in this browser. Export a backup first.')}
     >
-      <Button
-        variant="destructive"
-        onClick={async () => {
-          if (!confirm(t('Delete ALL data in this browser? This cannot be undone.'))) return;
-          await clearAllData();
-          await ensureDefaults();
-        }}
-      >
-        <Trash2 aria-hidden /> {t('Delete all data')}
-      </Button>
+      <div className="flex flex-wrap items-end gap-2">
+        <Field label={t('Type {word} to confirm', { word })}>
+          {(id) => (
+            <Input
+              id={id}
+              className="w-44"
+              autoComplete="off"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+            />
+          )}
+        </Field>
+        <Button
+          variant="destructive"
+          disabled={!ready}
+          title={ready ? undefined : t('Type {word} first', { word })}
+          onClick={async () => {
+            if (!ready) return;
+            await clearAllData();
+            await ensureDefaults();
+            setTyped('');
+          }}
+        >
+          <Trash2 aria-hidden /> {t('Delete all data')}
+        </Button>
+      </div>
     </Section>
   );
 }
@@ -1213,36 +1245,102 @@ function Reminder() {
   );
 }
 
+const SECTIONS = [
+  { id: 'general', label: t('General') },
+  { id: 'mode', label: t('Beginner / Pro') },
+  { id: 'assumptions', label: t('Assumptions') },
+  { id: 'taiwan', label: t('Taiwan rules') },
+  { id: 'categories', label: t('Categories') },
+  { id: 'backup', label: t('Backup') },
+  { id: 'reminder', label: t('Reminder') },
+  { id: 'danger', label: t('Danger zone') },
+] as const;
+type SectionId = (typeof SECTIONS)[number]['id'];
+const isSection = (v: string | undefined): v is SectionId => SECTIONS.some((x) => x.id === v);
+
+/**
+ * Settings, one section at a time (UI-15): a sticky sub-nav on wider screens and a section
+ * picker on phones. Each section has its own address, `#/settings/backup`, so other pages can
+ * link to it; old `#/settings#backup` links still land in the right place.
+ */
 export function SettingsPage() {
   const { settings } = useAppData();
+  const { section } = useParams();
   const { hash } = useLocation();
+  const navigate = useNavigate();
+  const anchor = hash.slice(1);
   useEffect(() => {
-    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
-  }, [hash]);
+    if (anchor) document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
+  }, [anchor, section]);
+  if (!section && isSection(anchor)) return <Navigate to={`/settings/${anchor}`} replace />;
+  if (!section && anchor === 'allocation') return <Navigate to="/settings/general#allocation" replace />;
+  const current: SectionId = isSection(section) ? section : 'general';
   return (
     <>
       <PageHeader
         title={t('Settings')}
         description={t('General settings, assumptions, Taiwan rules, categories, and backup.')}
       />
-      <Section id="general" title={t('General')}>
-        <LanguageSwitch className="mb-4" />
-        <GeneralSettings s={settings} />
-      </Section>
-      <Section
-        id="mode"
-        title={t('Beginner / Pro')}
-        description={t(
-          'Beginner mode is a separate space for children: jars, goals, a money tree and lessons. It keeps its own data and never shows or changes your plan.',
-        )}
-      >
-        <ModeSwitch className="h-10 rounded-md border px-3 text-foreground" />
-      </Section>
-      <AssumptionSets />
-      <Categories />
-      <Backup />
-      <Reminder />
-      <DangerZone />
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[160px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)]">
+        <div className="md:hidden">
+          <Select
+            aria-label={t('Settings section')}
+            value={current}
+            onChange={(e) => navigate(`/settings/${e.target.value}`)}
+          >
+            {SECTIONS.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <nav aria-label={t('Settings sections')} className="sticky top-4 hidden md:block">
+          <ul className="flex flex-col gap-0.5">
+            {SECTIONS.map((x) => (
+              <li key={x.id}>
+                <NavLink
+                  to={`/settings/${x.id}`}
+                  aria-current={current === x.id ? 'true' : undefined}
+                  className={cn(
+                    'flex min-h-8 items-center rounded-md px-2.5 text-sm',
+                    current === x.id
+                      ? 'bg-surface-2 font-semibold text-foreground'
+                      : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground',
+                    x.id === 'danger' && current !== x.id && 'text-critical',
+                  )}
+                >
+                  {x.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="min-w-0">
+          {current === 'general' && (
+            <Section id="general" title={t('General')}>
+              <GeneralSettings s={settings} />
+            </Section>
+          )}
+          {current === 'mode' && (
+            <Section
+              id="mode"
+              title={t('Beginner / Pro')}
+              description={t(
+                'Beginner mode is a separate space for children: jars, goals, a money tree and lessons. It keeps its own data and never shows or changes your plan.',
+              )}
+            >
+              <ModeSwitch className="h-10 rounded-md border px-3 text-foreground" />
+            </Section>
+          )}
+          {current === 'assumptions' && <AssumptionSets part="assumptions" />}
+          {current === 'taiwan' && <AssumptionSets part="taiwan" />}
+          {current === 'categories' && <Categories />}
+          {current === 'backup' && <Backup />}
+          {current === 'reminder' && <Reminder />}
+          {current === 'danger' && <DangerZone />}
+        </div>
+      </div>
     </>
   );
 }

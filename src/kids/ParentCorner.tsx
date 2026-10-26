@@ -228,6 +228,10 @@ function Settings({ kids }: { kids: Kids }) {
     void getSetting<Record<CostKey, number>>('costPresets', DEFAULT_COSTS).then(setCosts);
   }, []);
   const growth: Growth = kids.growth ?? defaultGrowth();
+  const sameAsDefault =
+    !!kids.profile &&
+    !!defaultSplit &&
+    (['spend', 'save', 'grow'] as const).every((j) => kids.profile!.split[j] === defaultSplit[j]);
   const costLabel = (k: CostKey) =>
     ({ home: t('Home'), food: t('Food'), transport: t('Getting around'), fun: t('Fun'), travel: t('Trips') })[
       k
@@ -248,26 +252,47 @@ function Settings({ kids }: { kids: Kids }) {
           <p className="text-sm text-muted-foreground">
             {t('Used for weeks to a goal until there are a few weeks of saving to go by.')}
           </p>
-          {kids.profile && (
+          {/* One split editor (UI-25): the child's split, optionally the default for new children. */}
+          {kids.profile ? (
             <div>
               <p className="mb-2 font-semibold">{t('{name}’s jar split', { name: kids.profile.nickname })}</p>
               <SplitEditor
                 split={kids.profile.split}
-                onChange={(split) => void kidsDb.profiles.update(kids.profile!.id, { split })}
-              />
-            </div>
-          )}
-          {defaultSplit && (
-            <div>
-              <p className="mb-2 font-semibold">{t('Split for new children')}</p>
-              <SplitEditor
-                split={defaultSplit}
-                onChange={(s) => {
-                  setDefaultSplit(s);
-                  void setSetting('defaultSplit', s);
+                onChange={(split) => {
+                  void kidsDb.profiles.update(kids.profile!.id, { split });
+                  if (sameAsDefault) {
+                    setDefaultSplit(split);
+                    void setSetting('defaultSplit', split);
+                  }
                 }}
               />
+              <label className="mt-3 flex min-h-12 items-center gap-3 text-base">
+                <input
+                  type="checkbox"
+                  className="size-6 accent-[var(--primary)]"
+                  checked={sameAsDefault}
+                  onChange={(e) => {
+                    const split = e.target.checked ? kids.profile!.split : DEFAULT_SPLIT;
+                    setDefaultSplit(split);
+                    void setSetting('defaultSplit', split);
+                  }}
+                />
+                {t('Use for new children too')}
+              </label>
             </div>
+          ) : (
+            defaultSplit && (
+              <div>
+                <p className="mb-2 font-semibold">{t('Split for new children')}</p>
+                <SplitEditor
+                  split={defaultSplit}
+                  onChange={(s) => {
+                    setDefaultSplit(s);
+                    void setSetting('defaultSplit', s);
+                  }}
+                />
+              </div>
+            )
           )}
         </div>
       </Panel>

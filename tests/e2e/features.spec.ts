@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { deleteAllData } from './helpers';
 import { fileURLToPath } from 'node:url';
 
 const fixture = (name: string) => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url));
@@ -48,12 +49,13 @@ test('imports balances into the snapshot grid', async ({ page }) => {
   await expect(page.getByText('1 account names skipped')).toBeVisible();
   await page.getByRole('button', { name: 'Import 2 balances' }).click();
   await expect(page.getByText('Imported 2 balances')).toBeVisible();
-  await expect(page.getByLabel('Emergency fund on 2026-10-31')).toHaveValue('445,000');
+  await expect(page.getByLabel('Emergency fund on 31 Oct 2026')).toHaveValue('445,000');
   expect(errors).toEqual([]);
 });
 
 test('exports and restores an encrypted backup', async ({ page }) => {
   const errors = await loadDemo(page);
+  await page.goto('./#/settings/backup');
   await page.getByRole('button', { name: 'Export encrypted backup' }).click();
   await page.getByLabel('Passphrase', { exact: true }).fill('a long passphrase');
   await page.getByLabel('Repeat passphrase').fill('a long passphrase');
@@ -63,8 +65,9 @@ test('exports and restores an encrypted backup', async ({ page }) => {
   expect(file.suggestedFilename()).toMatch(/\.encrypted\.fi\.json$/);
   const path = await file.path();
 
-  await page.getByRole('button', { name: 'Delete all data' }).click();
-  // Clearing re-creates the defaults and remounts the page; wait until it is back.
+  await deleteAllData(page);
+  await page.goto('./#/settings/backup');
+  // Clearing re-creates the defaults; the backup section shows no backup yet.
   await expect(page.getByText('never', { exact: true })).toBeVisible();
   await page.getByLabel('Backup file').setInputFiles(path);
   await page.getByLabel('Passphrase', { exact: true }).fill('wrong passphrase');
@@ -99,7 +102,7 @@ test('goal history, offline manifest and loading fallback', async ({ page, reque
   const errors = await loadDemo(page);
   await page.goto('./#/goal');
   await expect(page.getByRole('heading', { name: 'Goal history' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: '2025-01-31' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '31 Jan 2025' })).toBeVisible();
 
   const manifest = await request.get('./manifest.webmanifest');
   expect(manifest.ok()).toBe(true);

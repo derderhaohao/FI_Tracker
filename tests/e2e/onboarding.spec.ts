@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { deleteAllData } from './helpers';
 
 async function fillMoney(page: Page, label: string, value: string, nth = 0) {
   const input = page.getByLabel(label, { exact: true }).nth(nth);
@@ -84,8 +85,7 @@ test('the welcome screen offers demo data and returns after deleting all data', 
   await page.getByRole('button', { name: /A grown-up planning money \(Pro\)/ }).click();
   await page.getByRole('button', { name: 'Load demo data' }).click();
   await expect(page.getByLabel('Plan health')).toBeVisible();
-  await page.goto('./#/settings');
-  await page.getByRole('button', { name: 'Delete all data' }).click();
+  await deleteAllData(page);
   await page.goto('./#/');
   await expect(page.getByRole('heading', { name: 'Welcome to FI Tracker' })).toBeVisible();
 });

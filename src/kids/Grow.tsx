@@ -353,6 +353,7 @@ export function Grow({ kids }: { kids: Kids }) {
   };
   return (
     <div className="flex flex-col gap-4">
+      <h1 className="text-2xl font-bold">{t('Grow')}</h1>
       <div role="tablist" aria-label={t('Grow')} className="grid grid-cols-2 gap-2">
         {(
           [

@@ -143,7 +143,8 @@ test('the Time Machine plays a portfolio against the S&P 500 without touching FI
 
   // TM-10, TM-11: play, pause, and the counters move; lead or lag per benchmark.
   const end = await page.getByTestId('tm-value').innerText();
-  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  // At the end the button offers a replay (UI-16).
+  await page.getByRole('button', { name: 'Replay', exact: true }).click();
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(page.getByTestId('tm-date')).not.toHaveText(/Sep 2026/);

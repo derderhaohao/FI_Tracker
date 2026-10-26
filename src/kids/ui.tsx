@@ -13,7 +13,8 @@ export function BigButton({
   const tones = {
     primary: 'bg-primary text-primary-foreground',
     plain: 'border-2 bg-surface text-foreground',
-    good: 'bg-good text-white',
+    // A fixed dark green so white text keeps 4.5:1 in both themes.
+    good: 'bg-[#166534] text-white',
     warm: 'bg-[#f59e0b] text-[#1f1300]',
   };
   return (

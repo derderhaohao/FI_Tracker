@@ -11,14 +11,14 @@ import { newId, patch, save } from '@/db/repo';
 import { useAppData } from '@/app/data';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { PlanHealthCard } from '@/components/PlanHealthCard';
-import { Term } from '@/components/ui/term';
+import { InfoTip, Term } from '@/components/ui/term';
 import { LineChart } from '@/components/charts/LineChart';
 import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
-import { budgetVsActual, monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { budgetVsActual, formatDate, monthLabel, pct, twd, twdCompact } from '@/lib/format';
 import { addMonths } from '@/domain/dates';
 import { LOAN_CATEGORY, loanTarget, type LoanSchedule } from '@/domain/loans';
 import { t } from '@/i18n';
@@ -46,8 +46,10 @@ function BudgetRow({ c, actual, loans }: { c: Category; actual: number; loans: L
   return (
     <tr>
       <td className="font-medium">
-        {c.name}
-        {loanNote && <div className="text-[11px] font-normal text-subtle">{loanNote}</div>}
+        <span className="inline-flex items-center gap-1">
+          {c.name}
+          {loanNote && <InfoTip label={t('About loan payments')}>{loanNote}</InfoTip>}
+        </span>
       </td>
       <td>
         <Checkbox
@@ -68,8 +70,12 @@ function BudgetRow({ c, actual, loans }: { c: Category; actual: number; loans: L
           />
         )}
       </td>
-      <td className="text-right text-muted-foreground">{actual > 0 ? twd(actual) : '—'}</td>
-      <td className="text-right text-muted-foreground">{budgetVsActual(c.fiAnnualMinor, actual)}</td>
+      <td className="text-right whitespace-nowrap text-muted-foreground tabular">
+        {actual > 0 ? twd(actual) : '—'}
+      </td>
+      <td className="min-w-24 text-right whitespace-nowrap text-muted-foreground">
+        {budgetVsActual(c.fiAnnualMinor, actual)}
+      </td>
     </tr>
   );
 }
@@ -135,8 +141,7 @@ function IncomeStreams() {
               />
             </td>
             <td>
-              <input
-                type="checkbox"
+              <Checkbox
                 aria-label={t('Inflation-linked')}
                 checked={s.inflationLinked}
                 onChange={(e) => void patch(db.incomeStreams, s.id, { inflationLinked: e.target.checked })}
@@ -193,8 +198,7 @@ function IncomeStreams() {
             />
           </td>
           <td>
-            <input
-              type="checkbox"
+            <Checkbox
               aria-label={t('New stream inflation-linked')}
               checked={draft.inflationLinked}
               onChange={(e) => setDraft({ ...draft, inflationLinked: e.target.checked })}
@@ -204,6 +208,7 @@ function IncomeStreams() {
             <Button
               size="sm"
               disabled={!valid}
+              title={valid ? undefined : t('Enter a name, a start age and an amount first')}
               onClick={() => {
                 if (!valid || annual === null) return;
                 void save(db.incomeStreams, {
@@ -274,7 +279,7 @@ function GoalHistoryCard() {
                     const change = prev ? fromMinor(r.fiNumberMinor - prev.fiNumberMinor) : undefined;
                     return (
                       <tr key={r.id}>
-                        <td>{r.date}</td>
+                        <td className="whitespace-nowrap">{formatDate(r.date)}</td>
                         <td>{TIER_LABELS[r.fiTier]}</td>
                         <td className="text-right">{twd(fromMinor(r.fiSpendingMinor))}</td>
                         <td className="text-right">{twdCompact(fromMinor(r.guaranteedIncomeMinor))}</td>
@@ -417,7 +422,7 @@ export function GoalPage() {
                 <tr>
                   <th>{t('Category')}</th>
                   <th>{t('Tier')}</th>
-                  <th>{t('FI budget / year')}</th>
+                  <th className="text-right">{t('FI budget / year (TWD)')}</th>
                   <th className="text-right">{t('Last 12 months')}</th>
                   <th className="text-right">{t('Budget vs now')}</th>
                 </tr>
@@ -563,7 +568,7 @@ export function GoalPage() {
               ) : (
                 <>{t('The 勞保 annuity is off.')} </>
               )}
-              <Link to="/settings#taiwan" className="text-primary hover:underline">
+              <Link to="/settings/taiwan" className="text-primary hover:underline">
                 {t('Taiwan settings')}
               </Link>
             </p>

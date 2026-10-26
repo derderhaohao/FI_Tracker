@@ -14,6 +14,26 @@ export function dateAfterYears(fromDate: string, years: number): string {
   return date.toLocaleDateString(locale(), { month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
+/**
+ * One date style for the whole app (UI-18). Months read "Sep 2026" (zh-TW "2026年9月"); full
+ * dates "30 Sep 2026" (zh-TW "2026/9/30"). ISO stays only in file names and exports.
+ */
+export function formatDate(date: string): string {
+  const [y, m, d] = date.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return date;
+  if (locale() === 'zh-TW') return `${y}/${m}/${d}`;
+  const month = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', {
+    month: 'short',
+    timeZone: 'UTC',
+  });
+  return `${d} ${month} ${y}`;
+}
+
+/** A month as "Sep 2026" (zh-TW "2026年9月"). */
+export function formatMonth(month: string): string {
+  return monthLabel(month);
+}
+
 export function monthLabel(month: string): string {
   const [y, m] = month.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(locale(), {

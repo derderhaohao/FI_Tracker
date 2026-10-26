@@ -1,21 +1,16 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { chanceDots, chanceText, lastsSentence, STATUS_LABELS, type PlanStatus } from '@/domain/planStatus';
+import { chanceDots, chanceText, lastsSentence, STATUS_LABELS } from '@/domain/planStatus';
 import { useAppData } from '@/app/data';
 import { usePlanHealth } from '@/app/planHealth';
 import { stopAge, stopDate } from '@/features/lab/model';
 import { Badge } from '@/components/ui/misc';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Term } from '@/components/ui/term';
 import { Dots } from '@/features/lab/Dots';
 import { pct } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { t } from '@/i18n';
-
-export const STATUS_TONE: Record<PlanStatus, 'good' | 'warning' | 'critical'> = {
-  on_track: 'good',
-  watch: 'warning',
-  at_risk: 'critical',
-};
 
 /**
  * The one headline answer (product review, "one answer people can trust"): the plan's
@@ -41,7 +36,7 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
         : t('Likely between age {lo} and {hi} (8 in 10 futures)', { lo, hi })
       : undefined;
   const badge = status ? (
-    <Badge tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>
+    <StatusBadge status={status}>{STATUS_LABELS[status]}</StatusBadge>
   ) : (
     <Badge>{pending ? t('Checking…') : '—'}</Badge>
   );
@@ -66,11 +61,8 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
               })}
             </span>
           )}
-          <Link to="/lab" className="ml-auto text-primary hover:underline">
-            {t('Details')}
-          </Link>
+          <DetailsPopover note={note} />
         </div>
-        {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
       </section>
     );
   }
@@ -81,7 +73,15 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
         {t('Your plan')} {badge}
       </div>
       <div className={cn('mt-1 font-semibold tracking-tight', age !== undefined ? 'text-4xl' : 'text-3xl')}>
-        {headline}
+        {age !== undefined ? (
+          // Wraps after the age, never mid-phrase (UI-11).
+          <>
+            <span className="whitespace-nowrap">{t('Most likely age {age}', { age })}</span>{' '}
+            <span className="whitespace-nowrap">· {date}</span>
+          </>
+        ) : (
+          headline
+        )}
       </div>
       {range && <div className="mt-1 text-sm text-muted-foreground">{range}</div>}
       {summary ? (
@@ -112,5 +112,51 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
         </Link>
       </div>
     </section>
+  );
+}
+
+/**
+ * The strip's explainer sits behind "Details" (UI-22), so the strip stays one line: a small
+ * popover with the note and the way to the Strategy Lab. Escape or a click outside closes it.
+ */
+function DetailsPopover({ note }: { note?: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', close);
+    window.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', esc);
+    };
+  }, [open]);
+  return (
+    <div ref={box} className="relative ml-auto">
+      <button
+        type="button"
+        aria-expanded={open}
+        className="inline-flex min-h-6 items-center text-primary hover:underline touch:min-h-11"
+        onClick={() => setOpen((o) => !o)}
+      >
+        {t('Details')}
+      </button>
+      {open && (
+        <div
+          role="dialog"
+          aria-label={t('Plan health details')}
+          className="absolute right-0 z-30 mt-1 w-80 max-w-[calc(100vw-2rem)] animate-pop-in rounded-md border bg-surface p-3 text-xs shadow-lg"
+        >
+          {note && <p className="mb-2 text-muted-foreground">{note}</p>}
+          <Link to="/lab" className="font-medium text-primary hover:underline">
+            {t('Why, and what would make it safer')}
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }

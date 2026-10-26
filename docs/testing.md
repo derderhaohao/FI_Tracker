@@ -76,6 +76,22 @@ Other suites cover the rest of the maths:
   - The grown-ups corner: the PIN with its lockout, the settings steppers, start again and
     delete.
 
+## Accessibility checks
+
+`tests/e2e/a11y.spec.ts` runs the UI polish acceptance checks against the built app:
+
+- **Contrast:** axe-core `color-contrast` on every Pro route, Settings section, the Time Machine
+  and the Beginner screens, in light and dark themes.
+- **Text size:** no text under 12 px.
+- **Target size:** no control under 24 × 24 px at 1280×800, and none under 44 × 44 px in the page or
+  the bottom nav at 390×844. The page must also never scroll sideways at that width.
+- **Layout:**
+  - The Dashboard KPI row is in view at 1280×800.
+  - Settings sections open by address, and the Lab nav marks the section in view.
+  - Time Machine result cells stay on two lines.
+
+Round axis ticks are unit-tested in `src/components/charts/ticks.test.ts`.
+
 ## Coverage gate
 
 `vite.config.ts` measures every file in `src`. It leaves out the entry point, the worker shell

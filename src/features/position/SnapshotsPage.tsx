@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/input';
 import { Badge, EmptyState, Notice, PageHeader, Table } from '@/components/ui/misc';
-import { twd, twdCompact } from '@/lib/format';
+import { formatDate, twd, twdCompact } from '@/lib/format';
 import { t } from '@/i18n';
 
 const VISIBLE_DATES = 6;
@@ -54,7 +54,7 @@ function FxInput({ currency, date }: { currency: string; date: string }) {
   const [text, setText] = useState<string | null>(null);
   return (
     <input
-      aria-label={t('{currency}/TWD on {date}', { currency, date })}
+      aria-label={t('{currency}/TWD on {date}', { currency, date: formatDate(date) })}
       inputMode="decimal"
       className="h-8 w-full rounded-md border border-input bg-surface px-2 text-right text-sm tabular outline-none focus-visible:ring-2 focus-visible:ring-ring"
       value={text ?? (stored !== undefined ? String(stored) : '')}
@@ -104,7 +104,7 @@ function HoldingsPanel({ account, date }: { account: Account; date: string }) {
   return (
     <Card className="mt-4">
       <CardHeader
-        title={t('Holdings · {nickname} · {date}', { nickname: account.nickname, date })}
+        title={t('Holdings · {nickname} · {date}', { nickname: account.nickname, date: formatDate(date) })}
         description={t(
           'Optional detail: ticker, units and price. The account balance stays the number of record.',
         )}
@@ -279,7 +279,7 @@ export function SnapshotsPage() {
   };
 
   const deleteDate = async (date: string) => {
-    if (!confirm(t('Delete every balance and FX rate on {date}?', { date }))) return;
+    if (!confirm(t('Delete every balance and FX rate on {date}?', { date: formatDate(date) }))) return;
     await db.transaction('rw', db.snapshots, db.fxRates, db.holdings, async () => {
       await db.snapshots.where('date').equals(date).delete();
       await db.fxRates.filter((r) => r.date === date).delete();
@@ -298,7 +298,9 @@ export function SnapshotsPage() {
     data.activeAssumptions.assets,
   );
   const missingFx = shown.flatMap((d) =>
-    currencies.filter((c) => rateFor(fxRates, c, d) === undefined).map((c) => t('{c} on {d}', { c, d })),
+    currencies
+      .filter((c) => rateFor(fxRates, c, d) === undefined)
+      .map((c) => t('{c} on {d}', { c, d: formatDate(d) })),
   );
   const holdingsAccount = holdingsFor && accounts.find((a) => a.id === holdingsFor.accountId);
 
@@ -382,13 +384,13 @@ export function SnapshotsPage() {
                   <th className="sticky left-0 z-10 min-w-44 bg-surface">{t('Account')}</th>
                   {shown.map((d) => (
                     <th key={d} className="w-36 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {d}
+                      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                        {formatDate(d)}
                         <Button
                           size="icon"
                           variant="ghost"
                           className="size-6"
-                          aria-label={t('Delete snapshot {d}', { d })}
+                          aria-label={t('Delete snapshot {d}', { d: formatDate(d) })}
                           onClick={() => void deleteDate(d)}
                         >
                           <Trash2 className="size-3.5" />
@@ -424,7 +426,7 @@ export function SnapshotsPage() {
                         <td key={d} className="w-36 min-w-28 align-top">
                           <MoneyInput
                             compact
-                            aria-label={t('{nickname} on {d}', { nickname: a.nickname, d })}
+                            aria-label={t('{nickname} on {d}', { nickname: a.nickname, d: formatDate(d) })}
                             value={s?.balanceMinor}
                             currency={a.currency}
                             twdRate={rateFor(fxRates, a.currency, d)}
@@ -482,7 +484,9 @@ export function SnapshotsPage() {
                   className="w-44"
                 >
                   {dates.map((d) => (
-                    <option key={d}>{d}</option>
+                    <option key={d} value={d}>
+                      {formatDate(d)}
+                    </option>
                   ))}
                 </Select>
               )}

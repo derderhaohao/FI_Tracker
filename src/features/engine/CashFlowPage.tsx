@@ -325,7 +325,7 @@ export function CashFlowPage() {
     return (
       <>
         <PageHeader title={t('Cash flow')} />
-        <EmptyState title={t('No categories')} to="/settings#categories" action={t('Add categories')} />
+        <EmptyState title={t('No categories')} to="/settings/categories" action={t('Add categories')} />
       </>
     );
   }
@@ -350,7 +350,7 @@ export function CashFlowPage() {
               <span className="ml-1 text-xs text-subtle">{t('essential')}</span>
             )}
             {c.system === LOAN_CATEGORY && (
-              <Link to="/accounts" className="block text-[11px] text-primary hover:underline">
+              <Link to="/accounts" className="block text-xs text-primary hover:underline">
                 {t('from loan terms in Accounts')}
               </Link>
             )}
@@ -401,7 +401,7 @@ export function CashFlowPage() {
                 {loan.added > 0 && (
                   <Link
                     to="/accounts"
-                    className="mt-0.5 block text-right text-[11px] text-primary hover:underline"
+                    className="mt-0.5 block text-right text-xs text-primary hover:underline"
                     title={t('Added from the loan terms in Accounts')}
                   >
                     {t('+ {amount} loan', { amount: twd(loan.added) })}
@@ -410,14 +410,14 @@ export function CashFlowPage() {
                 {loan.included > 0 && (
                   <Link
                     to="/accounts"
-                    className="mt-0.5 block text-right text-[11px] text-subtle hover:text-primary"
+                    className="mt-0.5 block text-right text-xs text-subtle hover:text-primary"
                     title={t('Part of this amount, from the loan terms in Accounts')}
                   >
                     {t('incl. {amount} loan', { amount: twd(loan.included) })}
                   </Link>
                 )}
                 {mode === 'monthly' && Math.abs(others) > 0.5 && (
-                  <div className="mt-0.5 text-right text-[11px] text-subtle">
+                  <div className="mt-0.5 text-right text-xs text-subtle">
                     {t('+ {others} other', { others: twdCompact(others) })}
                   </div>
                 )}

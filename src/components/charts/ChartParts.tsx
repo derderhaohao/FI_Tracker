@@ -72,3 +72,29 @@ export function TooltipBox({
     </div>
   );
 }
+
+/** Height of one row in the label band above the plot (UI-8). */
+export const LABEL_ROW = 18;
+
+/**
+ * A reference-line label drawn in the band above the plot, not inside it where lines cross
+ * (UI-8). Recharts passes the line's `viewBox`; `row` stacks labels that would overlap.
+ */
+export function BandLabel({
+  viewBox,
+  text,
+  row = 0,
+  fill,
+}: {
+  viewBox?: { x?: number; y?: number };
+  text: string;
+  row?: number;
+  fill: string;
+}) {
+  if (viewBox?.x === undefined || viewBox.y === undefined) return null;
+  return (
+    <text x={viewBox.x + 3} y={viewBox.y - 6 - row * LABEL_ROW} fill={fill} fontSize={12}>
+      {text}
+    </text>
+  );
+}

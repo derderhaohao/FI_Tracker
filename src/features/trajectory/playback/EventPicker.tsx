@@ -159,7 +159,7 @@ export function EventPicker({
               onFire={onFire}
             />
           ))}
-          <li className="pt-2 text-[11px] text-subtle">
+          <li className="pt-2 text-xs text-subtle">
             {t('Hypothetical stress stories with indicative numbers, not forecasts or probabilities.')}
           </li>
         </ul>

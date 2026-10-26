@@ -8,7 +8,7 @@ import { t } from '@/i18n';
 export function AssumptionBadge({ set }: { set: AssumptionSet }) {
   return (
     <Link
-      to="/settings#assumptions"
+      to="/settings/assumptions"
       className="inline-flex items-center gap-1.5 rounded-md border bg-surface px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
       title={t('Edit assumptions')}
     >

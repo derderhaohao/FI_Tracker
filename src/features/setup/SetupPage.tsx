@@ -694,7 +694,7 @@ export function SetupPage() {
             >
               <span
                 className={cn(
-                  'grid size-4 place-items-center rounded-full text-[10px]',
+                  'grid size-4 place-items-center rounded-full text-xs',
                   i < step ? 'bg-primary text-primary-foreground' : 'bg-surface-2',
                 )}
               >

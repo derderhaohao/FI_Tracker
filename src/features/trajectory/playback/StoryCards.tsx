@@ -26,14 +26,20 @@ export function StoryCards({
   normal,
   onPick,
   onBuild,
+  onlySelected = false,
+  onExpand,
 }: {
   saved: readonly Story[];
   selected: string;
+  /** Show only the chosen card and a "Change story" button. */
+  onlySelected?: boolean;
+  onExpand?: () => void;
   normal: PlaybackPath;
   onPick: (id: string, story: PlaybackStory) => void;
   onBuild: () => void;
 }) {
-  const cards = storyCards(saved);
+  const all = storyCards(saved);
+  const cards = onlySelected ? all.filter((c) => c.id === selected) : all;
   return (
     <div
       role="radiogroup"
@@ -64,19 +70,29 @@ export function StoryCards({
           </span>
         </button>
       ))}
-      <button
-        type="button"
-        className="flex w-56 shrink-0 snap-start items-center gap-2 rounded-md border border-dashed p-2 text-left text-sm hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:w-auto"
-        onClick={onBuild}
-      >
-        <Wrench className="size-4 shrink-0" aria-hidden />
-        <span>
-          <span className="block font-medium">{t('Build your own')}</span>
-          <span className="block text-xs text-muted-foreground">
-            {t('Your own market event, in Advanced')}
+      {onlySelected ? (
+        <button
+          type="button"
+          className="inline-flex min-h-8 items-center self-start text-sm font-medium text-primary hover:underline"
+          onClick={onExpand}
+        >
+          {t('Change story')}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="flex w-56 shrink-0 snap-start items-center gap-2 rounded-md border border-dashed p-2 text-left text-sm hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:w-auto"
+          onClick={onBuild}
+        >
+          <Wrench className="size-4 shrink-0" aria-hidden />
+          <span>
+            <span className="block font-medium">{t('Build your own')}</span>
+            <span className="block text-xs text-muted-foreground">
+              {t('Your own market event, in Advanced')}
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+      )}
     </div>
   );
 }

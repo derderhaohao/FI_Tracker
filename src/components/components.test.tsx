@@ -77,7 +77,7 @@ describe('AssumptionBadge', () => {
       </MemoryRouter>,
     );
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/settings#assumptions');
+    expect(link).toHaveAttribute('href', '/settings/assumptions');
     expect(link).toHaveTextContent(set.name);
     expect(link).toHaveTextContent(/inflation/);
   });

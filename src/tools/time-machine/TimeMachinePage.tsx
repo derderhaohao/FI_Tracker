@@ -23,7 +23,8 @@ import type { PriceIndex } from './format';
 import { loadFx, loadIndex, loadSeries } from './data';
 import { marketEvents } from './events';
 import { accentButton } from './fields';
-import { monthText, pct } from './labels';
+import { benchmarkLabel, money, monthText, pct } from './labels';
+import { tickerText } from './search';
 import { BenchmarksPanel } from './BenchmarksPanel';
 import { ResultsPanel, type Compared } from './ResultsPanel';
 import { SetupPanel } from './SetupPanel';
@@ -66,6 +67,8 @@ export function TimeMachinePage() {
   const [failed, setFailed] = useState<string[]>([]);
   const [fx, setFx] = useState<MarketData['fx']>();
   const [view, setView] = useState<View>('value');
+  // On phones, setup folds to one line once a run has started (UI-16).
+  const [setupFolded, setSetupFolded] = useState(false);
   const [saved, setSaved] = useState<SavedScenario[]>([]);
   const [picked, setPicked] = useState<number[]>([]);
   const [toast, setToast] = useState<string>();
@@ -268,6 +271,18 @@ export function TimeMachinePage() {
     }
   };
 
+  const setupSummary = scenario
+    ? [
+        money(scenario.amount, scenario.currency, true),
+        monthText(monthIndex(scenario.start)),
+        scenario.holdings.map((h) => `${tickerText(h.ticker)} ${Math.round(h.weight)}`).join(' / '),
+        scenario.benchmarks.length
+          ? t('vs {names}', { names: scenario.benchmarks.map(benchmarkLabel).join(', ') })
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : '';
   return (
     <div className="flex flex-col gap-4">
       <header className="-mx-4 -mt-6 border-b border-tool-accent/30 bg-tool-accent-bg px-4 py-4 md:-mx-8 md:px-8">
@@ -276,7 +291,7 @@ export function TimeMachinePage() {
             <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
               <Hourglass className="size-5 text-tool-accent" aria-hidden />
               {t('Investment Time Machine')}
-              <span className="rounded bg-tool-accent px-1.5 py-0.5 text-[11px] font-medium text-tool-accent-foreground">
+              <span className="rounded bg-tool-accent px-1.5 py-0.5 text-xs font-medium text-tool-accent-foreground">
                 {t('Sandbox')}
               </span>
             </h1>
@@ -304,8 +319,10 @@ export function TimeMachinePage() {
       {!error && !index && <p className="text-sm text-muted-foreground">{t('Loading…')}</p>}
 
       {index && scenario && (
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="flex min-w-0 flex-col gap-4">
+        // Phones: setup, then the stage, then results; desktop: stage beside setup, results full
+        // width below both (UI-16).
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
             <Card>
               <CardContent>
                 {missing.length > 0 && (
@@ -338,7 +355,10 @@ export function TimeMachinePage() {
                     reduced={reduced}
                     toast={toast}
                     onCloseToast={() => setToast(undefined)}
-                    onToggle={player.toggle}
+                    onToggle={() => {
+                      player.toggle();
+                      setSetupFolded(true);
+                    }}
                     onJump={player.jump}
                     onSpeed={player.setSpeed}
                   />
@@ -352,35 +372,19 @@ export function TimeMachinePage() {
                 )}
               </CardContent>
             </Card>
-            {sim && sim.months > 0 && (
-              <Card>
-                <CardContent>
-                  <ResultsPanel
-                    sim={sim}
-                    benchmarks={scenario.benchmarks}
-                    currency={scenario.currency}
-                    saved={saved}
-                    compare={compared}
-                    onSave={(name) => {
-                      const next = [...saved, { name, scenario }];
-                      setSaved(next);
-                      storeSaved(next);
-                    }}
-                    onOpen={(i) => update(upgrade(saved[i].scenario))}
-                    onDelete={(i) => {
-                      const next = saved.filter((_, j) => j !== i);
-                      setSaved(next);
-                      storeSaved(next);
-                      setPicked([]);
-                    }}
-                    onCompare={setPicked}
-                  />
-                </CardContent>
-              </Card>
-            )}
           </div>
-          <Card className="lg:sticky lg:top-4">
-            <CardContent className="flex flex-col gap-5">
+          <Card className="order-first min-w-0 lg:sticky lg:top-4 lg:order-none lg:col-start-2 lg:row-start-1">
+            {setupFolded && (
+              <CardContent className="flex items-center gap-2 lg:hidden">
+                <p className="min-w-0 flex-1 truncate text-sm" data-testid="tm-setup-summary">
+                  {setupSummary}
+                </p>
+                <Button size="sm" variant="outline" onClick={() => setSetupFolded(false)}>
+                  {t('Edit')}
+                </Button>
+              </CardContent>
+            )}
+            <CardContent className={cn('flex flex-col gap-5', setupFolded && 'hidden lg:flex')}>
               <SetupPanel
                 scenario={scenario}
                 index={index}
@@ -392,6 +396,32 @@ export function TimeMachinePage() {
               <BenchmarksPanel scenario={scenario} onChange={update} />
             </CardContent>
           </Card>
+          {sim && sim.months > 0 && (
+            <Card className="min-w-0 lg:col-span-2">
+              <CardContent>
+                <ResultsPanel
+                  sim={sim}
+                  benchmarks={scenario.benchmarks}
+                  currency={scenario.currency}
+                  saved={saved}
+                  compare={compared}
+                  onSave={(name) => {
+                    const next = [...saved, { name, scenario }];
+                    setSaved(next);
+                    storeSaved(next);
+                  }}
+                  onOpen={(i) => update(upgrade(saved[i].scenario))}
+                  onDelete={(i) => {
+                    const next = saved.filter((_, j) => j !== i);
+                    setSaved(next);
+                    storeSaved(next);
+                    setPicked([]);
+                  }}
+                  onCompare={setPicked}
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

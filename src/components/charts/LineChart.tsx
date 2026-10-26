@@ -10,8 +10,9 @@ import {
   YAxis,
 } from 'recharts';
 import { twdCompact } from '@/lib/format';
-import { ChartLegend, TooltipBox } from './ChartParts';
+import { BandLabel, ChartLegend, LABEL_ROW, TooltipBox } from './ChartParts';
 import { axisTick, useChartTheme } from './theme';
+import { trimZeros, xTicksFor, yAxisFor } from './ticks';
 import { getLang } from '@/i18n';
 
 export interface SeriesSpec {
@@ -35,9 +36,11 @@ export interface LineChartProps<T extends object> {
   referenceX?: { x: number | string; label: string };
   height?: number;
   ariaLabel: string;
+  /** Start the y-axis at zero (money); false lets it fit the data (index values). */
+  yFromZero?: boolean;
 }
 
-/** Line chart with optional area wash, hairline grid, crosshair tooltip, one y-axis. */
+/** Line chart with optional area wash, a zero line, crosshair tooltip, one y-axis. */
 export function LineChart<T extends object>({
   data,
   xKey,
@@ -48,32 +51,51 @@ export function LineChart<T extends object>({
   referenceX,
   height = 280,
   ariaLabel,
+  yFromZero = true,
 }: LineChartProps<T>) {
   const theme = useChartTheme();
   const slotColor = (slot: number) => theme.series[slot % theme.series.length];
   const color = (s: SeriesSpec) => s.color ?? slotColor(s.slot);
+  const y = yAxisFor(
+    data,
+    series.map((s) => s.key),
+    yFromZero,
+  );
+  const numericX = typeof (data[0] as Record<string, unknown> | undefined)?.[xKey] === 'number';
+  const xTicks = xTicksFor(data, xKey);
   return (
     <figure aria-label={ariaLabel} className="m-0">
       <ChartLegend items={series.map((s) => ({ label: s.label, color: color(s), dashed: s.dashed }))} />
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke={theme.grid} vertical={false} />
+          <ComposedChart
+            data={data}
+            margin={{ top: referenceX ? 8 + LABEL_ROW : 8, right: 12, bottom: 0, left: 0 }}
+          >
+            {/* One gridline at zero; the axis line is the only other rule (UI-9). */}
+            <CartesianGrid stroke={theme.grid} vertical={false} horizontalValues={[0]} />
             <XAxis
               dataKey={xKey as string}
+              type={numericX ? 'number' : 'category'}
+              domain={numericX ? ['dataMin', 'dataMax'] : undefined}
+              ticks={xTicks}
+              interval="preserveStartEnd"
               tick={axisTick(theme)}
               tickFormatter={xFormat}
               stroke={theme.axis}
               tickLine={false}
-              minTickGap={24}
+              minTickGap={12}
             />
             <YAxis
               tick={axisTick(theme)}
-              tickFormatter={yFormat}
+              tickFormatter={(v: number) => trimZeros(yFormat(v))}
+              ticks={y.ticks}
+              domain={y.domain}
+              interval={0}
               stroke={theme.axis}
               tickLine={false}
               axisLine={false}
-              width={getLang() === 'zh-TW' ? 76 : 64}
+              width={getLang() === 'zh-TW' ? 76 : 68}
             />
             <Tooltip
               cursor={{ stroke: theme.axis, strokeWidth: 1 }}
@@ -96,7 +118,7 @@ export function LineChart<T extends object>({
               <ReferenceLine
                 x={referenceX.x}
                 stroke={theme.axis}
-                label={{ value: referenceX.label, position: 'insideTopLeft', fill: theme.text, fontSize: 11 }}
+                label={<BandLabel text={referenceX.label} fill={theme.text} />}
               />
             )}
             {series

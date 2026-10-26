@@ -56,9 +56,9 @@ export default tseslint.config(
               message: 'Standalone tools must not use FI Tracker data or logic (PRD Part B, TM-3).',
             },
             {
-              regex: '^@/(lib/(?!cn$|download$)|components/(?!ui/|charts/theme$))',
+              regex: '^@/(lib/(?!cn$|download$)|components/(?!ui/|charts/(theme|ticks)$))',
               message:
-                'Allowed shared imports: @/components/ui/*, @/components/charts/theme, @/lib/cn, @/lib/download, @/i18n.',
+                'Allowed shared imports: @/components/ui/*, @/components/charts/theme and ticks, @/lib/cn, @/lib/download, @/i18n.',
             },
           ],
         },

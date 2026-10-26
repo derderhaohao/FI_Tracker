@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/input';
 import { Badge, EmptyState, PageHeader, Segmented, Table } from '@/components/ui/misc';
-import { pct, twd, twdCompact } from '@/lib/format';
+import { formatDate, pct, twd, twdCompact } from '@/lib/format';
 import { t } from '@/i18n';
 
 interface ChecklistItem {
@@ -171,7 +171,10 @@ function NewReview() {
             label={t('Lock plan of record')}
             hint={
               plan
-                ? t('Current: {name}, locked {lockedAt}', { name: plan.name, lockedAt: plan.lockedAt })
+                ? t('Current: {name}, locked {lockedAt}', {
+                    name: plan.name,
+                    lockedAt: formatDate(plan.lockedAt ?? ''),
+                  })
                 : t('No plan of record yet')
             }
           >
@@ -340,7 +343,7 @@ export function ReviewsPage() {
                       <li key={r.id} className="py-3">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{r.date}</span>
+                            <span className="font-medium">{formatDate(r.date)}</span>
                             <Badge>{TYPE_LABELS[r.type]}</Badge>
                             {done > 0 && (
                               <span className="text-xs text-subtle">
@@ -351,7 +354,7 @@ export function ReviewsPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            aria-label={t('Delete review {date}', { date: r.date })}
+                            aria-label={t('Delete review {date}', { date: formatDate(r.date) })}
                             onClick={() => confirm(t('Delete this review?')) && void db.reviews.delete(r.id)}
                           >
                             <Trash2 />
