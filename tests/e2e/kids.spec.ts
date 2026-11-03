@@ -79,6 +79,7 @@ test('a Beginner session leaves the plan database byte for byte unchanged (KD-2,
     .toBe(true);
 
   // Switch from Settings (KD-1) and make a profile.
+  await page.goto('./#/settings/mode');
   await page.getByRole('button', { name: 'Switch to Beginner mode' }).first().click();
   await page.getByPlaceholder('A fun name, not your real one').fill('Leo');
   await page.getByRole('button', { name: 'Start' }).click();
@@ -143,7 +144,7 @@ test('a Beginner session leaves the plan database byte for byte unchanged (KD-2,
 
   await page.getByRole('link', { name: 'Grown-ups' }).click();
   await page.getByRole('button', { name: 'Switch to Pro' }).click();
-  await expect(page.getByLabel('Plan health')).toBeVisible();
+  await expect(page.getByLabel('Your progress')).toBeVisible();
   expect(errors).toEqual([]);
 });
 

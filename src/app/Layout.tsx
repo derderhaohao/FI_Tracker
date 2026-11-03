@@ -1,140 +1,51 @@
-import { useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import {
-  ArrowLeftRight,
-  ClipboardCheck,
-  FlaskConical,
-  Hourglass,
-  Landmark,
-  LayoutDashboard,
-  MoreHorizontal,
-  RefreshCw,
-  Settings as SettingsIcon,
-  Table2,
-  Target,
-  TrendingUp,
-} from 'lucide-react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Home, RefreshCw, Settings as SettingsIcon, Target, Wallet, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { BackupBanner } from './BackupBanner';
 import { UpdatePrompt } from './UpdatePrompt';
 import { useAppData } from './data';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
-import { ModeSwitch } from '@/components/ModeSwitch';
 import { t } from '@/i18n';
 
-const NAV = [
-  { to: '/', label: t('Dashboard'), icon: LayoutDashboard },
-  { to: '/update', label: t('Monthly update'), icon: RefreshCw },
-  { to: '/accounts', label: t('Accounts'), icon: Landmark },
-  { to: '/snapshots', label: t('Snapshots'), icon: Table2 },
-  { to: '/cashflow', label: t('Cash flow'), icon: ArrowLeftRight },
-  { to: '/goal', label: t('Goal'), icon: Target },
-  { to: '/projection', label: t('Projection'), icon: TrendingUp },
-  { to: '/lab', label: t('Strategy Lab'), icon: FlaskConical },
-  { to: '/reviews', label: t('Reviews'), icon: ClipboardCheck },
-  { to: '/settings', label: t('Settings'), icon: SettingsIcon },
-] as const;
+/**
+ * Five destinations, the same on desktop and phone (UX doc, N1). `match` lists the paths a
+ * destination holds, so it stays highlighted on its tabs (and Settings on the tools).
+ */
+const NAV: { to: string; label: string; icon: LucideIcon; match: string[] }[] = [
+  { to: '/', label: t('Home'), icon: Home, match: [] },
+  { to: '/update', label: t('Update'), icon: RefreshCw, match: ['/update'] },
+  { to: '/money/balances', label: t('My money'), icon: Wallet, match: ['/money'] },
+  { to: '/plan/projection', label: t('My plan'), icon: Target, match: ['/plan'] },
+  { to: '/settings', label: t('Settings'), icon: SettingsIcon, match: ['/settings', '/tools'] },
+];
 
-/** Standalone tools: separate from the plan and never reading its data (TM-1). */
-const TOOLS = [{ to: '/tools/time-machine', label: t('Time Machine'), icon: Hourglass }] as const;
-
-function SandboxBadge() {
-  return (
-    <span className="ml-auto shrink-0 rounded bg-tool-accent-bg px-1 py-0.5 text-xs font-medium text-tool-accent">
-      {t('Sandbox')}
-    </span>
-  );
+function isActive(pathname: string, item: (typeof NAV)[number]): boolean {
+  return item.to === '/' ? pathname === '/' : item.match.some((m) => pathname.startsWith(m));
 }
 
-/** Phone tabs (product review, issue 9): four destinations plus More, which lists the rest. */
-const PHONE_LABELS: Record<string, string> = { '/update': t('Update') };
-const PHONE_TABS = ['/', '/update', '/cashflow', '/lab'];
-
 function MobileNav() {
-  const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  const tabs = NAV.filter((n) => PHONE_TABS.includes(n.to));
-  const more = NAV.filter((n) => !PHONE_TABS.includes(n.to));
-  const moreActive = [...more, ...TOOLS].some((n) => pathname.startsWith(n.to));
-  const item = 'flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-xs';
   return (
-    <>
-      {open && (
-        <div className="fixed inset-0 z-20 md:hidden" onClick={() => setOpen(false)}>
-          <nav
-            aria-label={t('More pages')}
-            className="absolute inset-x-0 bottom-14 rounded-t-lg border-t bg-surface p-2 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {more.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-md px-3 py-3 text-sm',
-                    isActive ? 'bg-surface-2 font-medium' : 'text-foreground',
-                  )
-                }
-              >
-                <Icon className="size-5" aria-hidden />
-                {label}
-              </NavLink>
-            ))}
-            <p className="mt-1 border-t px-3 pt-2 pb-1 text-xs font-medium text-subtle">
-              {t('Standalone tools')}
-            </p>
-            {TOOLS.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-md px-3 py-3 text-sm',
-                    isActive ? 'bg-surface-2 font-medium' : 'text-foreground',
-                  )
-                }
-              >
-                <Icon className="size-5 text-tool-accent" aria-hidden />
-                {label}
-                <SandboxBadge />
-              </NavLink>
-            ))}
-            <ModeSwitch className="w-full border-t px-3 py-3" />
-            <LanguageSwitch className="border-t px-3 pt-3 pb-1" />
-          </nav>
-        </div>
-      )}
-      <nav
-        aria-label={t('Main')}
-        className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-surface md:hidden"
-      >
-        {tabs.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            onClick={() => setOpen(false)}
-            className={({ isActive }) => cn(item, isActive ? 'text-primary' : 'text-muted-foreground')}
+    <nav aria-label={t('Main')} className="fixed inset-x-0 bottom-0 z-30 flex border-t bg-surface md:hidden">
+      {NAV.map((item) => {
+        const active = isActive(pathname, item);
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs',
+              active ? 'font-medium text-primary' : 'text-muted-foreground',
+            )}
           >
             <Icon className="size-5" aria-hidden />
-            <span className="whitespace-nowrap">{PHONE_LABELS[to] ?? label}</span>
-          </NavLink>
-        ))}
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-label={t('More pages')}
-          className={cn(item, moreActive || open ? 'text-primary' : 'text-muted-foreground')}
-          onClick={() => setOpen((o) => !o)}
-        >
-          <MoreHorizontal className="size-5" aria-hidden />
-          <span>{t('More')}</span>
-        </button>
-      </nav>
-    </>
+            <span className="whitespace-nowrap">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -182,47 +93,27 @@ export function Layout() {
           <span className="font-semibold">{t('FI Tracker')}</span>
         </div>
         <nav aria-label={t('Main')} className="flex flex-1 flex-col gap-0.5 px-2">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm',
-                  isActive
+          {NAV.map((item) => {
+            const active = isActive(pathname, item);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex min-h-9 items-center gap-2.5 rounded-md px-2.5 text-sm',
+                  active
                     ? 'bg-surface-2 font-medium text-foreground'
                     : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground',
-                )
-              }
-            >
-              <Icon className="size-4" aria-hidden />
-              {label}
-            </NavLink>
-          ))}
-          <div className="mt-3 border-t pt-3" role="group" aria-label={t('Standalone tools')}>
-            <p className="px-2.5 pb-1 text-xs font-medium text-subtle">{t('Standalone tools')}</p>
-            {TOOLS.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm',
-                    isActive
-                      ? 'bg-tool-accent-bg font-medium text-foreground'
-                      : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground',
-                  )
-                }
+                )}
               >
-                <Icon className="size-4 text-tool-accent" aria-hidden />
-                <span className="whitespace-nowrap">{label}</span>
-                <SandboxBadge />
-              </NavLink>
-            ))}
-          </div>
+                <Icon className="size-4" aria-hidden />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
-        <ModeSwitch className="mx-4 mt-3" />
         <LanguageSwitch className="px-4 pt-3" />
         <p className="px-4 py-3 text-xs text-subtle">{t('Data stays in this browser.')}</p>
       </aside>

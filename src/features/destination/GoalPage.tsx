@@ -606,7 +606,7 @@ export function GoalPage() {
                     'On the typical path you could stop at {planAge}, {v} year{v2} after your target. To see what closes the gap, try “Retire at {targetAge}” in the',
                     { planAge, v: planAge - targetAge, v2: planAge - targetAge === 1 ? '' : 's', targetAge },
                   )}{' '}
-                  <Link to="/lab" className="text-primary hover:underline">
+                  <Link to="/plan/lab" className="text-primary hover:underline">
                     {t('Strategy Lab')}
                   </Link>
                   {t(': it shows the chance your money lasts and which changes help most.')}

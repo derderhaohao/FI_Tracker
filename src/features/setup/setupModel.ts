@@ -79,8 +79,8 @@ export const SETUP_KINDS: Record<SetupKind, KindPreset> = {
     hint: t('儲蓄險 cash value'),
   },
   home: {
-    label: t('Home'),
-    nickname: t('Home'),
+    label: t('My home'),
+    nickname: t('My home'),
     type: 'property',
     assetClass: 'property',
     currency: 'TWD',

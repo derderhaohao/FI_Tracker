@@ -36,18 +36,7 @@ import { StoryCards } from './StoryCards';
 import { usePlayback } from './usePlayback';
 import { Hint } from './hints';
 import { useHints } from './useHints';
-
-function useMedia(query: string): boolean {
-  const [on, setOn] = useState(() => window.matchMedia?.(query).matches ?? false);
-  useEffect(() => {
-    const mq = window.matchMedia?.(query);
-    if (!mq) return;
-    const change = () => setOn(mq.matches);
-    mq.addEventListener('change', change);
-    return () => mq.removeEventListener('change', change);
-  }, [query]);
-  return on;
-}
+import { useMedia } from '@/lib/useMedia';
 
 interface Toast {
   key: string;

@@ -195,7 +195,7 @@ describe('i18n', () => {
     expect(locale()).toBe('zh-TW');
     expect(document.documentElement.lang).toBe('zh-Hant-TW');
     expect(localStorage.getItem('fi-tracker-lang')).toBe('zh-TW');
-    expect(t('On track')).not.toBe('On track');
+    expect(t('Likely')).not.toBe('Likely');
     setLang('en');
     expect(document.documentElement.lang).toBe('en');
   });
@@ -213,10 +213,10 @@ describe('i18n', () => {
   });
 
   it('translates label maps when read', () => {
-    const labels = translated({ ok: 'On track' });
-    expect(labels.ok).toBe('On track');
+    const labels = translated({ ok: 'Likely' });
+    expect(labels.ok).toBe('Likely');
     setLang('zh-TW');
-    expect(labels.ok).toBe(t('On track'));
-    expect(labels.ok).not.toBe('On track');
+    expect(labels.ok).toBe(t('Likely'));
+    expect(labels.ok).not.toBe('Likely');
   });
 });

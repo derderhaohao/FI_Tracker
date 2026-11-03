@@ -65,10 +65,12 @@ test('a new user gets an estimate, sets up in four steps and lands on a result s
   await expect(page.getByRole('heading', { level: 1, name: /^Age \d+$/ })).toBeVisible();
   await expect(page.getByRole('progressbar', { name: 'Progress to financial independence' })).toBeVisible();
   await page.getByRole('link', { name: 'Go to my dashboard' }).click();
-  await expect(page.getByLabel('Plan health').getByText(/^Most likely age \d+ · \w{3} \d{4}$/)).toBeVisible();
-  await page.goto('./#/accounts');
-  await expect(page.getByRole('cell', { name: 'US broker', exact: true })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Loan', exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel('Your progress').getByText(/^At this pace you could stop work at \d+ \(\w{3} \d{4}\)\.$/),
+  ).toBeVisible();
+  await page.goto('./#/money/balances');
+  await expect(page.getByRole('button', { name: 'US broker', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Loan', exact: true })).toBeVisible();
   await page.goto('./#/setup');
   await expect(page.getByText('Setup is for a fresh start')).toBeVisible();
   expect(errors).toEqual([]);
@@ -78,7 +80,7 @@ test('the welcome screen offers demo data and returns after deleting all data', 
   page.on('dialog', (d) => void d.accept());
   await page.goto('./');
   await page.getByRole('button', { name: /Explore a sample household/ }).click();
-  await expect(page.getByLabel('Plan health')).toBeVisible();
+  await expect(page.getByLabel('Your progress')).toBeVisible();
   await deleteAllData(page);
   await page.goto('./#/');
   await expect(page.getByRole('heading', { name: 'When can you stop working?' })).toBeVisible();

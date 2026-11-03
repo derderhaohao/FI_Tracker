@@ -16,10 +16,11 @@ describe('plan status and rounding (review issues 1 and 4)', () => {
     );
   });
 
-  it('uses On track / Watch / At risk', () => {
-    expect([0.9, 0.85, 0.8, 0.7, 0.69].map(planStatus)).toEqual([
+  it('uses Likely / Fairly likely / Uncertain, red only below 60% (UX doc, A1)', () => {
+    expect([0.9, 0.8, 0.79, 0.66, 0.6, 0.59].map(planStatus)).toEqual([
       'on_track',
       'on_track',
+      'watch',
       'watch',
       'watch',
       'at_risk',

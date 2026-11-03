@@ -68,10 +68,10 @@ describe('plain-language helpers', () => {
   });
 
   it('uses the shared tier thresholds and rounding', () => {
-    expect(tierOf(0.85)).toBe('on_track');
-    expect(tierOf(0.84)).toBe('watch');
-    expect(tierOf(0.7)).toBe('watch');
-    expect(tierOf(0.69)).toBe('at_risk');
+    expect(tierOf(0.8)).toBe('on_track');
+    expect(tierOf(0.79)).toBe('watch');
+    expect(tierOf(0.6)).toBe('watch');
+    expect(tierOf(0.59)).toBe('at_risk');
     expect(outOfTen(0.6)).toBe(6);
     expect(outOfTen(0.97)).toBe(10);
     expect(outOfTen(0.94)).toBe(9);
@@ -86,7 +86,8 @@ describe('plain-language helpers', () => {
       `In 6 of 10 simulated futures your money lasts to ${today.input.horizonAge}; in the other 4 it runs out, typically around age 81.`,
     );
     expect(v.reach).toBe('You reach your target in nearly every simulation; the risk comes after you stop.');
-    expect(v.tier).toBe('at_risk');
+    // 6 in 10 is "Fairly likely" (amber), not red (UX doc, A1).
+    expect(v.tier).toBe('watch');
     expect(verdict(today, data.ctx.asOfDate).lasts).toBeUndefined();
   });
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Routes } from 'react-router-dom';
 import { ensureDefaults } from '@/db/defaults';
 import { importBackup } from '@/io/backup';
 import { buildDemoBackup } from '@/io/demo';
@@ -10,17 +10,7 @@ import type { ProjectionInput } from '@/domain/projection';
 import type { MonteCarloOptions } from '@/domain/montecarlo/runner';
 import { DataProvider, useAppData } from './data';
 import { PlanHealthProvider } from './planHealth';
-import { Layout } from './Layout';
-import { NotFound } from './NotFound';
-import { DashboardPage } from '@/features/dashboard/DashboardPage';
-import { AccountsPage } from '@/features/position/AccountsPage';
-import { SnapshotsPage } from '@/features/position/SnapshotsPage';
-import { CashFlowPage } from '@/features/engine/CashFlowPage';
-import { GoalPage } from '@/features/destination/GoalPage';
-import { ProjectionPage } from '@/features/trajectory/ProjectionPage';
-import { ReviewsPage } from '@/features/review/ReviewsPage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
-import { UpdatePage } from '@/features/update/UpdatePage';
+import { proRoutes } from './proRoutes';
 import { formatMoney } from '@/domain/money';
 
 // Whole screens with many clicks: allow for slower CI runners under coverage.
@@ -61,20 +51,7 @@ function renderPage(path: string) {
       <DataProvider fallback={<p>Loading</p>}>
         <PlanHealthProvider>
           <Spy />
-          <Routes>
-            <Route element={<Layout />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="accounts" element={<AccountsPage />} />
-              <Route path="snapshots" element={<SnapshotsPage />} />
-              <Route path="cashflow" element={<CashFlowPage />} />
-              <Route path="goal" element={<GoalPage />} />
-              <Route path="projection" element={<ProjectionPage />} />
-              <Route path="reviews" element={<ReviewsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="update" element={<UpdatePage />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
+          <Routes>{proRoutes(<p>Loading</p>)}</Routes>
         </PlanHealthProvider>
       </DataProvider>
     </MemoryRouter>,
@@ -92,33 +69,126 @@ afterAll(() => vi.unstubAllGlobals());
 
 describe('Pro pages with the demo plan', () => {
   it.each([
-    ['/', 'Dashboard'],
-    ['/accounts', 'Accounts'],
-    ['/snapshots', 'Snapshots'],
-    ['/cashflow', 'Cash flow'],
-    ['/goal', 'Goal'],
-    ['/projection', 'Projection'],
-    ['/reviews', 'Reviews'],
+    ['/', 'Home'],
+    ['/money/balances', 'Balances'],
+    ['/money/cashflow', 'Cash flow'],
+    ['/money/mix', 'Portfolio mix'],
+    ['/plan/goal', 'Goal'],
+    ['/plan/projection', 'Projection'],
+    ['/plan/lab', 'Strategy Lab'],
+    ['/update/reviews', 'Reviews'],
     ['/settings', 'Settings'],
     ['/update', 'Monthly update'],
-  ])('%s opens with its heading and navigation', async (path, heading) => {
+    // Old addresses redirect to the tab that holds the same content (N1).
+    ['/accounts', 'Balances'],
+    ['/snapshots', 'Balances'],
+    ['/goal', 'Goal'],
+    ['/reviews', 'Reviews'],
+  ])('%s opens with its heading and the five-item menu', async (path, heading) => {
     renderPage(path);
     expect(
       await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 5000 }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Accounts' }).length).toBeGreaterThan(0);
+    const menu = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    expect(
+      within(menu)
+        .getAllByRole('link')
+        .map((l) => l.textContent),
+    ).toEqual(['Home', 'Update', 'My money', 'My plan', 'Settings']);
   });
 
-  it('shows the plan health once the simulated futures are in', async () => {
+  it.each([
+    ['general', 'General'],
+    ['mode', 'Beginner / Pro'],
+    ['tools', 'Tools'],
+    ['assumptions', 'Assumptions'],
+    ['taiwan', 'Taiwan rules'],
+    ['categories', 'Categories'],
+    ['backup', 'Backup'],
+    ['reminder', 'Reminder'],
+    ['danger', 'Danger zone'],
+  ])('Settings opens its %s section by address', async (section, heading) => {
+    renderPage(`/settings/${section}`);
+    await screen.findByRole('heading', { level: 1, name: 'Settings' }, { timeout: 5000 });
+    const nav = screen.getByRole('navigation', { name: 'Settings sections' });
+    expect(within(nav).getByRole('link', { name: heading })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getAllByRole('heading', { level: 2 }).length).toBeGreaterThan(0);
+  });
+
+  it('runs the whole monthly update, pay and spending included, to a recap (M1)', async () => {
+    const user = userEvent.setup();
+    renderPage('/update');
+    await screen.findByRole('heading', { level: 1, name: 'Monthly update' }, { timeout: 5000 });
+    fireEvent.change(screen.getByLabelText('Balances as of'), { target: { value: '2026-10-31' } });
+    await user.click(screen.getByRole('button', { name: 'Start' }));
+    for (let i = 0; i < 30; i++) {
+      const same = screen.queryByRole('button', { name: 'Same as last month' });
+      if (same) {
+        await user.click(same);
+        continue;
+      }
+      const correct = screen.queryByRole('button', { name: 'All correct' });
+      if (correct) {
+        await user.click(correct);
+        continue;
+      }
+      if (screen.queryByRole('heading', { name: /^Pay and spending in / })) break;
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+    }
+    expect(screen.getByLabelText('Take-home pay (TWD)')).not.toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Add a bonus or one-off' }));
+    await user.type(screen.getByLabelText('Amount (TWD)'), '10000');
+    await user.tab();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Save and see the recap' }));
+    expect(
+      await screen.findByRole('heading', { name: /^Saved \d+ balances for 31 Oct 2026$/ }, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Saved this month')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Note for future you (optional)'), 'Raise next month');
+    await user.click(screen.getByRole('button', { name: 'Save note' }));
+    expect(await screen.findByRole('button', { name: 'Note saved' })).toBeInTheDocument();
+    expect(seen!.cashFlows.some((c) => c.month === '2026-10' && c.lumpSum)).toBe(true);
+    expect(seen!.reviews.some((r) => r.date === '2026-10-31' && r.notes === 'Raise next month')).toBe(true);
+  });
+
+  it('marks the menu item and tab for the page in view', async () => {
+    renderPage('/money/cashflow');
+    await screen.findByRole('heading', { level: 1, name: 'Cash flow' }, { timeout: 5000 });
+    const menu = screen.getAllByRole('navigation', { name: 'Main' })[0];
+    expect(within(menu).getByRole('link', { name: 'My money' })).toHaveAttribute('aria-current', 'page');
+    const tabs = screen.getByRole('navigation', { name: 'My money sections' });
+    expect(within(tabs).getByRole('link', { name: 'Cash flow' })).toHaveAttribute('aria-current', 'page');
+    expect(within(tabs).getByRole('link', { name: 'Balances' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('leads Home with progress, one certainty word and one next step (D1)', async () => {
     renderPage('/');
+    const hero = await screen.findByRole('region', { name: 'Your progress' }, { timeout: 5000 });
+    expect(within(hero).getByText(/^You’re \d+% of the way to financial independence$/)).toBeInTheDocument();
+    expect(within(hero).getByRole('progressbar')).toBeInTheDocument();
+    expect(
+      await within(hero).findByText(/^(Likely|Fairly likely|Uncertain)$/, {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    expect(within(hero).getByRole('link', { name: 'How sure is this?' })).toHaveAttribute(
+      'href',
+      '/plan/projection',
+    );
+    expect(screen.getAllByRole('region', { name: 'Next step' })).toHaveLength(1);
+    // Allocation and currency moved to My money.
+    expect(screen.queryByRole('heading', { name: 'Allocation' })).not.toBeInTheDocument();
+  });
+
+  it('shows the plan health on the projection once the simulated futures are in', async () => {
+    renderPage('/plan/projection');
     const health = await screen.findByRole('region', { name: 'Plan health' }, { timeout: 5000 });
     expect(
-      await within(health).findByText(/On track|Watch|At risk/, {}, { timeout: 5000 }),
+      await within(health).findByText(/^(Likely|Fairly likely|Uncertain)$/, {}, { timeout: 5000 }),
     ).toBeInTheDocument();
   });
 
   it('shows the FI number the calculations give', async () => {
-    renderPage('/goal');
+    renderPage('/plan/goal');
     await screen.findByRole('heading', { level: 1, name: 'Goal' }, { timeout: 5000 });
     expect(seen).toBeDefined();
     const fi = seen!.fiNumberNow;
@@ -129,7 +199,7 @@ describe('Pro pages with the demo plan', () => {
   });
 
   it('agrees with the projection: the dashboard progress uses the same target', async () => {
-    renderPage('/projection');
+    renderPage('/plan/projection');
     await screen.findByRole('heading', { level: 1, name: 'Projection' }, { timeout: 5000 });
     const { baseline, baselineInput } = seen!;
     expect(baseline.rows[0].age).toBe(baselineInput.startAge);
@@ -142,7 +212,7 @@ describe('Pro pages with the demo plan', () => {
 
   it('plays a story with a scheduled crisis to its end card', async () => {
     const user = userEvent.setup();
-    renderPage('/projection');
+    renderPage('/plan/projection');
     await screen.findByRole('heading', { level: 1, name: 'Projection' }, { timeout: 5000 });
     await user.click(screen.getByRole('radio', { name: 'Play a story' }));
     expect(
@@ -174,10 +244,34 @@ describe('Pro pages with the demo plan', () => {
     ).toBeInTheDocument();
   });
 
-  it('opens the add-account form from Accounts', async () => {
-    renderPage('/accounts');
-    await screen.findByRole('heading', { level: 1, name: 'Accounts' }, { timeout: 5000 });
+  it('groups Balances with subtotals and opens account details in a drawer (M2)', async () => {
+    renderPage('/money/balances');
+    await screen.findByRole('heading', { level: 1, name: 'Balances' }, { timeout: 5000 });
+    for (const group of ['What you own', 'What you owe']) expect(screen.getByText(group)).toBeInTheDocument();
+    expect(screen.getByText(/^Locked until \d+$/)).toBeInTheDocument();
+    expect(screen.getAllByText('Subtotal').length).toBeGreaterThanOrEqual(2);
+    // Read first: only the latest month takes typing; Edit opens an earlier one.
+    const history = screen.getByRole('region', { name: 'Monthly history' });
+    const before = within(history).getAllByRole('textbox').length;
+    await userEvent.click(within(history).getAllByRole('button', { name: /^Edit / })[0]);
+    expect(within(history).getAllByRole('textbox').length).toBeGreaterThan(before);
+    await userEvent.click(screen.getByRole('button', { name: 'Everyday account' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Edit Everyday account' });
+    expect(within(drawer).getByLabelText('Nickname')).toHaveValue('Everyday account');
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Close' }));
     await userEvent.click(screen.getByRole('button', { name: 'Add account' }));
-    expect(await screen.findByLabelText('Nickname')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'New account' })).toBeInTheDocument();
+  });
+
+  it('collapses cash-flow groups to totals and keeps one-offs behind a button (M2)', async () => {
+    renderPage('/money/cashflow');
+    await screen.findByRole('heading', { level: 1, name: 'Cash flow' }, { timeout: 5000 });
+    const income = screen.getByRole('button', { name: 'Income' });
+    expect(income).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('heading', { name: /^Other entries/ })).not.toBeInTheDocument();
+    await userEvent.click(income);
+    expect(income).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(screen.getByRole('button', { name: /^Add a one-off or see other entries/ }));
+    expect(screen.getByRole('heading', { name: /^Other entries/ })).toBeInTheDocument();
   });
 });

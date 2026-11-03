@@ -11,13 +11,13 @@ test('switches to Taiwan Traditional Chinese and back, keeping the choice', asyn
   await expect(page.getByRole('heading', { level: 1, name: '設定' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hant-TW');
 
-  await page.getByRole('link', { name: '總覽' }).first().click();
-  await expect(page.getByRole('heading', { level: 1, name: '總覽' })).toBeVisible();
-  await expect(page.getByText('淨資產總額').first()).toBeVisible();
+  await page.getByRole('link', { name: '首頁' }).first().click();
+  await expect(page.getByRole('heading', { level: 1, name: '首頁' })).toBeVisible();
+  await expect(page.getByText('淨資產', { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/NT\$[\d.]+萬/).first()).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: '總覽' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: '首頁' })).toBeVisible();
 
   await page.goto('./#/lab');
   await expect(page.getByRole('heading', { level: 1, name: '策略實驗室' })).toBeVisible();

@@ -1,18 +1,19 @@
 import { expect, test } from '@playwright/test';
 
-test('a loan is entered once in Accounts and shows up in Cash flow and the projection', async ({ page }) => {
+test('a loan is entered once in Balances and shows up in Cash flow and the projection', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('dialog', (d) => void d.accept());
   await page.goto('./#/settings?demo=1');
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
 
-  // The demo's car loan is already inside its "Loan repayment" spending.
-  await page.goto('./#/accounts');
+  // The demo's car loan is already inside its "Loan repayment" spending (shown under it in Balances).
+  await page.goto('./#/money/balances');
   await expect(page.getByText(/12,500\/mo · \d+ mo · in Loan repayment/)).toBeVisible();
-  await page.goto('./#/cashflow');
-  // Every month's cell says how much of it is the loan.
-  await expect(page.getByText('incl. NT$12,500 loan')).toHaveCount(6);
+  await page.goto('./#/money/cashflow');
+  // Every month's cell says how much of it is the loan; the groups open on a click (UX doc, M2).
+  await page.getByRole('button', { name: 'Expenses' }).click();
+  await expect(page.getByText('incl. NT$12,500 loan')).toHaveCount(3);
 
   // The projection pays it on its own schedule, then stops.
   await page.goto('./#/projection');
@@ -21,8 +22,8 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   await expect(page.getByRole('columnheader', { name: 'Loans' })).toBeVisible();
 
   // Switch it to "add automatically": a Loan payments row fills itself, and a month can be changed.
-  await page.goto('./#/accounts');
-  await page.getByRole('button', { name: 'Edit Car loan' }).click();
+  await page.goto('./#/money/balances');
+  await page.getByRole('button', { name: 'Car loan', exact: true }).click();
   // No term to type: it is worked out from the latest balance, the rate and the payment.
   await expect(page.getByLabel('Remaining term (months)')).toHaveCount(0);
   await expect(page.getByTestId('loan-term')).toContainText(
@@ -33,39 +34,44 @@ test('a loan is entered once in Accounts and shows up in Cash flow and the proje
   await page.getByLabel('In category').selectOption({ label: 'Housing' });
   await page.getByRole('button', { name: 'Save account' }).click();
   await expect(page.getByText(/added to Housing automatically/)).toBeVisible();
-  await page.goto('./#/cashflow');
+  await page.goto('./#/money/cashflow');
+  await page.getByRole('button', { name: 'Expenses' }).click();
   await expect(page.getByLabel('Housing 2026-09', { exact: true })).toHaveValue('18,000');
-  await expect(page.getByText('+ NT$12,500 loan')).toHaveCount(6);
+  await expect(page.getByText('+ NT$12,500 loan')).toHaveCount(3);
 
   // Or as a separate "Loan payments" row, where one month can be changed.
-  await page.goto('./#/accounts');
-  await page.getByRole('button', { name: 'Edit Car loan' }).click();
+  await page.goto('./#/money/balances');
+  await page.getByRole('button', { name: 'Car loan', exact: true }).click();
   await page.getByLabel('In category').selectOption('');
   await page.getByRole('button', { name: 'Save account' }).click();
   await expect(page.getByText(/added to Cash flow automatically/)).toBeVisible();
 
-  await page.goto('./#/cashflow');
+  await page.goto('./#/money/cashflow');
+  await page.getByRole('button', { name: 'Expenses' }).click();
+  // Read first: only the latest month takes typing; Edit opens August too.
+  await page.getByRole('button', { name: 'Edit Aug 2026' }).click();
   const september = page.getByLabel('Loan payments 2026-09', { exact: true });
   await expect(september).toHaveValue('12,500');
   const scheduled = page.getByTitle('Scheduled from Accounts; type to change this month');
-  await expect(scheduled).toHaveCount(6);
+  await expect(scheduled).toHaveCount(2);
   await september.fill('50,000');
   await september.press('Enter');
   // Saved: September's amount is now typed, no longer the schedule.
-  await expect(scheduled).toHaveCount(5);
+  await expect(scheduled).toHaveCount(1);
   await page.reload();
+  await page.getByRole('button', { name: 'Expenses' }).click();
   await expect(page.getByLabel('Loan payments 2026-09', { exact: true })).toHaveValue('50,000');
+  await page.getByRole('button', { name: 'Edit Aug 2026' }).click();
   await expect(page.getByLabel('Loan payments 2026-08', { exact: true })).toHaveValue('12,500');
 
   // A new, lower balance shortens the term by itself.
-  await page.goto('./#/snapshots');
-  await page.getByLabel('Snapshot date').fill('2026-10-31');
+  await page.goto('./#/money/balances');
+  await page.getByLabel('Balances as of').fill('2026-10-31');
   await page.getByRole('button', { name: 'Copy last period' }).click();
   const owed = page.getByLabel('Car loan on 31 Oct 2026');
   await owed.fill('50,000');
   await owed.press('Enter');
-  await page.goto('./#/accounts');
-  await page.getByRole('button', { name: 'Edit Car loan' }).click();
+  await page.getByRole('button', { name: 'Car loan', exact: true }).click();
   await expect(page.getByTestId('loan-term')).toContainText('Paid off in 5 months · last payment Mar 2027');
   expect(errors).toEqual([]);
 });

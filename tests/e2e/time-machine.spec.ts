@@ -110,11 +110,9 @@ test('the Time Machine plays a portfolio against the S&P 500 without touching FI
     )
     .toBe(true);
 
-  // TM-1, TM-2: its own nav group, a header band, and the default scenario.
-  await page
-    .getByRole('group', { name: 'Standalone tools' })
-    .getByRole('link', { name: /Time Machine/ })
-    .click();
+  // TM-1, TM-2: reached from Settings → Tools (UX doc, N1), a header band, the default scenario.
+  await page.goto('./#/settings/tools');
+  await page.getByRole('link', { name: /Time Machine/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: /Investment Time Machine/ })).toBeVisible();
   await expect(page.getByTestId('tm-band')).toHaveText(
     'Standalone tool · Uses market history only. It does not read or change your FI Tracker data.',

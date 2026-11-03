@@ -407,4 +407,6 @@ export const KIDS_ZH_TW: Record<string, string> = {
   'Between Savings and Grow': '儲蓄和種樹之間',
   'Spend {a} · Savings {b} · Grow {c} of every 10 coins': '每 10 元：花用 {a}・儲蓄 {b}・種樹 {c}',
   '{n} coin for every 100 each year': '每 100 元每年長出 {n} 元',
+  // The main dictionary's Home is the menu item; for children it is the house.
+  Home: '家',
 };

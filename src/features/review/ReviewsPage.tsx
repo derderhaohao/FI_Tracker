@@ -35,7 +35,7 @@ const CHECKLISTS: Record<ReviewType, ChecklistItem[]> = {
     },
     {
       id: 'fx',
-      label: t('Enter the USD/TWD rate for the snapshot date'),
+      label: t('Enter the USD/TWD rate for the update date'),
       auto: (d) => d.fxRates.some((r) => monthOf(r.date) >= lastMonth()),
     },
     {
@@ -119,7 +119,7 @@ function NewReview() {
     <Card>
       <CardHeader
         title={t('New review')}
-        description={t('Monthly snapshot, quarterly review, annual reset.')}
+        description={t('Monthly update, quarterly review, annual reset.')}
       />
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end gap-3">
@@ -214,7 +214,11 @@ function PlanVsActual() {
   const totals = useMemo(() => monthlyTotals(data.cashFlows, data.categories, data.fxRates), [data]);
   if (!plan?.lockedProjection || !plan.lockedAt) {
     return (
-      <EmptyState title={t('No plan of record yet')} to="/lab" action={t('Lock one in the Strategy Lab')}>
+      <EmptyState
+        title={t('No plan of record yet')}
+        to="/plan/lab"
+        action={t('Lock one in the Strategy Lab')}
+      >
         {t(
           'Lock a scenario as the plan of record; every review then compares actual net worth, savings and spending against it.',
         )}
