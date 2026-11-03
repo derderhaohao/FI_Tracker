@@ -982,6 +982,8 @@ function Backup() {
       downloadText(backupFileName(`${today()}-before-import`), JSON.stringify(current, null, 2));
     }
     await importBackup(file);
+    // A restored file is itself a backup, and the demo needs none: no reminder right away.
+    await markBackedUp();
     await ensureDefaults();
     setMessage({
       tone: 'info',

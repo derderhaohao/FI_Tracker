@@ -30,12 +30,14 @@ async function keypad(page: Page, digits: string) {
       .click();
 }
 
-test('a new device asks who is using it; Beginner needs only a profile (KD-1, KD-3)', async ({ page }) => {
+test('a new device opens Pro with a quiet Beginner link; Beginner needs only a profile (KD-1, KD-3)', async ({
+  page,
+}) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   const started = Date.now();
   await page.goto('./');
-  await page.getByRole('button', { name: /A kid learning about money \(Beginner\)/ }).click();
+  await page.getByRole('button', { name: 'Try Beginner mode.' }).click();
   await expect(page.getByRole('heading', { name: 'Hello! Who is learning today?' })).toBeVisible();
   await page.getByPlaceholder('A fun name, not your real one').fill('Mimi');
   await page.getByRole('button', { name: 'Animal 6' }).click();
@@ -51,7 +53,7 @@ test('a new device asks who is using it; Beginner needs only a profile (KD-1, KD
   // Back to Pro from the grown-ups corner: a fresh plan, no setup was needed for Beginner.
   await page.getByRole('link', { name: 'Grown-ups' }).click();
   await page.getByRole('button', { name: 'Switch to Pro' }).click();
-  await expect(page.getByRole('heading', { name: 'Welcome to FI Tracker' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'When can you stop working?' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -68,7 +70,7 @@ test('a Beginner session leaves the plan database byte for byte unchanged (KD-2,
     .poll(
       async () => {
         const now = await dumpPlan(page);
-        const settled = now === before && now.includes(new Date().toISOString().slice(0, 10));
+        const settled = now === before && now.includes(`"date":"${new Date().toISOString().slice(0, 10)}"`);
         before = now;
         return settled;
       },

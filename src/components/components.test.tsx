@@ -5,7 +5,6 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { ModeSwitch } from './ModeSwitch';
 import { AssumptionBadge } from './AssumptionBadge';
 import { Dots } from '@/features/lab/Dots';
-import { WelcomeMode } from '@/app/WelcomeMode';
 import { getMode, setMode } from '@/lib/mode';
 import { getLang, setLang } from '@/i18n';
 import { makeAssumptions } from '@/domain/testFixtures';
@@ -48,23 +47,6 @@ describe('ModeSwitch', () => {
   it('takes a custom label', () => {
     render(<ModeSwitch label="Kids" />);
     expect(screen.getByRole('button', { name: 'Kids' })).toBeInTheDocument();
-  });
-});
-
-describe('WelcomeMode', () => {
-  it('asks who is using the app and keeps the answer', async () => {
-    render(<WelcomeMode />);
-    expect(screen.getByRole('heading', { name: 'Who is using this today?' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /A grown-up planning money/ }));
-    expect(getMode()).toBe('pro');
-    expect(window.location.hash).toBe('');
-  });
-
-  it('opens Beginner mode for a child', async () => {
-    render(<WelcomeMode />);
-    await userEvent.click(screen.getByRole('button', { name: /A kid learning about money/ }));
-    expect(getMode()).toBe('beginner');
-    expect(window.location.hash).toBe('#/kids');
   });
 });
 

@@ -123,8 +123,12 @@ export interface SetupDraft {
     avgInsuredSalaryMinor?: number;
     claimAge?: number;
   };
-  /** How new savings are invested; asked on the last step. */
+  /** How new savings are invested; pre-selected (T2) and changeable on the last step. */
   mix?: MixChoice;
+  /** "Do you have a Taiwan employer?" Yes estimates 勞退 and 勞保 from pay (UX doc, O2). */
+  taiwanEmployer?: boolean;
+  /** True once the user types their own FI spending; until then it follows spending × 12. */
+  fiSpendingEdited?: boolean;
 }
 
 export type MixChoice = 'current' | 'growth' | 'balanced' | 'cautious';
@@ -169,14 +173,67 @@ export function emptyDraft(swr: number): SetupDraft {
   return { accounts: [draftAccount('bank')], swr, taiwan: { skipped: false } };
 }
 
+/** Four short steps (UX doc, O2); the result screen follows Finish. */
 export const STEPS = [
   t('About you'),
-  t('Accounts'),
-  t('Money in & out'),
-  t('FI goal'),
-  t('Taiwan pensions'),
-  t('Review'),
+  t('What you have'),
+  t('Money in and out'),
+  t('How you invest'),
 ] as const;
+
+/** The answers of the 60-second estimate on the welcome screen (UX doc, O1). */
+export interface QuickEstimate {
+  age?: number;
+  investedMinor?: number;
+  monthlyIncomeMinor?: number;
+  monthlySpendingMinor?: number;
+}
+
+/** A setup draft from the quick estimate, so "Make it accurate" carries its four answers. */
+export function draftFromEstimate(e: QuickEstimate, swr: number, currentYear: number): SetupDraft {
+  const d = emptyDraft(swr);
+  if (e.age !== undefined) d.birthYear = currentYear - e.age;
+  if (e.investedMinor !== undefined) {
+    d.accounts = [
+      { ...draftAccount('tw_broker'), nickname: t('Investments'), balanceMinor: e.investedMinor },
+    ];
+  }
+  d.monthlyIncomeMinor = e.monthlyIncomeMinor;
+  d.monthlySpendingMinor = e.monthlySpendingMinor;
+  if (e.monthlySpendingMinor !== undefined) d.fiSpendingMinor = e.monthlySpendingMinor * 12;
+  return d;
+}
+
+/** True when the estimate has all four answers. */
+export function estimateComplete(e: QuickEstimate): boolean {
+  return (
+    e.age !== undefined &&
+    e.investedMinor !== undefined &&
+    e.monthlyIncomeMinor !== undefined &&
+    e.monthlySpendingMinor !== undefined
+  );
+}
+
+/** Take-home pay is roughly 90% of gross after 勞健保 and withheld tax. */
+const TAKE_HOME_SHARE = 0.9;
+/** A typical start of insured work, for years of 勞保 so far. */
+const CAREER_START_AGE = 23;
+
+/**
+ * Rough 勞退 and 勞保 figures from monthly take-home pay and age, for someone with a Taiwan
+ * employer. The dashboard asks for the real figures later ("Improve accuracy").
+ */
+export function estimateTaiwanPension(
+  monthlyIncomeMinor: number,
+  age: number,
+): { pensionWageMinor: number; avgInsuredSalaryMinor: number; insuredYears: number } {
+  const gross = Math.round(monthlyIncomeMinor / TAKE_HOME_SHARE / 100_00) * 100_00;
+  return {
+    pensionWageMinor: Math.min(gross, 150_000_00),
+    avgInsuredSalaryMinor: Math.min(gross, 45_800_00),
+    insuredYears: Math.max(0, Math.min(45, age - CAREER_START_AGE)),
+  };
+}
 
 /** Problems that stop the user leaving a step; empty when the step is complete. */
 export function validateStep(step: number, d: SetupDraft, currentYear: number): string[] {
@@ -215,26 +272,10 @@ export function validateStep(step: number, d: SetupDraft, currentYear: number): 
       if (d.monthlyIncomeMinor === undefined)
         errors.push(t('Enter your monthly take-home pay (0 if none right now).'));
       if (d.monthlySpendingMinor === undefined) errors.push(t('Enter your monthly spending.'));
-      break;
-    case 3:
-      if (!d.fiSpendingMinor || d.fiSpendingMinor <= 0)
+      if (d.monthlySpendingMinor !== undefined && (!d.fiSpendingMinor || d.fiSpendingMinor <= 0))
         errors.push(t('Enter how much you would spend per year once you stop working.'));
       if (d.swr < 0.025 || d.swr > 0.05) errors.push(t('The withdrawal rate must be between 2.5% and 5%.'));
       break;
-    case 5:
-      if (!d.mix) errors.push(t('Choose how your new savings will be invested.'));
-      else if (d.mix === 'current' && !currentMix(d))
-        errors.push(t('There is no current mix to keep yet; pick one of the ready-made mixes.'));
-      break;
-    case 4: {
-      const tw = d.taiwan;
-      if (tw.skipped) break;
-      if (tw.insuredYears !== undefined && (tw.insuredYears < 0 || tw.insuredYears > 50))
-        errors.push(t('勞保 insured years must be between 0 and 50.'));
-      if (tw.claimAge !== undefined && (tw.claimAge < 60 || tw.claimAge > 70))
-        errors.push(t('勞保 claim age must be between 60 and 70.'));
-      break;
-    }
   }
   return [...new Set(errors)];
 }
@@ -286,28 +327,68 @@ export function currentMix(d: SetupDraft): Allocation | undefined {
   return out;
 }
 
-/** The target allocation the user chose, if any. */
+const SHARE_CLASSES: AssetClass[] = ['global_equity', 'us_equity', 'tw_equity'];
+
+/** Shares, bonds and cash-or-other, as fractions of a mix. */
+function mixShape(a: Allocation): [number, number, number] {
+  const total = Object.values(a).reduce((s, v) => s + (v ?? 0), 0) || 1;
+  const shares = SHARE_CLASSES.reduce((s, c) => s + (a[c] ?? 0), 0) / total;
+  const bonds = (a.bond ?? 0) / total;
+  return [shares, bonds, 1 - shares - bonds];
+}
+
+/**
+ * The ready-made mix closest to what the accounts already hold, by their split between shares,
+ * bonds and cash; Balanced when nothing is invested yet. Setup pre-selects it (UX doc, T2), so
+ * the required choice is never blank.
+ */
+export function suggestedMix(d: SetupDraft): Exclude<MixChoice, 'current'> {
+  const current = currentMix(d);
+  if (!current) return 'balanced';
+  const shape = mixShape(current);
+  let best: Exclude<MixChoice, 'current'> = 'balanced';
+  let bestDistance = Infinity;
+  for (const [key, preset] of Object.entries(MIX_PRESETS) as [
+    Exclude<MixChoice, 'current'>,
+    (typeof MIX_PRESETS)['balanced'],
+  ][]) {
+    const p = mixShape(preset.allocation);
+    const distance = p.reduce((s, v, i) => s + Math.abs(v - shape[i]), 0);
+    if (distance < bestDistance) [best, bestDistance] = [key, distance];
+  }
+  return best;
+}
+
+/** The mix in effect: the user's choice, else the suggested one. */
+export function effectiveMix(d: SetupDraft): MixChoice {
+  if (d.mix === 'current' && !currentMix(d)) return suggestedMix(d);
+  return d.mix ?? suggestedMix(d);
+}
+
+/** The target allocation the draft will save. */
 export function chosenMix(d: SetupDraft): Allocation | undefined {
-  if (!d.mix) return undefined;
-  return d.mix === 'current' ? currentMix(d) : MIX_PRESETS[d.mix].allocation;
+  const mix = effectiveMix(d);
+  return mix === 'current' ? currentMix(d) : MIX_PRESETS[mix].allocation;
 }
 
 /** Turns a complete draft into the records to save. Pure: ids come from `newId`. */
 export function buildSetupRecords(d: SetupDraft, ctx: SetupContext): SetupRecords {
   const at = { createdAt: ctx.now, updatedAt: ctx.now };
-  const settings: Settings = {
-    ...ctx.settings,
-    birthYear: d.birthYear ?? ctx.settings.birthYear,
-    defaultSwr: d.swr,
-    destination: { ...ctx.settings.destination, targetFiAge: d.targetFiAge },
-    targetAllocation: chosenMix(d) ?? ctx.settings.targetAllocation,
-    backupPrompt: 'setup',
-    updatedAt: ctx.now,
-  };
 
   const assumptionSet: AssumptionSet = structuredClone(ctx.assumptionSet);
   const tw = assumptionSet.taiwan;
-  if (!d.taiwan.skipped) {
+  const estimated =
+    d.taiwanEmployer === true &&
+    d.taiwan.pensionWageMinor === undefined &&
+    d.monthlyIncomeMinor !== undefined &&
+    d.birthYear !== undefined;
+  if (estimated) {
+    const e = estimateTaiwanPension(d.monthlyIncomeMinor!, yearOf(ctx.today) - d.birthYear!);
+    tw.laborPension.monthlyInsuredWageMinor = e.pensionWageMinor;
+    tw.laborInsurance.avgMonthlyInsuredSalaryMinor = e.avgInsuredSalaryMinor;
+    tw.laborInsurance.insuredYearsToDate = e.insuredYears;
+    assumptionSet.updatedAt = ctx.now;
+  } else if (!d.taiwan.skipped && d.taiwanEmployer !== false) {
     if (d.taiwan.pensionWageMinor !== undefined)
       tw.laborPension.monthlyInsuredWageMinor = d.taiwan.pensionWageMinor;
     if (d.taiwan.insuredYears !== undefined) tw.laborInsurance.insuredYearsToDate = d.taiwan.insuredYears;
@@ -317,6 +398,16 @@ export function buildSetupRecords(d: SetupDraft, ctx: SetupContext): SetupRecord
     assumptionSet.updatedAt = ctx.now;
   }
 
+  const settings: Settings = {
+    ...ctx.settings,
+    birthYear: d.birthYear ?? ctx.settings.birthYear,
+    defaultSwr: d.swr,
+    destination: { ...ctx.settings.destination, targetFiAge: d.targetFiAge },
+    targetAllocation: chosenMix(d) ?? ctx.settings.targetAllocation,
+    backupPrompt: 'setup',
+    pensionEstimated: estimated || undefined,
+    updatedAt: ctx.now,
+  };
   const accounts: Account[] = [];
   const liabilities: Liability[] = [];
   const snapshots: Snapshot[] = [];
@@ -455,6 +546,51 @@ export async function applySetup(r: SetupRecords): Promise<void> {
   );
 }
 
+const DRAFT_KEY = 'fi-tracker-setup-draft';
+
+/** The draft survives a reload during setup (session storage only). */
+export function loadSetupDraft(swr: number): SetupDraft {
+  try {
+    const saved = sessionStorage.getItem(DRAFT_KEY);
+    if (saved) return JSON.parse(saved) as SetupDraft;
+  } catch {
+    // Unavailable storage just means a fresh draft.
+  }
+  return emptyDraft(swr);
+}
+
+export function saveSetupDraft(d: SetupDraft | undefined): void {
+  try {
+    if (d) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    else sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Not critical.
+  }
+}
+
 export function currentAge(birthYear: number | undefined, today: string): number | undefined {
   return birthYear === undefined ? undefined : yearOf(today) - birthYear;
+}
+
+/**
+ * The live "Estimated FI age" during setup (UX doc, O2), from whatever the draft holds so far.
+ * `needsMoney` until pay and spending are in, since a date without them means nothing.
+ */
+export function livePreview(
+  d: SetupDraft,
+  ctx: SetupContext,
+): { investableNow: number; needsMoney: boolean; preview?: SetupPreview } | undefined {
+  if (d.birthYear === undefined) return undefined;
+  const filled: SetupDraft = {
+    ...d,
+    accounts: d.accounts.map((a) => ({ ...a, balanceMinor: a.balanceMinor ?? 0 })),
+    usdRate: d.usdRate ?? 0,
+  };
+  const needsMoney = d.monthlyIncomeMinor === undefined || d.monthlySpendingMinor === undefined;
+  const preview = previewSetup(buildSetupRecords(filled, ctx));
+  return {
+    investableNow: preview.investableNow,
+    needsMoney,
+    preview: needsMoney || !(d.fiSpendingMinor && d.fiSpendingMinor > 0) ? undefined : preview,
+  };
 }

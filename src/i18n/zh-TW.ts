@@ -160,7 +160,6 @@ export const ZH_TW: Record<string, string> = {
   Markets: '市場',
   'Exchange rates': '匯率',
   'Pay and spending': '薪資與支出',
-  'FI goal': '財務自由目標',
   // domain/planStatus.ts
   'On track': '進度正常',
   Watch: '留意',
@@ -1406,23 +1405,9 @@ export const ZH_TW: Record<string, string> = {
   'Back up your data': '備份你的資料',
   'It lives only in this browser. Export a backup, or turn on auto-save to a file.':
     '資料只存在這個瀏覽器中。請匯出備份，或開啟自動儲存到檔案。',
-  'Refine your cash flow': '細分你的現金流',
-  'Split “Living costs” into categories, add bonuses, or import a bank CSV.':
-    '把「生活費」拆成多個類別、加入獎金，或匯入銀行 CSV。',
-  'Shape your FI budget': '規劃你的財務自由預算',
-  'Set essential vs. lifestyle spending per category for Lean and Full FI.':
-    '為每個類別設定必要與生活品質支出，用於精簡與標準財務自由。',
-  'Try a strategy': '試試一種策略',
-  'Save more, retire later, part-time work: compare scenarios side by side.':
-    '多存一點、晚點退休、兼職工作：並列比較情境。',
   'Next steps': '下一步',
-  'Setup done: here is your first projection': '設定完成：這是你的第一份預測',
-  'Dismiss next steps': '關閉下一步',
-  'Your browser agreed to keep this data when space runs low.': '你的瀏覽器同意在空間不足時保留這些資料。',
   'Your browser did not promise to keep this data, so a backup matters even more.':
     '你的瀏覽器沒有承諾保留這些資料，所以備份更加重要。',
-  'Once a month, update balances in Snapshots and last month’s pay and spending in Cash flow. When you have time:':
-    '每個月在「快照」更新結餘，並在「現金流」更新上個月的薪資與支出。有空時：',
   // features/setup/SetupPage.tsx
   'Your age sets the timeline: when 勞退 unlocks (60), when 勞保 starts (65), and how many years your money must last.':
     '你的年齡決定時間軸：勞退何時可領（60 歲）、勞保何時開始（65 歲），以及你的資金必須撐多少年。',
@@ -1498,7 +1483,6 @@ export const ZH_TW: Record<string, string> = {
   'Taiwan pension details skipped.': '已略過台灣退休金細節。',
   'Your 勞退 and 勞保 details.': '你的勞退與勞保資料。',
   'New savings invested as: {mixText}.': '新儲蓄的投資方式：{mixText}。',
-  'Choose how new savings are invested, above.': '請在上方選擇新儲蓄的投資方式。',
   'Your browser is asked to keep this data safe from automatic clean-up when space runs low.':
     '會請你的瀏覽器在空間不足時，保護這些資料不被自動清除。',
   'Set up FI Tracker': '設定 FI Tracker',
@@ -1514,19 +1498,12 @@ export const ZH_TW: Record<string, string> = {
   Back: '上一步',
   'Skip for now': '先略過',
   'Saving…': '儲存中…',
-  'Finish and see my dashboard': '完成並查看總覽',
   Next: '下一步',
   // features/setup/Welcome.tsx
-  'Welcome to FI Tracker': '歡迎使用 FI Tracker',
   'When can you stop depending on a paycheck, and which strategy gets you there most reliably? FI Tracker turns your balances and monthly cash flow into a projected financial-independence date, then lets you test strategies against it.':
     '什麼時候可以不再依賴薪水？哪種策略最能穩定地帶你達成？FI Tracker 會把你的結餘與每月現金流，換算成預估的財務自由日期，並讓你以此測試各種策略。',
-  'Set up my data': '設定我的資料',
   "Six short steps, about 10 minutes: your birth year, today's account balances, monthly pay and spending, and what you'd spend once you stop working. You get your projected FI date at the end, and can refine everything later.":
     '六個簡短步驟，約 10 分鐘：你的出生年、今天的帳戶結餘、每月薪資與支出，以及停止工作後的花費。最後就會得到預估的財務自由日期，之後也能再細調。',
-  'Have to hand: rough balances of your bank, broker and 勞退 accounts.':
-    '請準備：銀行、券商與勞退帳戶的大概結餘。',
-  'Start setup': '開始設定',
-  'Look around with demo data': '用示範資料看看',
   "Explore every screen with a made-up person's 21 months of balances, cash flow and scenarios. Nothing you do affects real data.":
     '用一位虛構人物 21 個月的結餘、現金流與情境，瀏覽每個畫面。你的任何操作都不會影響真實資料。',
   'When you are ready for your own numbers, Settings →': '準備好輸入自己的數字時，到「設定」→',
@@ -1558,9 +1535,6 @@ export const ZH_TW: Record<string, string> = {
   '35% shares, 45% bonds, 20% cash. Smaller swings, lower typical growth.':
     '35% 股票、45% 債券、20% 現金。波動較小，典型成長較低。',
   'About you': '關於你',
-  'Money in & out': '收入與支出',
-  'Taiwan pensions': '台灣退休金',
-  Review: '確認',
   'Enter your birth year.': '請輸入你的出生年。',
   'Birth year must be between 1930 and {v}.': '出生年必須介於 1930 到 {v} 之間。',
   'Target FI age must be between {v} and 100, or left empty.':
@@ -1576,9 +1550,6 @@ export const ZH_TW: Record<string, string> = {
   'Enter your monthly spending.': '請輸入你的每月支出。',
   'Enter how much you would spend per year once you stop working.': '請輸入停止工作後每年會花多少。',
   'The withdrawal rate must be between 2.5% and 5%.': '提領率必須介於 2.5% 到 5% 之間。',
-  'Choose how your new savings will be invested.': '請選擇新儲蓄的投資方式。',
-  'There is no current mix to keep yet; pick one of the ready-made mixes.':
-    '目前還沒有可沿用的配置；請從現成的配置中選一個。',
   '勞保 insured years must be between 0 and 50.': '勞保投保年資必須介於 0 到 50 年之間。',
   '勞保 claim age must be between 60 and 70.': '勞保請領年齡必須介於 60 到 70 歲之間。',
   'Living costs': '生活費',
@@ -1594,8 +1565,6 @@ export const ZH_TW: Record<string, string> = {
   'Age {fiAge}': '{fiAge} 歲',
   'By age {horizonAge}': '到 {horizonAge} 歲',
   'Usable investments at FI': '財務自由時的可動用投資',
-  'Money needed at {fiAge}: {fiTarget}. Plus {locked} locked pension, which unlocks later.':
-    '{fiAge} 歲時所需資金：{fiTarget}。另有 {locked} 鎖定的退休金，之後才能動用。',
   'Money needed today: {twdCompact}': '今天所需資金：{twdCompact}',
   'Left at age {horizonAge}': '{horizonAge} 歲時剩下',
   'Left on the typical path; see the status above for the risk': '典型路徑上的剩餘金額；風險請看上方的狀態',
@@ -2321,13 +2290,6 @@ export const ZH_TW: Record<string, string> = {
   'Taiwan 50 (0050)': '台灣50（0050）',
   'TAIEX (price only, dividends not included)': '加權指數（僅價格，不含股利）',
   // Beginner / Pro choice (KD-1); the rest of Beginner mode's text is in src/kids/zh-TW.ts
-  'Who is using this today?': '今天是誰在使用？',
-  'A grown-up planning money (Pro)': '規劃理財的大人（專業模式）',
-  'Net worth, cash flow, goals and projections.': '淨值、現金流、目標與預測。',
-  'A kid learning about money (Beginner)': '學習用錢的小朋友（新手模式）',
-  'Jars, goals, a money tree and short lessons.': '存錢罐、目標、金錢樹和小課程。',
-  'You can switch later in Settings. Everything stays on this device.':
-    '之後可以在「設定」切換。所有資料都只留在這台裝置上。',
   'Switch to Beginner mode': '切換到新手模式',
   'Beginner / Pro': '新手／專業模式',
   'Beginner mode is a separate space for children: jars, goals, a money tree and lessons. It keeps its own data and never shows or changes your plan.':
@@ -2363,4 +2325,79 @@ export const ZH_TW: Record<string, string> = {
   'Change story': '換個故事',
   'vs {names}': '對比 {names}',
   Edit: '編輯',
+  'Money needed at {fiAge}: {fiTarget}': '{fiAge} 歲時所需資金：{fiTarget}',
+  'About locked pension': '關於鎖定的退休金',
+  'Plus {locked} locked pension, which unlocks later and is not counted here.':
+    '另有 {locked} 鎖定的退休金，之後才能動用，這裡不計入。',
+  'Your mix is {points} points off your target. That is normal while you are still building up investments; new savings follow the target and close the gap.':
+    '你的配置與目標相差 {points} 個百分點。仍在累積投資時這很正常；新的儲蓄會依目標投入，逐步縮小差距。',
+  'Exit setup': '離開設定',
+  'Your age sets the timeline and how many years your money must last.':
+    '你的年齡決定時間軸，以及錢需要撐多少年。',
+  'Tap what you have, then type today’s balance. Rough numbers are fine; the Monthly update keeps them current. Use nicknames only, never account numbers.':
+    '點選你擁有的項目，再輸入今天的餘額。大概的數字就可以；之後的「每月更新」會讓它保持最新。請只用暱稱，不要輸入帳號。',
+  'Balance today (USD)': '今天的餘額（美元）',
+  'A typical month, as two totals. Spending means everything that leaves your accounts: rent or loan payments, insurance, food, fun. You can split it into categories later.':
+    '用兩個總數描述一個典型的月份。支出是指所有離開你帳戶的錢：房租或貸款、保險、餐飲、娛樂。之後可以再分成類別。',
+  'Yearly spending once you stop working': '停止工作後的每年支出',
+  'Starts at today’s spending × 12; change it for things that will differ, like a paid-off loan.':
+    '預設為今天的支出 × 12；若有會改變的項目（例如貸款已還清），請調整。',
+  'Do you have a Taiwan employer?': '你有台灣的雇主嗎？',
+  'If yes, 勞退 and 勞保 are estimated from your pay. You can add the real figures later to sharpen the date.':
+    '如果有，會依你的薪資估算勞退和勞保。之後可以填入實際數字，讓日期更準確。',
+  'The projection invests what you save each month in this mix. Cash grows slowly, so a mix that is mostly cash pushes your FI date later. The closest match to what you hold now is picked for you; you can change it any time in Settings.':
+    '預測會把你每月存下的錢依這個配置投資。現金成長得慢，所以以現金為主的配置會讓財務自由日期延後。已為你選好最接近你目前持有的配置；之後隨時可以在設定中更改。',
+  'Estimated FI age': '預估財務自由年齡',
+  '{date} · in {years} years': '{date} · {years} 年後',
+  'Not reached by {horizonAge} at this pace': '照這個步調，{horizonAge} 歲前無法達成',
+  'Appears once you add pay and spending.': '填入薪資和支出後就會顯示。',
+  'Investments now: {v}': '目前投資：{v}',
+  'Setup is for a fresh start, and this browser already has data.':
+    '設定是給全新開始用的，而這個瀏覽器已經有資料。',
+  'Go to my dashboard': '前往我的總覽',
+  'Set up your plan': '設定你的計畫',
+  'Four short steps. Nothing is saved until you finish, and everything can be changed later.':
+    '四個簡短步驟。完成前不會儲存任何東西，之後也都可以修改。',
+  'Finish and see my result': '完成並查看結果',
+  'Do your first monthly update next month': '下個月做第一次每月更新',
+  'About 3 minutes: balances, the USD rate, pay and spending.': '大約 3 分鐘：餘額、美元匯率、薪資和支出。',
+  'Save a backup': '儲存備份',
+  'Your data lives only in this browser.': '你的資料只存在這個瀏覽器中。',
+  'Save more, stop later, work part-time: see the date move.':
+    '多存一點、晚點退休、兼職工作：看看日期怎麼變。',
+  'Your plan is ready': '你的計畫已就緒',
+  'At this pace you could stop work at': '照這個步調，你可以在這個年齡停止工作',
+  'Progress to financial independence': '財務自由的進度',
+  'You are {pct} of the way: your investments today cover that share of what you need to stop depending on a paycheck.':
+    '你已完成 {pct}：你今天的投資，已足以支應不再依賴薪水所需金額的這個比例。',
+  'You are {pct} of the way. Saving more or spending less once you stop moves the date into reach; try it in the Strategy Lab.':
+    '你已完成 {pct}。多存一點，或停止工作後少花一點，就能讓日期變得可及；可以在策略實驗室試試看。',
+  'A 60-second estimate': '60 秒快速估算',
+  'Four rough numbers give a first answer. Nothing is saved until you start your plan.':
+    '四個大概的數字就能得到初步答案。在你開始計畫前，不會儲存任何東西。',
+  'Your age': '你的年齡',
+  'Money invested now (TWD)': '目前已投資的金額（新台幣）',
+  'Savings and investments you could use': '你可以動用的存款和投資',
+  'Monthly take-home pay (TWD)': '每月實領薪資（新台幣）',
+  'Monthly spending (TWD)': '每月支出（新台幣）',
+  'Fill in all four to see a rough FI age.': '四項都填完，就能看到大概的財務自由年齡。',
+  'Roughly, you could stop work at': '大致上，你可以停止工作的時間是',
+  'Age {age} · {date}': '{age} 歲 · {date}',
+  'At this pace the money does not reach the goal by {horizonAge}.':
+    '照這個步調，{horizonAge} 歲前資金無法達到目標。',
+  'Make it accurate': '讓它更準確',
+  'When can you stop working?': '你什麼時候可以停止工作？',
+  'FI Tracker turns your balances and monthly pay and spending into the age when your investments could pay for your life. Everything stays in this browser.':
+    'FI Tracker 會把你的餘額、每月薪資與支出，換算成投資足以支應生活的年齡。所有資料都只留在這個瀏覽器中。',
+  'Start my plan': '開始我的計畫',
+  'Four short steps, about 5 minutes.': '四個簡短步驟，大約 5 分鐘。',
+  'Explore a sample household': '看看範例家庭',
+  '21 months of made-up data. Delete it any time in Settings.': '21 個月的虛構資料，隨時可以在設定中刪除。',
+  'Moving from another device or browser.': '從其他裝置或瀏覽器搬過來。',
+  'Teaching a child about money?': '想教孩子認識金錢嗎？',
+  'Try Beginner mode.': '試試新手模式。',
+  'What you have': '你擁有的',
+  'Money in and out': '收入與支出',
+  'How you invest': '你怎麼投資',
+  'FI goal': '財務自由目標',
 };

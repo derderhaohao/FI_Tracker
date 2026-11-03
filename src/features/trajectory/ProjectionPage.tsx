@@ -6,7 +6,7 @@ import { useAppData, assumptionSetFor } from '@/app/data';
 import { useUi } from '@/state/ui';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { PlanHealthCard } from '@/components/PlanHealthCard';
-import { Term } from '@/components/ui/term';
+import { InfoTip, Term } from '@/components/ui/term';
 import { LineChart } from '@/components/charts/LineChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -125,18 +125,25 @@ export function ProjectionPage() {
               }
             />
             <Stat
-              label={t('Usable investments at FI')}
+              label={
+                <span className="inline-flex items-center gap-1">
+                  {t('Usable investments at FI')}
+                  {fiRow && fiRow.locked > 0 && (
+                    <InfoTip label={t('About locked pension')}>
+                      {t('Plus {locked} locked pension, which unlocks later and is not counted here.', {
+                        locked: twdCompact(fiRow.locked),
+                      })}
+                    </InfoTip>
+                  )}
+                </span>
+              }
               value={fiRow ? twdCompact(fiRow.liquid) : '—'}
               sub={
                 fiRow
-                  ? t(
-                      'Money needed at {fiAge}: {fiTarget}. Plus {locked} locked pension, which unlocks later.',
-                      {
-                        fiAge: result.fiAge,
-                        fiTarget: twdCompact(fiRow.fiTarget),
-                        locked: twdCompact(fiRow.locked),
-                      },
-                    )
+                  ? t('Money needed at {fiAge}: {fiTarget}', {
+                      fiAge: result.fiAge,
+                      fiTarget: twdCompact(fiRow.fiTarget),
+                    })
                   : t('Money needed today: {twdCompact}', {
                       twdCompact: twdCompact(result.rows[0]?.fiTarget ?? 0),
                     })

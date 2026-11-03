@@ -2,8 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { db } from '@/db/db';
 import { ensureDefaults } from '@/db/defaults';
-import { importBackup } from '@/io/backup';
-import { buildDemoBackup } from '@/io/demo';
+import { loadDemo } from '@/io/demo';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { AccountsPage } from '@/features/position/AccountsPage';
 import { SnapshotsPage } from '@/features/position/SnapshotsPage';
@@ -14,6 +13,7 @@ import { LabPage } from '@/features/lab/LabPage';
 import { ReviewsPage } from '@/features/review/ReviewsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { SetupPage } from '@/features/setup/SetupPage';
+import { SetupResult } from '@/features/setup/SetupResult';
 import { UpdatePage } from '@/features/update/UpdatePage';
 import { DataProvider } from './data';
 import { PlanHealthProvider } from './planHealth';
@@ -26,7 +26,6 @@ import { Layout } from './Layout';
 import { NotFound } from './NotFound';
 import { t } from '@/i18n';
 import { getMode, setMode, useMode } from '@/lib/mode';
-import { WelcomeMode } from './WelcomeMode';
 
 // Standalone tools load on demand, so the main bundle does not grow (TM-1).
 const TimeMachinePage = lazy(() =>
@@ -36,23 +35,20 @@ const TimeMachinePage = lazy(() =>
 const KidsApp = lazy(() => import('@/kids/KidsApp').then((m) => ({ default: m.KidsApp })));
 
 /**
- * Beginner or Pro before anything opens (KD-1). A device with plan data, a demo link or a deep
- * link to a Pro page is Pro without asking; a link into `#/kids` is Beginner; otherwise the
- * welcome screen asks.
+ * Beginner or Pro before anything opens (KD-1). A link into `#/kids` is Beginner; everything
+ * else opens Pro, whose one welcome screen offers Beginner mode as a quiet link (UX doc, O1).
  */
-async function chooseMode(): Promise<void> {
+function chooseMode(): void {
   if (getMode()) return;
   const path = window.location.hash.replace(/^#/, '').split('?')[0];
-  if (path.startsWith('/kids')) setMode('beginner');
-  else if (window.location.hash.includes('demo=1') || (path && path !== '/')) setMode('pro');
-  else if ((await db.accounts.count()) > 0) setMode('pro');
+  setMode(path.startsWith('/kids') ? 'beginner' : 'pro');
 }
 
 /** `npm run demo` opens `#/settings?demo=1`: load the demo data when the database is empty. */
 async function loadDemoIfRequested(): Promise<void> {
   if (!window.location.hash.includes('demo=1')) return;
   window.history.replaceState(null, '', window.location.href.replace(/[?&]demo=1/, ''));
-  if ((await db.accounts.count()) === 0) await importBackup(buildDemoBackup());
+  if ((await db.accounts.count()) === 0) await loadDemo();
 }
 
 function Loading({ error }: { error?: string }) {
@@ -64,8 +60,9 @@ function Loading({ error }: { error?: string }) {
 }
 
 export function App() {
+  // Pick the mode before the first render, so nothing flashes.
+  useState(chooseMode);
   const mode = useMode();
-  const [started, setStarted] = useState(false);
   const [proReady, setProReady] = useState(false);
   const [error, setError] = useState<string>();
   const fail = (e: unknown) =>
@@ -75,25 +72,18 @@ export function App() {
       }),
     );
 
-  useEffect(() => {
-    chooseMode()
-      .then(() => setStarted(true))
-      .catch(fail);
-  }, []);
-
   // The plan database gets its defaults only in Pro: Beginner mode never writes to it.
   useEffect(() => {
-    if (!started || mode !== 'pro' || proReady) return;
+    if (mode !== 'pro' || proReady) return;
     ensureDefaults()
       .then(loadDemoIfRequested)
       .then(() => setProReady(true))
       .catch(fail);
     void initAutosave();
-  }, [started, mode, proReady]);
+  }, [mode, proReady]);
 
   if (error) return <Loading error={error} />;
-  if (!started) return <Loading />;
-  if (!mode) return <WelcomeMode />;
+  if (!mode) return <Loading />;
   if (mode === 'beginner')
     return (
       <ErrorBoundary>
@@ -136,6 +126,7 @@ export function App() {
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="settings/:section" element={<SettingsPage />} />
                 <Route path="setup" element={<SetupPage />} />
+                <Route path="setup/done" element={<SetupResult />} />
                 <Route path="update" element={<UpdatePage />} />
                 <Route
                   path="tools/time-machine"

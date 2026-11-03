@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   ArrowLeftRight,
   ClipboardCheck,
@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { BackupBanner } from './BackupBanner';
+import { UpdatePrompt } from './UpdatePrompt';
+import { useAppData } from './data';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { ModeSwitch } from '@/components/ModeSwitch';
 import { t } from '@/i18n';
@@ -136,9 +138,42 @@ function MobileNav() {
   );
 }
 
+/**
+ * First run and setup in focus mode (UX doc, O1): no sidebar or tabs, just the name, the
+ * language picker and, during setup, a way out.
+ */
+function FocusLayout({ setup }: { setup: boolean }) {
+  return (
+    <div className="min-h-screen">
+      <header className="flex items-center justify-between gap-3 border-b bg-surface px-4 py-3 md:px-8">
+        <Link to="/" className="flex items-center gap-2">
+          <img src="./favicon.svg" alt="" className="size-6" />
+          <span className="font-semibold">{t('FI Tracker')}</span>
+        </Link>
+        <div className="flex items-center gap-3">
+          {setup && (
+            <Link to="/" className="text-sm text-primary hover:underline">
+              {t('Exit setup')}
+            </Link>
+          )}
+          <LanguageSwitch compact />
+        </div>
+      </header>
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-8">
+        <Outlet />
+      </main>
+      <UpdatePrompt holdOffline />
+    </div>
+  );
+}
+
 export function Layout() {
+  const { pathname } = useLocation();
+  const { accounts } = useAppData();
   // Plan chrome such as the backup banner stays off the standalone tools (TM-2).
-  const tool = useLocation().pathname.startsWith('/tools/');
+  const tool = pathname.startsWith('/tools/');
+  const setup = pathname.startsWith('/setup');
+  if (setup || (pathname === '/' && accounts.length === 0)) return <FocusLayout setup={setup} />;
   return (
     <div className="min-h-screen md:flex">
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r bg-surface md:flex">
@@ -198,6 +233,7 @@ export function Layout() {
         </main>
       </div>
       <MobileNav />
+      <UpdatePrompt />
     </div>
   );
 }

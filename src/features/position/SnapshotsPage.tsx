@@ -3,7 +3,8 @@ import { Copy, Plus, Trash2, Upload } from 'lucide-react';
 import { BalanceImport } from '@/features/import/CsvImport';
 import type { Account, Holding } from '@/domain/entities';
 import { monthlyTotals } from '@/domain/cashflow';
-import { lastDayOfMonth, monthOf, today } from '@/domain/dates';
+import { today } from '@/domain/dates';
+import { defaultUpdateDate } from '@/features/update/updateModel';
 import { exactRate, rateFor } from '@/domain/fx';
 import { formatMoney, fromMinor, toMinor } from '@/domain/money';
 import { latestSnapshots, netWorthAt, snapshotDates } from '@/domain/networth';
@@ -239,7 +240,7 @@ export function SnapshotsPage() {
   const dates = [...new Set([...allDates, ...extraDates])].sort();
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? dates : dates.slice(-VISIBLE_DATES);
-  const [newDate, setNewDate] = useState(lastDayOfMonth(monthOf(today())));
+  const [newDate, setNewDate] = useState(() => defaultUpdateDate(today()));
   const [holdingsFor, setHoldingsFor] = useState<{ accountId: string; date: string }>();
   const [importing, setImporting] = useState(false);
   const currencies = [...new Set(active.map((a) => a.currency).filter((c) => c !== 'TWD'))].sort();

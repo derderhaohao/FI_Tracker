@@ -7,28 +7,38 @@ async function fillMoney(page: Page, label: string, value: string, nth = 0) {
   await input.press('Tab');
 }
 
-test('a new user sets up their data with the wizard and lands on a projection', async ({ page }) => {
+test('a new user gets an estimate, sets up in four steps and lands on a result screen', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  const started = Date.now();
   await page.goto('./');
-  // A first visit asks who is using the app (KD-1).
-  await page.getByRole('button', { name: /A grown-up planning money \(Pro\)/ }).click();
-  await expect(page.getByRole('heading', { name: 'Welcome to FI Tracker' })).toBeVisible();
-  await page.getByRole('button', { name: 'Start setup' }).click();
+  // One welcome screen (O1), in focus mode: no sidebar while there is no data.
+  await expect(page.getByRole('heading', { name: 'When can you stop working?' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
 
-  // 1. About you: validation, then birth year and target age.
+  // The 60-second estimate gives a rough FI age at once.
+  await fillMoney(page, 'Your age', '38');
+  await fillMoney(page, 'Money invested now (TWD)', '2,000,000');
+  await fillMoney(page, 'Monthly take-home pay (TWD)', '90,000');
+  await fillMoney(page, 'Monthly spending (TWD)', '50,000');
+  await expect(page.getByText(/^Age \d+ · \w{3} \d{4}$/)).toBeVisible();
+  expect(Date.now() - started).toBeLessThan(60_000);
+  await page.getByRole('button', { name: 'Make it accurate' }).click();
+
+  // 1. About you: carried from the estimate.
   await expect(page.getByRole('heading', { name: 'About you' })).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page.getByText('Enter your birth year.')).toBeVisible();
-  await fillMoney(page, 'Birth year', '1988');
+  await expect(page.getByRole('link', { name: 'Exit setup' })).toBeVisible();
+  await expect(page.getByLabel('Birth year')).toHaveValue(String(new Date().getFullYear() - 38));
   await fillMoney(page, 'Target FI age (optional)', '50');
   await page.getByRole('button', { name: 'Next' }).click();
 
-  // 2. Accounts: a bank account, a USD broker (needs a rate) and a loan.
-  await expect(page.getByRole('heading', { name: 'Accounts' })).toBeVisible();
-  await fillMoney(page, 'Balance today', '800,000');
+  // 2. What you have: tiles add rows; a USD account needs a rate.
+  await expect(page.getByRole('heading', { name: 'What you have' })).toBeVisible();
+  await expect(page.getByLabel('Nickname').first()).toHaveValue('Investments');
+  await page.getByRole('button', { name: 'Bank account' }).click();
+  await fillMoney(page, 'Balance today', '800,000', 1);
   await page.getByRole('button', { name: 'US broker' }).click();
-  await fillMoney(page, 'Balance today', '40,000', 1);
+  await fillMoney(page, 'Balance today (USD)', '40,000');
   await page.getByRole('button', { name: 'Loan / mortgage' }).click();
   await fillMoney(page, 'Amount owed', '300,000');
   await page.getByRole('button', { name: 'Next' }).click();
@@ -36,41 +46,26 @@ test('a new user sets up their data with the wizard and lands on a projection', 
   await fillMoney(page, 'TWD per USD today', '32');
   await page.getByRole('button', { name: 'Next' }).click();
 
-  // 3. Money in & out.
-  await expect(page.getByRole('heading', { name: 'Money in & out' })).toBeVisible();
-  await fillMoney(page, 'Monthly take-home pay', '90,000');
-  await fillMoney(page, 'Monthly spending', '50,000');
-  await expect(page.getByText('a savings rate of 44.4%')).toBeVisible();
+  // 3. Money in and out: carried; FI spending pre-filled; the live FI age shows.
+  await expect(page.getByRole('heading', { name: 'Money in and out' })).toBeVisible();
+  await expect(page.getByLabel('Monthly take-home pay')).toHaveValue('90,000');
+  await expect(page.getByLabel('Yearly spending once you stop working')).toHaveValue('600,000');
+  const live = page.getByRole('region', { name: 'Estimated FI age' });
+  await expect(live.getByText(/in [\d.]+ years$/)).toBeVisible();
+  await page.getByRole('radio', { name: 'Yes' }).check();
   await page.getByRole('button', { name: 'Next' }).click();
 
-  // 4. FI goal, pre-filled from spending × 12.
-  await expect(page.getByLabel('Yearly spending once FI')).toHaveValue('600,000');
-  await page.getByRole('button', { name: 'Next' }).click();
-
-  // 5. Taiwan pensions: skip.
-  await expect(page.getByRole('heading', { name: 'Taiwan pensions' })).toBeVisible();
-  await page.getByRole('button', { name: 'Skip for now' }).click();
-
-  // 6. Review shows the projection before saving.
-  await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible();
-  await expect(page.getByText('Most likely FI date')).toBeVisible();
-  await expect(page.getByText('Birth year 1988, target FI age 50.')).toBeVisible();
-  // The mix for new savings must be chosen; keeping a mostly-cash mix warns.
-  await page.getByRole('button', { name: 'Finish and see my dashboard' }).click();
-  await expect(page.getByText('Choose how your new savings will be invested.')).toBeVisible();
-  await page.getByRole('radio', { name: /Keep my current mix/ }).check();
-  await expect(page.getByText(/of new savings would stay in cash/)).toBeVisible();
+  // 4. How you invest: pre-selected from what the accounts hold (80% shares).
+  await expect(page.getByRole('heading', { name: 'How you invest' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Mostly shares/ })).toBeChecked();
   await page.getByRole('radio', { name: /Balanced/ }).check();
-  await expect(page.getByText(/of new savings would stay in cash/)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Finish and see my dashboard' }).click();
+  await page.getByRole('button', { name: 'Finish and see my result' }).click();
 
-  await expect(
-    page.getByRole('heading', { name: 'Setup done: here is your first projection' }),
-  ).toBeVisible();
+  // The result screen (O3): the FI age first, not a dashboard of warnings.
+  await expect(page.getByRole('heading', { level: 1, name: /^Age \d+$/ })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Progress to financial independence' })).toBeVisible();
+  await page.getByRole('link', { name: 'Go to my dashboard' }).click();
   await expect(page.getByLabel('Plan health').getByText(/^Most likely age \d+ · \w{3} \d{4}$/)).toBeVisible();
-  await expect(page.getByText('Setup saved. Your data lives only in this browser')).toBeVisible();
-  await page.getByRole('link', { name: /Refine your cash flow/ }).click();
-  await expect(page.getByText('Living costs').first()).toBeVisible();
   await page.goto('./#/accounts');
   await expect(page.getByRole('cell', { name: 'US broker', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Loan', exact: true })).toBeVisible();
@@ -82,10 +77,9 @@ test('a new user sets up their data with the wizard and lands on a projection', 
 test('the welcome screen offers demo data and returns after deleting all data', async ({ page }) => {
   page.on('dialog', (d) => void d.accept());
   await page.goto('./');
-  await page.getByRole('button', { name: /A grown-up planning money \(Pro\)/ }).click();
-  await page.getByRole('button', { name: 'Load demo data' }).click();
+  await page.getByRole('button', { name: /Explore a sample household/ }).click();
   await expect(page.getByLabel('Plan health')).toBeVisible();
   await deleteAllData(page);
   await page.goto('./#/');
-  await expect(page.getByRole('heading', { name: 'Welcome to FI Tracker' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'When can you stop working?' })).toBeVisible();
 });

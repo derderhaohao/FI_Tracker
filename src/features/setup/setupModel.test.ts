@@ -6,6 +6,13 @@ import {
   CASH_WARNING,
   chosenMix,
   currentMix,
+  draftFromEstimate,
+  estimateComplete,
+  estimateTaiwanPension,
+  livePreview,
+  STEPS,
+  effectiveMix,
+  suggestedMix,
   MIX_PRESETS,
   draftAccount,
   emptyDraft,
@@ -77,15 +84,57 @@ describe('setup validation', () => {
     expect(validateStep(1, numbered, 2026)[0]).toMatch(/account number/);
   });
 
-  it('checks money, goal and Taiwan steps', () => {
+  it('checks the money step, FI spending and withdrawal rate included (four steps)', () => {
     const d = fullDraft();
-    expect([2, 3, 4, 5].flatMap((s) => validateStep(s, d, 2026))).toEqual([]);
+    expect(STEPS).toHaveLength(4);
+    expect([2, 3].flatMap((s) => validateStep(s, d, 2026))).toEqual([]);
     expect(validateStep(2, { ...d, monthlySpendingMinor: undefined }, 2026)).toEqual([
       'Enter your monthly spending.',
     ]);
-    expect(validateStep(3, { ...d, swr: 0.06 }, 2026)[0]).toMatch(/2.5% and 5%/);
-    expect(validateStep(4, { ...d, taiwan: { skipped: false, claimAge: 75 } }, 2026)[0]).toMatch(/claim age/);
-    expect(validateStep(4, { ...d, taiwan: { skipped: true, claimAge: 75 } }, 2026)).toEqual([]);
+    expect(validateStep(2, { ...d, swr: 0.06 }, 2026)[0]).toMatch(/2.5% and 5%/);
+    expect(validateStep(2, { ...d, fiSpendingMinor: 0 }, 2026)[0]).toMatch(/once you stop working/);
+  });
+
+  it('estimates 勞退 and 勞保 from pay for someone with a Taiwan employer', () => {
+    // 90,000 take-home ≈ 100,000 gross; 勞保 is capped; insured since 23.
+    expect(estimateTaiwanPension(toMinor(90_000), 36)).toEqual({
+      pensionWageMinor: toMinor(100_000),
+      avgInsuredSalaryMinor: toMinor(45_800),
+      insuredYears: 13,
+    });
+    expect(estimateTaiwanPension(toMinor(200_000), 20).pensionWageMinor).toBe(toMinor(150_000));
+    expect(estimateTaiwanPension(toMinor(200_000), 20).insuredYears).toBe(0);
+    const d = { ...fullDraft(), taiwanEmployer: true, taiwan: { skipped: false } };
+    const r = buildSetupRecords(d, ctx);
+    expect(r.settings.pensionEstimated).toBe(true);
+    expect(r.assumptionSet.taiwan.laborPension.monthlyInsuredWageMinor).toBeGreaterThan(0);
+    // No Taiwan employer: nothing is estimated.
+    const none = buildSetupRecords({ ...d, taiwanEmployer: false }, ctx);
+    expect(none.settings.pensionEstimated).toBeUndefined();
+    expect(none.assumptionSet.taiwan.laborPension.monthlyInsuredWageMinor).toBe(
+      ctx.assumptionSet.taiwan.laborPension.monthlyInsuredWageMinor,
+    );
+  });
+
+  it('carries the 60-second estimate into a setup draft', () => {
+    const e = {
+      age: 30,
+      investedMinor: toMinor(1_000_000),
+      monthlyIncomeMinor: toMinor(80_000),
+      monthlySpendingMinor: toMinor(40_000),
+    };
+    expect(estimateComplete(e)).toBe(true);
+    expect(estimateComplete({ ...e, age: undefined })).toBe(false);
+    const d = draftFromEstimate(e, 0.04, 2026);
+    expect(d.birthYear).toBe(1996);
+    expect(d.accounts).toHaveLength(1);
+    expect(d.accounts[0].balanceMinor).toBe(toMinor(1_000_000));
+    expect(d.fiSpendingMinor).toBe(toMinor(480_000));
+    expect(draftFromEstimate({}, 0.04, 2026).accounts[0].kind).toBe('bank');
+    // The live preview waits for pay and spending.
+    expect(livePreview({ ...d, birthYear: undefined }, ctx)).toBeUndefined();
+    expect(livePreview({ ...d, monthlyIncomeMinor: undefined }, ctx)?.needsMoney).toBe(true);
+    expect(livePreview(d, ctx)?.preview?.fiAge).toBeDefined();
   });
 
   it('has no mix without usable investments', () => {
@@ -165,17 +214,29 @@ describe('setup records', () => {
 });
 
 describe('investment mix for new savings', () => {
-  it('must be chosen, and can be the current mix or a preset', () => {
+  it('is pre-selected (T2): the closest ready-made mix, or Balanced with nothing invested', () => {
     const d = fullDraft();
-    expect(validateStep(5, { ...d, mix: undefined }, 2026)).toEqual([
-      'Choose how your new savings will be invested.',
-    ]);
+    // Never blank, so Finish cannot fail on it.
+    expect(validateStep(5, { ...d, mix: undefined }, 2026)).toEqual([]);
     expect(chosenMix({ ...d, mix: 'balanced' })).toEqual(MIX_PRESETS.balanced.allocation);
     const sum = (a: Record<string, number | undefined>) =>
       Object.values(a).reduce<number>((x, y) => x + (y ?? 0), 0);
     for (const p of Object.values(MIX_PRESETS)) expect(sum(p.allocation)).toBeCloseTo(1, 9);
     expect(chosenMix(d)!.cash).toBeGreaterThan(CASH_WARNING);
-    const noUsable = { ...d, accounts: [{ ...draftAccount('pension'), balanceMinor: 100 }] };
-    expect(validateStep(5, noUsable, 2026)[0]).toMatch(/no current mix/);
+    // Nothing usable yet: Balanced, even if "current" was picked earlier.
+    const noUsable = {
+      ...d,
+      mix: 'current' as const,
+      accounts: [{ ...draftAccount('pension'), balanceMinor: 100 }],
+    };
+    expect(suggestedMix(noUsable)).toBe('balanced');
+    expect(effectiveMix(noUsable)).toBe('balanced');
+    expect(chosenMix(noUsable)).toEqual(MIX_PRESETS.balanced.allocation);
+    // All shares: Mostly shares. Mostly cash: Cautious.
+    const shares = { ...d, mix: undefined, accounts: [{ ...draftAccount('tw_broker'), balanceMinor: 100 }] };
+    expect(suggestedMix(shares)).toBe('growth');
+    expect(effectiveMix(shares)).toBe('growth');
+    const cash = { ...d, mix: undefined, accounts: [{ ...draftAccount('bank'), balanceMinor: 100 }] };
+    expect(suggestedMix(cash)).toBe('cautious');
   });
 });
