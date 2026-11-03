@@ -38,11 +38,11 @@ test('Strategy Lab answers in plain words first (Simple view)', async ({ page })
   const text = await page.locator('main').innerText();
   for (const word of JARGON) expect(text).not.toContain(word);
 
-  // Advanced adds the developer controls back.
-  await page.getByRole('radio', { name: 'Advanced' }).click();
+  // More options adds the developer controls back (no Simple/Advanced switch, UX doc P2).
+  await page.getByRole('button', { name: 'More options' }).click();
   await expect(page.getByLabel('Comparison seed')).toBeVisible();
   await expect(page.getByLabel('Monte Carlo runs')).toBeVisible();
-  await page.getByRole('radio', { name: 'Simple' }).click();
+  await page.getByRole('button', { name: 'Fewer options' }).click();
   await expect(page.getByLabel('Comparison seed')).toHaveCount(0);
 
   // Assumptions and reference tests.
@@ -116,18 +116,29 @@ test('phone navigation reaches every page in two taps (UX doc, N1)', async ({ pa
   const bar = page.getByRole('navigation', { name: 'Main' }).last();
   // The same five destinations as on desktop.
   await expect(bar.getByRole('link')).toHaveText(['Home', 'Update', 'My money', 'My plan', 'Settings']);
-  const pages: [string, string, string][] = [
-    ['My money', 'My money sections', 'Balances'],
-    ['My money', 'My money sections', 'Cash flow'],
-    ['My plan', 'My plan sections', 'Goal'],
-    ['My plan', 'My plan sections', 'Strategy Lab'],
-    ['Update', 'Update sections', 'Reviews'],
+  const pages: [string, string, string, string][] = [
+    ['My money', 'My money sections', 'Balances', 'Balances'],
+    ['My money', 'My money sections', 'Cash flow', 'Cash flow'],
+    ['My plan', 'My plan sections', 'Goal details', 'Goal'],
+    ['My plan', 'My plan sections', 'How sure is this?', 'How sure is this?'],
+    ['My plan', 'My plan sections', 'Compare what-ifs', 'Strategy Lab'],
   ];
-  for (const [menu, tabs, name] of pages) {
+  for (const [menu, tabs, name, heading] of pages) {
     await bar.getByRole('link', { name: menu }).click();
     await page.getByRole('navigation', { name: tabs }).getByRole('link', { name }).click();
-    await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
   }
+  // On a phone the Lab's first screen is the answer; its controls wait behind Options (P2).
+  await expect(page.getByLabel('Verdict')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'More options' })).toBeHidden();
+  await page.getByText('Options', { exact: true }).click();
+  await expect(page.getByRole('button', { name: 'More options' })).toBeVisible();
+  await bar.getByRole('link', { name: 'Update' }).click();
+  await page
+    .getByRole('navigation', { name: 'Update sections' })
+    .getByRole('link', { name: 'Reviews' })
+    .click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Reviews' })).toBeVisible();
   await bar.getByRole('link', { name: 'Settings' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
   await page.goto('./#/strategy');

@@ -14,17 +14,24 @@ built in as editable settings.
 
 ## Screens
 
-| Route          | Screen       | What it does                                                                                                                                                            |
-| -------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `#/`           | Dashboard    | Net worth, FI progress, projected FI date, savings rate, alerts, backup                                                                                                 |
-| `#/accounts`   | Accounts     | Account registry and loan terms: the one place a loan payment is entered; it feeds Cash flow and every projection                                                       |
-| `#/snapshots`  | Snapshots    | Accounts × dates grid, FX per date, holdings, CSV import, change attribution with reconciliation check                                                                  |
-| `#/cashflow`   | Cash flow    | Monthly totals or individual transactions, CSV import from bank exports, lump sums, savings-rate trend                                                                  |
-| `#/goal`       | Goal         | FI budget and tiers, SWR, income streams, post-employment costs, target age, goal history                                                                               |
-| `#/projection` | Projection   | Baseline projection, FI target, sensitivity, year table; Play mode: month-by-month playback of 29 hypothetical stories with live events                                 |
-| `#/lab`        | Strategy Lab | A plain verdict per plan, what-if templates, comparison against your plan today, simulated futures and past markets (1871–2022), what would make it safer, buy vs. rent |
-| `#/reviews`    | Reviews      | Checklists, plan vs. actual, review log                                                                                                                                 |
-| `#/settings`   | Settings     | Assumptions, Taiwan settings, categories, backup / restore, encrypted export, auto-save, demo data                                                                      |
+Five destinations, the same on desktop and phone. Old addresses (`#/accounts`, `#/snapshots`,
+`#/cashflow`, `#/goal`, `#/projection`, `#/lab`, `#/reviews`) redirect to the tab that now holds
+the same content.
+
+| Route               | Screen               | What it does                                                                                                                |
+| ------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `#/`                | Home                 | Progress to FI, the stop-work age with one certainty word, net worth, saving, savings rate, one Next step                   |
+| `#/update`          | Update → This month  | The monthly job: balances, USD rate, pay and spending, then a recap with why the FI date moved                              |
+| `#/update/reviews`  | Update → Reviews     | Checklists, plan vs. actual, review log                                                                                     |
+| `#/money/balances`  | My money → Balances  | Accounts grouped by what you own, what is locked and what you owe; monthly history, FX, holdings, CSV import, what changed  |
+| `#/money/cashflow`  | My money → Cash flow | Monthly totals or individual transactions, CSV import from bank exports, one-offs, savings-rate trend                       |
+| `#/money/mix`       | My money → Mix       | Allocation and currency against the target mix                                                                              |
+| `#/plan`            | My plan              | Investments against money needed, with sliders for stop-work age, saving and spending once FI; save a change as a what-if   |
+| `#/plan/goal`       | Goal details         | FI budget and tiers, SWR, income streams, post-employment costs, target age, goal history                                   |
+| `#/plan/lab`        | Compare what-ifs     | Strategy Lab: what-if templates, comparison, simulated futures and past markets (1871–2022), buy vs. rent                   |
+| `#/plan/sure`       | How sure is this?    | Simulated futures, the past-markets second opinion, and what would make the plan safer, in money                            |
+| `#/plan/projection` | Year by year         | The projection year by year, sensitivity; Play mode: month-by-month playback of 29 hypothetical stories with live events    |
+| `#/settings`        | Settings             | Amounts in today's or future money, assumptions, Taiwan settings, categories, backup / restore, Time Machine, Beginner mode |
 
 ### Language
 

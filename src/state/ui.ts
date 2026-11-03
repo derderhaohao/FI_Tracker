@@ -45,8 +45,12 @@ interface UiState {
 }
 
 export const useUi = create<UiState>((set) => ({
-  valueMode: 'real',
-  setValueMode: (valueMode) => set({ valueMode }),
+  // Set once in Settings → General (UX doc, P2), default today's money.
+  valueMode: stored('fi-tracker-value-mode', ['real', 'nominal'] as const, 'real'),
+  setValueMode: (valueMode) => {
+    store('fi-tracker-value-mode', valueMode);
+    set({ valueMode });
+  },
   selectedScenarioId: undefined,
   selectScenario: (selectedScenarioId) => set({ selectedScenarioId }),
   compare: {},

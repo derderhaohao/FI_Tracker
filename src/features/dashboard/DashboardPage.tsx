@@ -56,8 +56,8 @@ const NEXT: Record<NextStep, (month: string) => { title: string; text: string; t
     'what-if': () => ({
       title: t('Try a what-if'),
       text: t('Save more, stop later, work part-time: see the date move.'),
-      to: '/plan/lab',
-      action: t('Open the Strategy Lab'),
+      to: '/plan',
+      action: t('Open My plan'),
     }),
   };
 
@@ -181,7 +181,7 @@ export function DashboardPage() {
           ) : (
             <Badge>{pending ? t('Checking…') : '—'}</Badge>
           )}
-          <Link to="/plan/projection" className="text-sm text-primary hover:underline">
+          <Link to="/plan/sure" className="text-sm text-primary hover:underline">
             {t('How sure is this?')}
           </Link>
         </div>

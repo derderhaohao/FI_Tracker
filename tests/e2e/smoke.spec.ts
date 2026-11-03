@@ -39,13 +39,13 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await expect(page.getByText(/Last backup was|No backup in over/)).toHaveCount(0);
 
   await page.getByRole('link', { name: 'My plan' }).first().click();
-  await page.getByRole('link', { name: 'Projection' }).first().click();
+  await page.getByRole('link', { name: 'Year by year' }).first().click();
   await expect(page.getByText('Investable net worth against the FI target')).toBeVisible();
   await expect(page.getByText('Start', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('31 Oct 2026 · age 35')).toBeVisible();
 
   // Strategy Lab: simulated futures run on their own and lead with a plain verdict.
-  await page.getByRole('link', { name: 'Strategy Lab' }).first().click();
+  await page.getByRole('link', { name: 'Compare what-ifs' }).first().click();
   await expect(page.getByText(/simulated futures your money (lasts|runs out)/)).toBeVisible({
     timeout: 20_000,
   });
@@ -87,7 +87,9 @@ test('every screen renders with demo data', async ({ page }) => {
     ['money/balances', 'Balances'],
     ['money/cashflow', 'Cash flow'],
     ['money/mix', 'Portfolio mix'],
-    ['plan/projection', 'Projection'],
+    ['plan', 'My plan'],
+    ['plan/sure', 'How sure is this?'],
+    ['plan/projection', 'Year by year'],
     ['plan/goal', 'Goal'],
     ['plan/lab', 'Strategy Lab'],
     // Old addresses redirect (UX doc, N1).

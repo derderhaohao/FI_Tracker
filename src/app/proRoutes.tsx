@@ -7,6 +7,8 @@ import { CashFlowPage } from '@/features/engine/CashFlowPage';
 import { GoalPage } from '@/features/destination/GoalPage';
 import { ProjectionPage } from '@/features/trajectory/ProjectionPage';
 import { LabPage } from '@/features/lab/LabPage';
+import { PlanPage } from '@/features/plan/PlanPage';
+import { SurePage } from '@/features/plan/SurePage';
 import { ReviewsPage } from '@/features/review/ReviewsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { SetupPage } from '@/features/setup/SetupPage';
@@ -29,9 +31,11 @@ export const MONEY_TABS = [
 ] as const;
 
 export const PLAN_TABS = [
-  { to: '/plan/projection', label: t('Projection') },
-  { to: '/plan/goal', label: t('Goal') },
-  { to: '/plan/lab', label: t('Strategy Lab') },
+  { to: '/plan', label: t('My plan') },
+  { to: '/plan/goal', label: t('Goal details') },
+  { to: '/plan/lab', label: t('Compare what-ifs') },
+  { to: '/plan/sure', label: t('How sure is this?') },
+  { to: '/plan/projection', label: t('Year by year') },
 ] as const;
 
 export const UPDATE_TABS = [
@@ -57,8 +61,9 @@ export function proRoutes(loading: ReactNode) {
         <Route path="money/cashflow" element={<CashFlowPage />} />
         <Route path="money/mix" element={<MixPage />} />
       </Route>
-      <Route path="plan" element={<Navigate to="/plan/projection" replace />} />
       <Route element={<SectionTabs label={t('My plan sections')} tabs={PLAN_TABS} />}>
+        <Route path="plan" element={<PlanPage />} />
+        <Route path="plan/sure" element={<SurePage />} />
         <Route path="plan/projection" element={<ProjectionPage />} />
         <Route path="plan/goal" element={<GoalPage />} />
         <Route path="plan/lab" element={<LabPage />} />

@@ -17,7 +17,7 @@ import { MoneyInput, NumberInput, PercentInput } from '@/components/MoneyInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input } from '@/components/ui/input';
-import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
+import { Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
 import { budgetVsActual, formatDate, monthLabel, pct, twd, twdCompact } from '@/lib/format';
 import { addMonths } from '@/domain/dates';
 import { LOAN_CATEGORY, loanTarget, type LoanSchedule } from '@/domain/loans';
@@ -379,34 +379,39 @@ export function GoalPage() {
         </Notice>
       )}
 
-      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {(['lean', 'full', 'fat'] as const).map((tier) => (
-          <Stat
-            key={tier}
-            className={d.fiTier === tier ? 'border-primary' : undefined}
-            label={
-              <span className="flex items-center gap-2">
-                {t('{TIER_LABELS} FI', { TIER_LABELS: TIER_LABELS[tier] })}{' '}
-                {d.fiTier === tier && <Badge tone="primary">{t('Plan')}</Badge>}
-              </span>
-            }
-            value={twdCompact(
-              fiNumber(
-                ctx.fiSpendingFromT12 ? ctx.annualSpendingExLoans + tiers.postEmployment : tiers[tier],
-                G,
-                swr,
-              ),
-            )}
-            sub={t('Spending {twd}/yr{v} ÷ SWR {swr}', {
-              twd: twd(
-                ctx.fiSpendingFromT12 ? ctx.annualSpendingExLoans + tiers.postEmployment : tiers[tier],
-              ),
-              v: G > 0 ? t(' − guaranteed {G}', { G: twdCompact(G) }) : '',
-              swr: pct(swr, 2),
-            })}
-          />
-        ))}
-      </div>
+      {/* One target (UX doc, P2): the plan's tier big, the other two as small alternatives. */}
+      {(() => {
+        const spendingOf = (tier: FiTier) =>
+          ctx.fiSpendingFromT12 ? ctx.annualSpendingExLoans + tiers.postEmployment : tiers[tier];
+        const others = (['lean', 'full', 'fat'] as const).filter((x) => x !== d.fiTier);
+        return (
+          <div className="mb-4 flex flex-col gap-2">
+            <Stat
+              className="border-primary"
+              label={t('Your target: {TIER_LABELS} FI', { TIER_LABELS: TIER_LABELS[d.fiTier] })}
+              value={twdCompact(fiNumber(spendingOf(d.fiTier), G, swr))}
+              sub={t('Spending {twd}/yr{v} ÷ SWR {swr}', {
+                twd: twd(spendingOf(d.fiTier)),
+                v: G > 0 ? t(' − guaranteed {G}', { G: twdCompact(G) }) : '',
+                swr: pct(swr, 2),
+              })}
+            />
+            <p className="text-sm text-muted-foreground">
+              {t('Alternatives:')}{' '}
+              {others
+                .map((tier) =>
+                  t('{TIER_LABELS} FI {value}', {
+                    TIER_LABELS: TIER_LABELS[tier],
+                    value: twdCompact(fiNumber(spendingOf(tier), G, swr)),
+                  }),
+                )
+                .join(' · ')}
+              {'. '}
+              {t('Change the tier under FI settings below.')}
+            </p>
+          </div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

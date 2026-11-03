@@ -7,7 +7,6 @@ import { newId, save } from '@/db/repo';
 import { assumptionSetFor, useAppData } from '@/app/data';
 import { MAX_COMPARE, useUi } from '@/state/ui';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
-import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { BandChart } from '@/components/charts/BandChart';
 import { PLAIN_BAND_LABELS, TECHNICAL_BAND_LABELS } from '@/components/charts/bandLabels';
 import { LineChart } from '@/components/charts/LineChart';
@@ -15,6 +14,7 @@ import { useChartTheme } from '@/components/charts/theme';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Select } from '@/components/ui/input';
+import { useMedia } from '@/lib/useMedia';
 import { Badge, LabeledControl, Notice, PageHeader, Segmented, Table } from '@/components/ui/misc';
 import { Term } from '@/components/ui/term';
 import { chanceDots, chanceText } from '@/domain/planStatus';
@@ -108,6 +108,7 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
     setLabStarter,
   } = useUi();
   const advanced = labView === 'advanced';
+  const wide = useMedia('(min-width: 768px)');
   const mc = useMonteCarlo();
   const sorted = useMemo(
     () => [...scenarios].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
@@ -241,13 +242,45 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
   const todayVerdict = verdict(today, ctx.asOfDate, fresh(today) ? resultFor(today)?.summary : undefined);
   /** Unticked scenarios only need a name in the table. */
   const placeholder = (s: Scenario): LabRow => ({ ...today, id: s.id, name: s.name, scenario: s });
+  // Your plan is the plan of record: a stored copy with no changes is the same row (UX doc, P2).
+  const sameAsToday = (s: Scenario) =>
+    Object.keys(s.overrides).length === 0 &&
+    s.events.length === 0 &&
+    s.withdrawalRule.kind === 'fixed_swr' &&
+    (s.assumptionSetId === undefined || s.assumptionSetId === data.activeAssumptions.id);
   const rowsInTable: (LabRow & { slot?: number; stored?: Scenario })[] = [
     today,
-    ...sorted.map((s) => {
-      const c = compared.find((x) => x.id === s.id);
-      return c ? { ...c, stored: s } : { ...placeholder(s), stored: s };
-    }),
+    ...sorted
+      .filter((s) => !sameAsToday(s))
+      .map((s) => {
+        const c = compared.find((x) => x.id === s.id);
+        return c ? { ...c, stored: s } : { ...placeholder(s), stored: s };
+      }),
   ];
+
+  const controls = (
+    <div className="flex flex-wrap items-end gap-3">
+      <LabeledControl label={t('Tool')}>{tabs}</LabeledControl>
+      <Button
+        size="sm"
+        variant="outline"
+        aria-pressed={advanced}
+        onClick={() => setLabView(advanced ? 'simple' : 'advanced')}
+      >
+        {advanced ? t('Fewer options') : t('More options')}
+      </Button>
+      {!showStarter && (
+        <Button size="sm" variant="ghost" onClick={() => setLabStarter('shown')}>
+          <HelpCircle aria-hidden /> {t('How this works')}
+        </Button>
+      )}
+      {advanced && (
+        <AssumptionBadge
+          set={assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id)}
+        />
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -257,33 +290,17 @@ function ScenarioLab({ tabs }: { tabs: ReactNode }) {
           'Will your plan work, and what would make it safer? Try a what-if and compare it with your plan today.',
         )}
         actions={
-          <div className="flex flex-wrap items-end gap-3">
-            <LabeledControl label={t('Tool')}>{tabs}</LabeledControl>
-            <LabeledControl label={t('Detail')}>
-              <Segmented
-                label={t('Simple or advanced view')}
-                value={labView}
-                onChange={setLabView}
-                options={[
-                  { value: 'simple', label: t('Simple') },
-                  { value: 'advanced', label: t('Advanced') },
-                ]}
-              />
-            </LabeledControl>
-            <LabeledControl label={t('Show amounts in')}>
-              <ValueModeToggle />
-            </LabeledControl>
-            {!showStarter && (
-              <Button size="sm" variant="ghost" onClick={() => setLabStarter('shown')}>
-                <HelpCircle aria-hidden /> {t('How this works')}
-              </Button>
-            )}
-            {advanced && (
-              <AssumptionBadge
-                set={assumptionSetFor(data, selected.scenario?.assumptionSetId ?? data.activeAssumptions.id)}
-              />
-            )}
-          </div>
+          wide ? (
+            controls
+          ) : (
+            // On a phone the first screen shows the result; the controls wait behind Options.
+            <details className="w-full">
+              <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary">
+                {t('Options')}
+              </summary>
+              <div className="mt-2">{controls}</div>
+            </details>
+          )
         }
       />
       <LabNav sections={LAB_SECTIONS} />

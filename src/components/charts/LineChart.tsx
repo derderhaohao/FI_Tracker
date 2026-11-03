@@ -34,6 +34,8 @@ export interface LineChartProps<T extends object> {
   yFormat?: (v: number) => string;
   tooltipTitle?: (row: T) => string;
   referenceX?: { x: number | string; label: string };
+  /** Several labelled milestones on a numeric x axis; close ones stagger onto a second row (UI-8). */
+  references?: { x: number; label: string }[];
   height?: number;
   ariaLabel: string;
   /** Start the y-axis at zero (money); false lets it fit the data (index values). */
@@ -49,6 +51,7 @@ export function LineChart<T extends object>({
   yFormat = twdCompact,
   tooltipTitle,
   referenceX,
+  references = [],
   height = 280,
   ariaLabel,
   yFromZero = true,
@@ -63,6 +66,16 @@ export function LineChart<T extends object>({
   );
   const numericX = typeof (data[0] as Record<string, unknown> | undefined)?.[xKey] === 'number';
   const xTicks = xTicksFor(data, xKey);
+  const xs = numericX ? data.map((r) => Number((r as Record<string, unknown>)[xKey])) : [];
+  const span = xs.length ? Math.max(1, Math.max(...xs) - Math.min(...xs)) : 1;
+  const marks = [...references].sort((a, b) => a.x - b.x);
+  // A label sits on row 1 when the one before it on row 0 is closer than a sixth of the axis.
+  const markRows: number[] = [];
+  marks.forEach((m, i) => {
+    const prev = i > 0 && markRows[i - 1] === 0 && m.x - marks[i - 1].x < span / 6;
+    markRows.push(prev ? 1 : 0);
+  });
+  const labelRows = referenceX ? 1 : marks.length ? Math.max(...markRows) + 1 : 0;
   return (
     <figure aria-label={ariaLabel} className="m-0">
       <ChartLegend items={series.map((s) => ({ label: s.label, color: color(s), dashed: s.dashed }))} />
@@ -70,7 +83,7 @@ export function LineChart<T extends object>({
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={data}
-            margin={{ top: referenceX ? 8 + LABEL_ROW : 8, right: 12, bottom: 0, left: 0 }}
+            margin={{ top: 8 + labelRows * LABEL_ROW, right: 12, bottom: 0, left: 0 }}
           >
             {/* One gridline at zero; the axis line is the only other rule (UI-9). */}
             <CartesianGrid stroke={theme.grid} vertical={false} horizontalValues={[0]} />
@@ -121,6 +134,15 @@ export function LineChart<T extends object>({
                 label={<BandLabel text={referenceX.label} fill={theme.text} />}
               />
             )}
+            {marks.map((m, i) => (
+              <ReferenceLine
+                key={`${m.x}-${m.label}`}
+                x={m.x}
+                stroke={theme.axis}
+                strokeDasharray="3 3"
+                label={<BandLabel text={m.label} row={markRows[i]} fill={theme.text} />}
+              />
+            ))}
             {series
               .filter((s) => s.area)
               .map((s) => (
