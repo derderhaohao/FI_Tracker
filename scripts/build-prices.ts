@@ -490,6 +490,14 @@ async function main() {
     await sleep(800);
   }
   if (!entries.some((e) => e.t === 'SPY')) throw new Error('SPY is missing: the default benchmark needs it');
+  // The app runs every simulation up to `asOf`, so it must not pass the default benchmark's last
+  // month: Taiwan closes can arrive a month before the US ones.
+  const spy = JSON.parse(readFileSync(new URL('SPY.json', OUT), 'utf8')) as PriceFile;
+  const spyEnd = monthIndex(spy.s) + spy.tr.length - 1;
+  if (asOf > spyEnd) {
+    warn(`asOf set to ${monthName(spyEnd)}, the last month SPY has (others reach ${monthName(asOf)})`);
+    asOf = spyEnd;
+  }
 
   await taiexTotalReturn(entries);
 
