@@ -89,35 +89,47 @@ test('a what-if from a template, safer variants and reaching a target', async ({
 
 test('every page shows the same status and stop-work age (review: one answer)', async ({ page }) => {
   const errors = await loadDemo(page);
-  const health = async (path: string) => {
+  const WORD = /^(Likely|Fairly likely|Uncertain)$/;
+  const health = async (path: string, label = 'Plan health') => {
     await page.goto(`./#${path}`);
-    const card = page.getByLabel('Plan health');
-    await expect(card.getByText(/^(On track|Watch|At risk)$/)).toBeVisible({ timeout: 20_000 });
-    const status = await card.getByText(/^(On track|Watch|At risk)$/).innerText();
-    const age = (await card.innerText()).match(/(?:Most likely age|most likely at) (\d+)/)?.[1];
+    const card = page.getByLabel(label);
+    await expect(card.getByText(WORD)).toBeVisible({ timeout: 20_000 });
+    const status = await card.getByText(WORD).innerText();
+    const age = (await card.innerText()).match(/(?:Most likely age|most likely at|stop work at) (\d+)/)?.[1];
     return { status, age };
   };
-  const dashboard = await health('/');
-  expect(dashboard.age).toBeDefined();
-  expect(await health('/projection')).toEqual(dashboard);
-  expect(await health('/goal')).toEqual(dashboard);
-  await page.goto('./#/lab');
+  // Home leads with progress and one certainty word (UX doc, D1).
+  const home = await health('/', 'Your progress');
+  expect(home.age).toBeDefined();
+  expect(await health('/plan/projection')).toEqual(home);
+  expect(await health('/plan/goal')).toEqual(home);
+  await page.goto('./#/plan/lab');
   const verdict = page.getByLabel('Verdict');
-  await expect(verdict.getByText(dashboard.status, { exact: true })).toBeVisible({ timeout: 20_000 });
-  await expect(verdict.getByText(new RegExp(`stop working at ${dashboard.age} `))).toBeVisible();
+  await expect(verdict.getByText(home.status, { exact: true })).toBeVisible({ timeout: 20_000 });
+  await expect(verdict.getByText(new RegExp(`stop working at ${home.age} `))).toBeVisible();
   expect(errors).toEqual([]);
 });
 
-test('phone navigation reaches every page in two taps', async ({ page }) => {
+test('phone navigation reaches every page in two taps (UX doc, N1)', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   const errors = await loadDemo(page);
   const bar = page.getByRole('navigation', { name: 'Main' }).last();
-  await expect(bar.getByRole('link')).toHaveCount(4);
-  for (const name of ['Accounts', 'Goal', 'Projection', 'Reviews', 'Settings']) {
-    await bar.getByRole('button', { name: 'More pages' }).click();
-    await page.getByRole('navigation', { name: 'More pages' }).getByRole('link', { name }).click();
+  // The same five destinations as on desktop.
+  await expect(bar.getByRole('link')).toHaveText(['Home', 'Update', 'My money', 'My plan', 'Settings']);
+  const pages: [string, string, string][] = [
+    ['My money', 'My money sections', 'Accounts'],
+    ['My money', 'My money sections', 'Cash flow'],
+    ['My plan', 'My plan sections', 'Goal'],
+    ['My plan', 'My plan sections', 'Strategy Lab'],
+    ['Update', 'Update sections', 'Reviews'],
+  ];
+  for (const [menu, tabs, name] of pages) {
+    await bar.getByRole('link', { name: menu }).click();
+    await page.getByRole('navigation', { name: tabs }).getByRole('link', { name }).click();
     await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
   }
+  await bar.getByRole('link', { name: 'Settings' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
   await page.goto('./#/strategy');
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
   expect(errors).toEqual([]);

@@ -78,7 +78,7 @@ describe('i18n', () => {
 
   it('switches to Taiwan Traditional Chinese', () => {
     setLang('zh-TW');
-    expect(t('Dashboard')).toBe('總覽');
+    expect(t('Home')).toBe('首頁');
     expect(t('Age {age}', { age: 49 })).toBe('49 歲');
     expect(tn(3, '1 year', '{n} years')).toBe('3 年');
     expect(t('Not in the catalog')).toBe('Not in the catalog');

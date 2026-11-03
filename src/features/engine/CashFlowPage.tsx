@@ -350,7 +350,7 @@ export function CashFlowPage() {
               <span className="ml-1 text-xs text-subtle">{t('essential')}</span>
             )}
             {c.system === LOAN_CATEGORY && (
-              <Link to="/accounts" className="block text-xs text-primary hover:underline">
+              <Link to="/money/accounts" className="block text-xs text-primary hover:underline">
                 {t('from loan terms in Accounts')}
               </Link>
             )}
@@ -400,7 +400,7 @@ export function CashFlowPage() {
                 )}
                 {loan.added > 0 && (
                   <Link
-                    to="/accounts"
+                    to="/money/accounts"
                     className="mt-0.5 block text-right text-xs text-primary hover:underline"
                     title={t('Added from the loan terms in Accounts')}
                   >
@@ -409,7 +409,7 @@ export function CashFlowPage() {
                 )}
                 {loan.included > 0 && (
                   <Link
-                    to="/accounts"
+                    to="/money/accounts"
                     className="mt-0.5 block text-right text-xs text-subtle hover:text-primary"
                     title={t('Part of this amount, from the loan terms in Accounts')}
                   >

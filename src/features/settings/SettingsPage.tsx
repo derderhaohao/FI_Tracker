@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Navigate, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { CalendarPlus, Copy, Download, Lock, Plus, Trash2, Upload } from 'lucide-react';
+import { Link, Navigate, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { CalendarPlus, Copy, Download, Hourglass, Lock, Plus, Trash2, Upload } from 'lucide-react';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { downloadMonthlyReminder } from '@/lib/ics';
 import {
   ASSET_CLASSES,
@@ -388,7 +389,11 @@ function AssumptionEditor({ set }: { set: AssumptionSet }) {
 function TaiwanEditor({ set }: { set: AssumptionSet }) {
   const update = useSetUpdater(set);
   const tx = set.taiwan;
-  const tw = (mutate: (t: TaiwanSettings) => void) => update((d) => mutate(d.taiwan));
+  const tw = (mutate: (t: TaiwanSettings) => void) => {
+    update((d) => mutate(d.taiwan));
+    // The user's own figures replace setup's estimate, so Home stops asking for them.
+    void patch(db.settings, 'singleton', { pensionEstimated: undefined });
+  };
   const pctField = (
     label: string,
     value: number,
@@ -1250,6 +1255,7 @@ function Reminder() {
 const SECTIONS = [
   { id: 'general', label: t('General') },
   { id: 'mode', label: t('Beginner / Pro') },
+  { id: 'tools', label: t('Tools') },
   { id: 'assumptions', label: t('Assumptions') },
   { id: 'taiwan', label: t('Taiwan rules') },
   { id: 'categories', label: t('Categories') },
@@ -1321,7 +1327,31 @@ export function SettingsPage() {
         <div className="min-w-0">
           {current === 'general' && (
             <Section id="general" title={t('General')}>
+              {/* Phones have no sidebar, so the language picker lives here too. */}
+              <LanguageSwitch className="mb-4 md:hidden" />
               <GeneralSettings s={settings} />
+            </Section>
+          )}
+          {current === 'tools' && (
+            <Section
+              id="tools"
+              title={t('Tools')}
+              description={t('Standalone tools that never read or change your plan.')}
+            >
+              <Link
+                to="/tools/time-machine"
+                className="flex items-start gap-3 rounded-md border p-4 hover:bg-surface-2"
+              >
+                <Hourglass className="mt-0.5 size-5 shrink-0 text-tool-accent" aria-hidden />
+                <span>
+                  <span className="block font-medium text-primary">{t('Time Machine')}</span>
+                  <span className="block text-sm text-muted-foreground">
+                    {t(
+                      'What if you had invested a sum on a past date? Play it month by month against the S&P 500.',
+                    )}
+                  </span>
+                </span>
+              </Link>
             </Section>
           )}
           {current === 'mode' && (

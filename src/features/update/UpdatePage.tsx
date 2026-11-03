@@ -152,7 +152,7 @@ export function UpdatePage() {
             <p className="text-muted-foreground">{t('Done in {ms}.', { ms: durationText(done.ms) })}</p>
             <p>{t("Last step: add last month's pay and spending, so savings and the FI date stay right.")}</p>
             <div className="flex flex-wrap gap-2">
-              <Link to="/cashflow" className={buttonVariants()}>
+              <Link to="/money/cashflow" className={buttonVariants()}>
                 {t('Cash flow')}
               </Link>
               <Link to="/" className={buttonVariants({ variant: 'outline' })}>

@@ -21,11 +21,14 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await page.getByRole('button', { name: 'Load demo data' }).click();
   await expect(page.getByText('Demo data loaded.')).toBeVisible();
 
-  await page.getByRole('link', { name: 'Dashboard' }).first().click();
-  await expect(page.getByLabel('Plan health').getByText(/^Most likely age \d+ · \w{3} \d{4}$/)).toBeVisible();
-  await expect(page.getByText('Total net worth').first()).toBeVisible();
+  await page.getByRole('link', { name: 'Home' }).first().click();
+  await expect(
+    page.getByLabel('Your progress').getByText(/^At this pace you could stop work at \d+ \(\w{3} \d{4}\)\.$/),
+  ).toBeVisible();
+  await expect(page.getByText('Net worth', { exact: true }).first()).toBeVisible();
 
   // Add a snapshot by copying the last period, then edit one balance.
+  await page.getByRole('link', { name: 'My money' }).first().click();
   await page.getByRole('link', { name: 'Snapshots' }).first().click();
   await page.getByLabel('Snapshot date').fill('2026-10-31');
   await page.getByRole('button', { name: 'Copy last period' }).click();
@@ -36,6 +39,7 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   // No permanent backup banner: prompts come after setup, reviews or 30 days.
   await expect(page.getByText(/Last backup was|No backup in over/)).toHaveCount(0);
 
+  await page.getByRole('link', { name: 'My plan' }).first().click();
   await page.getByRole('link', { name: 'Projection' }).first().click();
   await expect(page.getByText('Investable net worth against the FI target')).toBeVisible();
   await expect(page.getByText('Start', { exact: true }).first()).toBeVisible();
@@ -60,12 +64,13 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   expect(exported.data.snapshots.some((s: { date: string }) => s.date === '2026-10-31')).toBe(true);
 
   await deleteAllData(page);
-  await page.getByRole('link', { name: 'Dashboard' }).first().click();
+  await page.getByRole('link', { name: 'Home' }).first().click();
   await expect(page.getByRole('heading', { name: 'When can you stop working?' })).toBeVisible();
 
   await page.goto('./#/settings/backup');
   await page.getByLabel('Backup file').setInputFiles(path);
   await expect(page.getByText('Backup loaded.')).toBeVisible();
+  await page.getByRole('link', { name: 'My money' }).first().click();
   await page.getByRole('link', { name: 'Snapshots' }).first().click();
   await expect(page.getByLabel('Everyday account on 31 Oct 2026')).toHaveValue('150,000');
 
@@ -78,14 +83,19 @@ test('every screen renders with demo data', async ({ page }) => {
   await page.goto('./#/settings?demo=1');
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
   for (const [route, heading] of [
-    ['', 'Dashboard'],
-    ['accounts', 'Accounts'],
+    ['', 'Home'],
+    ['update', 'Monthly update'],
+    ['update/reviews', 'Reviews'],
+    ['money/accounts', 'Accounts'],
+    ['money/snapshots', 'Snapshots'],
+    ['money/cashflow', 'Cash flow'],
+    ['money/mix', 'Portfolio mix'],
+    ['plan/projection', 'Projection'],
+    ['plan/goal', 'Goal'],
+    ['plan/lab', 'Strategy Lab'],
+    // Old addresses redirect (UX doc, N1).
     ['snapshots', 'Snapshots'],
-    ['cashflow', 'Cash flow'],
-    ['goal', 'Goal'],
-    ['projection', 'Projection'],
     ['lab', 'Strategy Lab'],
-    ['reviews', 'Reviews'],
   ]) {
     await page.goto(`./#/${route}`);
     await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();

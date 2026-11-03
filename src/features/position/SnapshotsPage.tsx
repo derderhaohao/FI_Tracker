@@ -253,7 +253,7 @@ export function SnapshotsPage() {
     return (
       <>
         <PageHeader title={t('Snapshots')} />
-        <EmptyState title={t('Add an account first')} to="/accounts" action={t('Add an account')}>
+        <EmptyState title={t('Add an account first')} to="/money/accounts" action={t('Add an account')}>
           {t('Each snapshot holds one balance per account.')}
         </EmptyState>
       </>

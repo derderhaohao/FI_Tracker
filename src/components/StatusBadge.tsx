@@ -1,6 +1,8 @@
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/misc';
-import type { PlanStatus } from '@/domain/planStatus';
+import { InfoTip } from '@/components/ui/term';
+import { STATUS_EXPLAIN, type PlanStatus } from '@/domain/planStatus';
+import { t } from '@/i18n';
 
 const TONE: Record<PlanStatus, 'good' | 'warning' | 'critical'> = {
   on_track: 'good',
@@ -8,14 +10,30 @@ const TONE: Record<PlanStatus, 'good' | 'warning' | 'critical'> = {
   at_risk: 'critical',
 };
 
-/** A plan status as a word with an icon, so it never relies on colour alone (UI-22). */
-export function StatusBadge({ status, children }: { status: PlanStatus; children: string }) {
+/**
+ * A plan status as a word with an icon, so it never relies on colour alone (UI-22), and a
+ * one-line explanation behind it (UX doc, A1).
+ */
+export function StatusBadge({
+  status,
+  children,
+  explain = true,
+}: {
+  status: PlanStatus;
+  children: string;
+  explain?: boolean;
+}) {
   return (
-    <Badge
-      tone={TONE[status]}
-      icon={status === 'on_track' ? <CheckCircle2 aria-hidden /> : <AlertTriangle aria-hidden />}
-    >
-      {children}
-    </Badge>
+    <span className="inline-flex items-center gap-1">
+      <Badge
+        tone={TONE[status]}
+        icon={status === 'on_track' ? <CheckCircle2 aria-hidden /> : <AlertTriangle aria-hidden />}
+      >
+        {children}
+      </Badge>
+      {explain && (
+        <InfoTip label={t('What “{word}” means', { word: children })}>{STATUS_EXPLAIN[status]}</InfoTip>
+      )}
+    </span>
   );
 }

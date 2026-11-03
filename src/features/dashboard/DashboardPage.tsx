@@ -1,28 +1,72 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ASSET_CLASS_LABELS, type AssetClass } from '@/domain/entities';
+import { ArrowRight, RefreshCw } from 'lucide-react';
 import { allocationGap, computeAlerts, groupDriftAlerts } from '@/domain/alerts';
 import { monthlyTotals } from '@/domain/cashflow';
-import { daysBetween, today } from '@/domain/dates';
+import { today } from '@/domain/dates';
 import { fiProgress, netWorthSeries } from '@/domain/networth';
+import { STATUS_LABELS } from '@/domain/planStatus';
 import { periodChanges } from '@/domain/reconcile';
 import { useAppData } from '@/app/data';
+import { usePlanHealth } from '@/app/planHealth';
+import { stopAge, stopDate } from '@/features/lab/model';
 import { Welcome } from '@/features/setup/Welcome';
+import { defaultUpdateDate } from '@/features/update/updateModel';
+import { useAutosave } from '@/lib/autosave';
 import { FiMoveCard } from './FiMoveCard';
-import { AssumptionBadge } from '@/components/AssumptionBadge';
-import { PlanHealthCard } from '@/components/PlanHealthCard';
+import { nextStep, type NextStep } from './nextStep';
+import { StatusBadge } from '@/components/StatusBadge';
 import { LineChart } from '@/components/charts/LineChart';
-import { ShareBars } from '@/components/charts/ShareBars';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
-import { EmptyState, Notice, PageHeader, Stat } from '@/components/ui/misc';
-import { formatDate, monthLabel, pct, twd, twdCompact } from '@/lib/format';
+import { Badge, EmptyState, Notice, PageHeader, Segmented, Stat } from '@/components/ui/misc';
+import { formatDate, monthLabel, pct, twdCompact } from '@/lib/format';
+import { cn } from '@/lib/cn';
 import { t } from '@/i18n';
+
+/** "41% (good)": every percentage carries a word (UX doc, words and numbers). */
+function savingsWord(rate: number, target: number): string {
+  if (rate >= target) return t('good');
+  if (rate >= 0.1) return t('fair');
+  return t('low');
+}
+
+const NEXT: Record<NextStep, (month: string) => { title: string; text: string; to: string; action: string }> =
+  {
+    update: (month) => ({
+      title: t('{month} update due', { month }),
+      text: t('About 3 minutes: balances, the USD rate, pay and spending.'),
+      to: '/update',
+      action: t('Start the update'),
+    }),
+    backup: () => ({
+      title: t('Save a backup'),
+      text: t('Your data lives only in this browser. Keep a copy, or turn on auto-save to a file.'),
+      to: '/settings/backup',
+      action: t('Back up now'),
+    }),
+    pension: () => ({
+      title: t('Add your 勞保 details to sharpen the date'),
+      text: t(
+        'Setup estimated 勞退 and 勞保 from your pay. Your real figures are on the 勞保局 e化服務 site.',
+      ),
+      to: '/settings/taiwan',
+      action: t('Add details'),
+    }),
+    'what-if': () => ({
+      title: t('Try a what-if'),
+      text: t('Save more, stop later, work part-time: see the date move.'),
+      to: '/plan/lab',
+      action: t('Open the Strategy Lab'),
+    }),
+  };
 
 export function DashboardPage() {
   const data = useAppData();
-  const { settings, accounts, snapshots, ctx, baseline, fiNumberNow } = data;
+  const { settings, accounts, snapshots, ctx, baseline, baselineInput, fiNumberNow } = data;
+  const { status, pending } = usePlanHealth();
+  const autosave = useAutosave();
+  const [chart, setChart] = useState<'total' | 'investable'>('total');
   const totals = useMemo(
     () => monthlyTotals(data.cashFlows, data.categories, data.fxRates),
     [data.cashFlows, data.categories, data.fxRates],
@@ -36,8 +80,12 @@ export function DashboardPage() {
   if (snapshots.length === 0) {
     return (
       <>
-        <PageHeader title={t('Dashboard')} />
-        <EmptyState title={t('Enter your first snapshot')} to="/snapshots" action={t('Go to Snapshots')}>
+        <PageHeader title={t('Home')} />
+        <EmptyState
+          title={t('Enter your first balances')}
+          to="/money/snapshots"
+          action={t('Go to Snapshots')}
+        >
           {t('One balance per account, in its own currency, plus the USD/TWD rate for the date.')}
         </EmptyState>
       </>
@@ -45,11 +93,14 @@ export function DashboardPage() {
   }
 
   const nw = ctx.netWorth;
-  const progress = fiProgress(nw.investable, fiNumberNow);
+  const progress = Math.max(0, fiProgress(nw.investable, fiNumberNow));
+  const age = stopAge(baseline);
+  const date = stopDate(baselineInput, baseline, ctx.asOfDate);
   const lastMonth = totals.at(-1);
-  const backupAge = settings.lastBackupAt
-    ? daysBetween(settings.lastBackupAt.slice(0, 10), today())
-    : undefined;
+  const previous = series.at(-2);
+  const change = previous ? nw.total - previous.total : undefined;
+
+  // At most one banner (UX doc, A1): data problems first, then the other warnings.
   const alerts = groupDriftAlerts(
     computeAlerts(settings.alerts, settings.targetAllocation, nw, totals, ctx.t12.annualExpense / 12),
     series.length,
@@ -58,218 +109,184 @@ export function DashboardPage() {
   const lastChange = periodChanges(series.slice(-2), totals, data.fxRates, data.activeAssumptions.assets).at(
     -1,
   );
-  if (lastChange?.check?.flagged) {
-    alerts.push({
-      id: 'reconcile',
-      level: 'warning',
-      message: t(
-        'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.',
-        {
-          change: twdCompact(lastChange.change),
-          from: lastChange.from,
-          to: lastChange.to,
-          contributions: twdCompact(lastChange.contributions),
-        },
-      ),
-    });
-  }
-  const driftAlerts = alerts.filter((a) => a.id === 'drift');
-  const otherAlerts = alerts.filter((a) => a.id !== 'drift');
-  const targetSum = Object.values(settings.targetAllocation).reduce((a, b) => a + (b ?? 0), 0);
-  const byClass = (Object.keys(nw.byAssetClass) as AssetClass[])
-    .filter((c) => nw.balances.some((b) => b.account.assetClass === c && b.bucket === 'liquid'))
-    .map((c) => {
-      const value = nw.balances
-        .filter((b) => b.account.assetClass === c && b.bucket === 'liquid')
-        .reduce((s, b) => s + b.twd, 0);
-      return {
-        label: ASSET_CLASS_LABELS[c],
-        value,
-        target: targetSum > 0 ? (settings.targetAllocation[c] ?? 0) / targetSum : undefined,
-      };
-    })
-    .sort((a, b) => b.value - a.value);
-  const byCurrency = Object.entries(nw.byCurrency)
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => b.value - a.value);
+  const banner =
+    ctx.warnings[0] ??
+    (lastChange?.check?.flagged
+      ? t(
+          'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.',
+          {
+            change: twdCompact(lastChange.change),
+            from: lastChange.from,
+            to: lastChange.to,
+            contributions: twdCompact(lastChange.contributions),
+          },
+        )
+      : alerts.find((a) => a.id !== 'drift')?.message);
+  const drift = alerts.some((a) => a.id === 'drift');
 
+  const step = nextStep({
+    today: today(),
+    asOfDate: ctx.asOfDate,
+    snapshotDateCount: series.length,
+    backupPrompt: settings.backupPrompt,
+    lastBackupAt: settings.lastBackupAt,
+    firstDataDate: accounts.map((a) => a.createdAt.slice(0, 10)).sort()[0],
+    autosaving: autosave.status === 'active' || autosave.status === 'saving',
+    pensionEstimated: settings.pensionEstimated,
+  });
+  const next = NEXT[step](monthLabel(defaultUpdateDate(today()).slice(0, 7)));
+
+  const rate = lastMonth?.regularSavingsRate;
   return (
     <>
       <PageHeader
-        title={t('Dashboard')}
-        description={t('As of the snapshot on {asOfDate}. All amounts in TWD.', {
-          asOfDate: formatDate(ctx.asOfDate),
-        })}
+        title={t('Home')}
+        description={t('As of {asOfDate}. All amounts in TWD.', { asOfDate: formatDate(ctx.asOfDate) })}
         actions={
-          <>
-            <Link to="/update" className={buttonVariants({ size: 'sm' })}>
-              <RefreshCw aria-hidden /> {t('Monthly update')}
-            </Link>
-            <AssumptionBadge set={data.activeAssumptions} />
-          </>
+          <Link to="/update" className={buttonVariants({ size: 'sm' })}>
+            <RefreshCw aria-hidden /> {t('Monthly update')}
+          </Link>
         }
       />
-      {ctx.warnings.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2">
-          {ctx.warnings.map((w) => (
-            <Notice key={w} tone="warning">
-              {w}
-            </Notice>
-          ))}
-        </div>
+      {banner && (
+        <Notice tone="warning" className="mb-4">
+          {banner}
+        </Notice>
       )}
 
-      <PlanHealthCard
-        note={
-          baseline.fiAge === undefined
-            ? t('Add cash flow and an FI budget, or try a scenario in the Strategy Lab.')
-            : t(
-                'The age is the typical path, where markets return their typical amount every year; the status counts how often the money lasts across 1,000 simulated futures.',
-              )
-        }
-      />
+      {/* The hero holds one sentence, one bar and one word of certainty (UX doc, D1). */}
+      <section aria-label={t('Your progress')} className="mb-4 rounded-lg border bg-surface p-5">
+        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+          {t('You’re {pct} of the way to financial independence', { pct: pct(Math.min(progress, 1), 0) })}
+        </h2>
+        <div
+          role="progressbar"
+          aria-label={t('Progress to financial independence')}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(Math.min(progress, 1) * 100)}
+          className="mt-3 h-3 overflow-hidden rounded-full bg-surface-2"
+        >
+          <div
+            className="h-full rounded-full bg-primary"
+            style={{ width: `${Math.min(progress, 1) * 100}%` }}
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <p className="text-base sm:text-lg">
+            {age !== undefined && date
+              ? t('At this pace you could stop work at {age} ({date}).', { age, date })
+              : t('At this pace you would not reach it by {horizonAge}.', {
+                  horizonAge: baselineInput.horizonAge,
+                })}
+          </p>
+          {status ? (
+            <StatusBadge status={status}>{STATUS_LABELS[status]}</StatusBadge>
+          ) : (
+            <Badge>{pending ? t('Checking…') : '—'}</Badge>
+          )}
+          <Link to="/plan/projection" className="text-sm text-primary hover:underline">
+            {t('How sure is this?')}
+          </Link>
+        </div>
+      </section>
 
-      {/* Section order (UI-10): plan, KPIs, alerts, net worth and allocation, FI-date move, backup. */}
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat
-          label={t('Total net worth')}
-          value={twdCompact(nw.total)}
-          sub={t('Assets {twdCompact} · debt {liabilities}', {
-            twdCompact: twdCompact(nw.total + nw.liabilities),
-            liabilities: twdCompact(nw.liabilities),
-          })}
-        />
-        <Stat
-          label={t('Investable net worth')}
-          value={twdCompact(nw.investable)}
-          sub={
-            nw.locked > 0
-              ? t('Plus {locked} locked until access age', { locked: twdCompact(nw.locked) })
-              : t('Usable now')
-          }
-        />
-        <Stat
-          label={t('FI progress')}
-          value={pct(progress, 1)}
-          sub={
-            <>
-              {t('of FI number {fiNumberNow} ·', { fiNumberNow: twdCompact(fiNumberNow) })}{' '}
-              <Link className="text-primary hover:underline" to="/goal">
-                {t('Goal')}
-              </Link>
-            </>
-          }
-        />
-        <Stat
-          label={t('Savings rate')}
-          value={
-            lastMonth && Number.isFinite(lastMonth.regularSavingsRate)
-              ? pct(lastMonth.regularSavingsRate)
-              : '—'
-          }
-          sub={
-            lastMonth
-              ? t('{month} excl. lump sums · trailing 12 months {v}', {
-                  month: monthLabel(lastMonth.month),
-                  v: Number.isFinite(ctx.t12.savingsRate) ? pct(ctx.t12.savingsRate) : '—',
-                })
-              : t('No cash flow yet')
-          }
-        />
+      <div className="mb-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Stat
+            label={t('Net worth')}
+            value={twdCompact(nw.total)}
+            sub={
+              change === undefined
+                ? t('First month')
+                : t('{sign}{change} since last month', {
+                    sign: change >= 0 ? '+' : '−',
+                    change: twdCompact(Math.abs(change)),
+                  })
+            }
+          />
+          <Stat
+            label={t('Saving per month')}
+            value={lastMonth ? twdCompact(lastMonth.income - lastMonth.expense) : '—'}
+            sub={lastMonth ? monthLabel(lastMonth.month) : t('No cash flow yet')}
+          />
+          <Stat
+            label={t('Savings rate')}
+            value={rate !== undefined && Number.isFinite(rate) ? pct(rate) : '—'}
+            sub={
+              rate !== undefined && Number.isFinite(rate)
+                ? t('{word} · bonuses left out', {
+                    word: savingsWord(rate, settings.alerts.targetSavingsRate),
+                  })
+                : t('No cash flow yet')
+            }
+          />
+        </div>
+        <section aria-label={t('Next step')} className="rounded-lg border border-primary/40 bg-surface p-4">
+          <div className="text-xs font-medium tracking-wide text-primary uppercase">{t('Next step')}</div>
+          <h2 className="mt-1 font-semibold">{next.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{next.text}</p>
+          <Link to={next.to} className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'mt-3')}>
+            {next.action} <ArrowRight aria-hidden />
+          </Link>
+        </section>
       </div>
 
-      {otherAlerts.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2">
-          {otherAlerts.map((a) => (
-            <Notice key={a.id} tone="warning">
-              {a.message}
-            </Notice>
-          ))}
-        </div>
+      {drift && (
+        <p className="mb-4 text-sm">
+          {t('Your mix is {points} points off target.', {
+            points: Math.round(allocationGap(settings.targetAllocation, nw) * 100),
+          })}{' '}
+          <Link to="/money/mix" className="text-primary hover:underline">
+            {t('Review')}
+          </Link>
+        </p>
       )}
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Card>
-          <CardHeader
-            title={t('Net worth over time')}
-            description={t("Total and investable (incl. locked pension), TWD at each snapshot's FX rate")}
-          />
-          <CardContent>
+      <Card>
+        <CardHeader
+          title={t('Net worth over time')}
+          description={t("TWD at each snapshot's FX rate")}
+          actions={
+            <Segmented
+              label={t('Show')}
+              value={chart}
+              onChange={setChart}
+              options={[
+                { value: 'total', label: t('Total') },
+                { value: 'investable', label: t('Investments') },
+              ]}
+            />
+          }
+        />
+        <CardContent>
+          {series.length < 2 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              {t('Your line starts here. Do next month’s update to see it grow.')}
+            </p>
+          ) : (
             <LineChart
               ariaLabel={t('Net worth over time')}
               data={series.map((s) => ({
                 date: s.date,
-                total: s.total,
-                investable: s.investable + s.locked,
+                value: chart === 'total' ? s.total : s.investable + s.locked,
               }))}
               xKey="date"
               xFormat={(v) => monthLabel(String(v).slice(0, 7))}
               series={[
-                { key: 'total', label: t('Total net worth'), slot: 0 },
-                { key: 'investable', label: t('Investable + locked'), slot: 2 },
+                {
+                  key: 'value',
+                  label: chart === 'total' ? t('Total net worth') : t('Investments incl. locked pension'),
+                  slot: chart === 'total' ? 0 : 2,
+                },
               ]}
-              height={300}
+              height={280}
             />
-          </CardContent>
-        </Card>
-        <div className="flex flex-col gap-4">
-          {driftAlerts.map((a) => (
-            <Notice
-              key={a.id}
-              tone="warning"
-              action={
-                <Link
-                  to="/settings/general#allocation"
-                  className="text-sm font-medium whitespace-nowrap text-primary hover:underline"
-                >
-                  {t('Review allocation')}
-                </Link>
-              }
-            >
-              {a.message}
-            </Notice>
-          ))}
-          <Card>
-            <CardHeader
-              title={t('Allocation')}
-              description={t('Liquid investable assets by class; ticks mark the target')}
-            />
-            <CardContent>
-              <ShareBars rows={byClass} ariaLabel={t('Allocation by asset class')} />
-              <p className="mt-3 text-xs text-muted-foreground">
-                {t('Total {investable}{v}', {
-                  investable: twd(nw.investable),
-                  v:
-                    nw.locked > 0 &&
-                    t(' · {locked} locked until access age not shown', { locked: twdCompact(nw.locked) }),
-                })}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader title={t('By currency')} description={t('All assets, converted to TWD')} />
-            <CardContent>
-              <ShareBars rows={byCurrency} ariaLabel={t('Assets by currency')} />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      <FiMoveCard />
-
-      <Card className="mt-4">
-        <CardHeader title={t('Backup')} />
-        <CardContent className="pt-2 text-sm text-muted-foreground">
-          {backupAge === undefined
-            ? t('Never backed up.')
-            : backupAge === 0
-              ? t('Last backup today.')
-              : t('Last backup {backupAge} days ago.', { backupAge })}{' '}
-          <Link to="/settings/backup" className="text-primary hover:underline">
-            {t('Backup & restore')}
-          </Link>
+          )}
         </CardContent>
       </Card>
+
+      <FiMoveCard />
     </>
   );
 }

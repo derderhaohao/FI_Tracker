@@ -42,7 +42,7 @@ export function SetupResult() {
           : t('Your data lives only in this browser.'),
     },
     {
-      to: '/lab',
+      to: '/plan/lab',
       title: t('Try a what-if'),
       text: t('Save more, stop later, work part-time: see the date move.'),
     },

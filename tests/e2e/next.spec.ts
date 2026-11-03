@@ -38,6 +38,8 @@ test('the monthly update on a phone, then why the FI date moved', async ({ page 
   await expect(move.getByText(/on 30 Sep 2026 → .* on 31 Oct 2026/)).toBeVisible();
   await expect(move.getByText('A month went by')).toBeVisible();
   await expect(move.getByText('What you saved')).toBeVisible();
+  // The full answer, with the range, lives behind "How sure is this?" (UX doc, D1).
+  await page.getByRole('link', { name: 'How sure is this?' }).click();
   await expect(
     page.getByLabel('Plan health').getByText(/^Likely between age \d+ and \d+ \(8 in 10 futures\)$/),
   ).toBeVisible({

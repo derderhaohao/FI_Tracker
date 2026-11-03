@@ -104,10 +104,10 @@ export function PlanHealthCard({ compact = false, note }: { compact?: boolean; n
       )}
       {note && <p className="mt-2 text-xs text-muted-foreground">{note}</p>}
       <div className="mt-2 flex flex-wrap gap-x-4 text-sm">
-        <Link className="text-primary hover:underline" to="/lab">
+        <Link className="text-primary hover:underline" to="/plan/lab">
           {t('Why, and what would make it safer')}
         </Link>
-        <Link className="text-primary hover:underline" to="/projection">
+        <Link className="text-primary hover:underline" to="/plan/projection">
           {t('Year by year')}
         </Link>
       </div>
@@ -152,7 +152,7 @@ function DetailsPopover({ note }: { note?: ReactNode }) {
           className="absolute right-0 z-30 mt-1 w-80 max-w-[calc(100vw-2rem)] animate-pop-in rounded-md border bg-surface p-3 text-xs shadow-lg"
         >
           {note && <p className="mb-2 text-muted-foreground">{note}</p>}
-          <Link to="/lab" className="font-medium text-primary hover:underline">
+          <Link to="/plan/lab" className="font-medium text-primary hover:underline">
             {t('Why, and what would make it safer')}
           </Link>
         </div>

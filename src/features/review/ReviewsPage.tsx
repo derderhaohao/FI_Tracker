@@ -214,7 +214,11 @@ function PlanVsActual() {
   const totals = useMemo(() => monthlyTotals(data.cashFlows, data.categories, data.fxRates), [data]);
   if (!plan?.lockedProjection || !plan.lockedAt) {
     return (
-      <EmptyState title={t('No plan of record yet')} to="/lab" action={t('Lock one in the Strategy Lab')}>
+      <EmptyState
+        title={t('No plan of record yet')}
+        to="/plan/lab"
+        action={t('Lock one in the Strategy Lab')}
+      >
         {t(
           'Lock a scenario as the plan of record; every review then compares actual net worth, savings and spending against it.',
         )}

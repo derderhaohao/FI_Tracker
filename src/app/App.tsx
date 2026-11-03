@@ -3,18 +3,6 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { db } from '@/db/db';
 import { ensureDefaults } from '@/db/defaults';
 import { loadDemo } from '@/io/demo';
-import { DashboardPage } from '@/features/dashboard/DashboardPage';
-import { AccountsPage } from '@/features/position/AccountsPage';
-import { SnapshotsPage } from '@/features/position/SnapshotsPage';
-import { CashFlowPage } from '@/features/engine/CashFlowPage';
-import { GoalPage } from '@/features/destination/GoalPage';
-import { ProjectionPage } from '@/features/trajectory/ProjectionPage';
-import { LabPage } from '@/features/lab/LabPage';
-import { ReviewsPage } from '@/features/review/ReviewsPage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
-import { SetupPage } from '@/features/setup/SetupPage';
-import { SetupResult } from '@/features/setup/SetupResult';
-import { UpdatePage } from '@/features/update/UpdatePage';
 import { DataProvider } from './data';
 import { PlanHealthProvider } from './planHealth';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -22,15 +10,10 @@ import { GoalHistoryRecorder } from './GoalHistoryRecorder';
 import { AutoSaver } from './AutoSaver';
 import { UpdatePrompt } from './UpdatePrompt';
 import { initAutosave } from '@/lib/autosave';
-import { Layout } from './Layout';
-import { NotFound } from './NotFound';
+import { proRoutes } from './proRoutes';
 import { t } from '@/i18n';
 import { getMode, setMode, useMode } from '@/lib/mode';
 
-// Standalone tools load on demand, so the main bundle does not grow (TM-1).
-const TimeMachinePage = lazy(() =>
-  import('@/tools/time-machine/TimeMachinePage').then((m) => ({ default: m.TimeMachinePage })),
-);
 // Beginner mode is its own lazy app with its own database (KD-2).
 const KidsApp = lazy(() => import('@/kids/KidsApp').then((m) => ({ default: m.KidsApp })));
 
@@ -111,35 +94,8 @@ export function App() {
         <PlanHealthProvider>
           <GoalHistoryRecorder />
           <AutoSaver />
-          <UpdatePrompt />
           <HashRouter>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="accounts" element={<AccountsPage />} />
-                <Route path="snapshots" element={<SnapshotsPage />} />
-                <Route path="cashflow" element={<CashFlowPage />} />
-                <Route path="goal" element={<GoalPage />} />
-                <Route path="projection" element={<ProjectionPage />} />
-                <Route path="lab" element={<LabPage />} />
-                <Route path="reviews" element={<ReviewsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="settings/:section" element={<SettingsPage />} />
-                <Route path="setup" element={<SetupPage />} />
-                <Route path="setup/done" element={<SetupResult />} />
-                <Route path="update" element={<UpdatePage />} />
-                <Route
-                  path="tools/time-machine"
-                  element={
-                    <Suspense fallback={<Loading />}>
-                      <TimeMachinePage />
-                    </Suspense>
-                  }
-                />
-                <Route path="kids/*" element={<Navigate to="/" replace />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
+            <Routes>{proRoutes(<Loading />)}</Routes>
           </HashRouter>
         </PlanHealthProvider>
       </DataProvider>

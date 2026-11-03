@@ -8,16 +8,31 @@ import { t } from '@/i18n';
 
 export type PlanStatus = 'on_track' | 'watch' | 'at_risk';
 
+/**
+ * A word, not a verdict (UX doc, A1): anything under 100% "success" sounds scary, so only a
+ * chance below 60% is red.
+ */
 export const STATUS_LABELS: Record<PlanStatus, string> = {
-  on_track: t('On track'),
-  watch: t('Watch'),
-  at_risk: t('At risk'),
+  on_track: t('Likely'),
+  watch: t('Fairly likely'),
+  at_risk: t('Uncertain'),
 };
 
-/** On track 85%+, Watch 70–84%, At risk under 70%. */
+/** One line behind each word. */
+export const STATUS_EXPLAIN: Record<PlanStatus, string> = {
+  on_track: t('Likely: the money lasts in at least 8 of 10 simulated futures.'),
+  watch: t(
+    'Fairly likely: the money lasts in 6 or 7 of 10 simulated futures. In the others, spending a little less after a bad run of markets would keep it going.',
+  ),
+  at_risk: t(
+    'Uncertain: the money lasts in fewer than 6 of 10 simulated futures. A what-if in My plan shows what would make it safer.',
+  ),
+};
+
+/** Likely 80%+, Fairly likely 60–79%, Uncertain under 60%. */
 export function planStatus(chance: number): PlanStatus {
-  if (chance >= 0.85) return 'on_track';
-  if (chance >= 0.7) return 'watch';
+  if (chance >= 0.8) return 'on_track';
+  if (chance >= 0.6) return 'watch';
   return 'at_risk';
 }
 

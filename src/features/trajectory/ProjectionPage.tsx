@@ -86,8 +86,8 @@ export function ProjectionPage() {
         }
       />
       {mode === 'static' && (
+        // The full answer lives here; Home links to it as "How sure is this?" (UX doc, D1).
         <PlanHealthCard
-          compact
           note={
             setId !== data.activeAssumptions.id
               ? t('The status uses your active assumption set ({name}); the chart below uses {name2}.', {

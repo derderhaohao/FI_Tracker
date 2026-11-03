@@ -14,22 +14,12 @@ export const ZH_TW: Record<string, string> = {
   'Auto-save failed: {v}. Export a backup manually.': '自動儲存失敗：{v}。請手動匯出備份。',
   'unknown error': '未知錯誤',
   'Export backup': '匯出備份',
-  'Setup saved. Your data lives only in this browser: keep a copy somewhere safe.':
-    '設定已儲存。你的資料只存在這個瀏覽器中：請在安全的地方保留一份副本。',
-  'Review saved. A good moment to back up.': '回顧已儲存。現在是備份的好時機。',
-  'No backup in over 30 days. Your data lives only in this browser.':
-    '已超過 30 天沒有備份。你的資料只存在這個瀏覽器中。',
-  'Last backup was {age} days ago.': '上次備份是 {age} 天前。',
-  'Turn on auto-save (recommended)': '開啟自動儲存（建議）',
-  'Remind me later': '稍後提醒我',
-  Later: '稍後',
   // app/ErrorBoundary.tsx
   'Something went wrong': '發生錯誤',
   'Your data is still stored in this browser. Reload the page; if the problem stays, export a backup from Settings before changing anything.':
     '你的資料仍儲存在這個瀏覽器中。請重新載入頁面；如果問題持續，請先到「設定」匯出備份，再做任何變更。',
   'Try again': '再試一次',
   // app/Layout.tsx
-  Dashboard: '總覽',
   'Monthly update': '每月更新',
   Accounts: '帳戶',
   Snapshots: '快照',
@@ -40,9 +30,7 @@ export const ZH_TW: Record<string, string> = {
   Reviews: '回顧',
   Settings: '設定',
   Update: '更新',
-  'More pages': '更多頁面',
   Main: '主選單',
-  More: '更多',
   'FI Tracker': 'FI Tracker',
   'Data stays in this browser.': '資料只保存在這個瀏覽器。',
   // app/NotFound.tsx
@@ -161,9 +149,6 @@ export const ZH_TW: Record<string, string> = {
   'Exchange rates': '匯率',
   'Pay and spending': '薪資與支出',
   // domain/planStatus.ts
-  'On track': '進度正常',
-  Watch: '留意',
-  'At risk': '有風險',
   'Nearly all': '幾乎全部',
   'Almost none': '幾乎沒有',
   '{chance} in 10': '{chance} 成',
@@ -355,13 +340,11 @@ export const ZH_TW: Record<string, string> = {
   'Fixed % of portfolio': '投資組合固定比例',
   'Dividends only': '只領股利',
   // features/dashboard/DashboardPage.tsx
-  'Enter your first snapshot': '輸入你的第一筆快照',
   'Go to Snapshots': '前往快照',
   'One balance per account, in its own currency, plus the USD/TWD rate for the date.':
     '每個帳戶一筆結餘，以帳戶本身的幣別記錄，並加上當天的美元／新台幣匯率。',
   'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.':
     '淨資產從 {from} 到 {to} 變動了 {change}，記錄的儲蓄（{contributions}）和合理的市場波動都無法解釋。請到「快照」檢查是否有漏記或打錯。',
-  'As of the snapshot on {asOfDate}. All amounts in TWD.': '以 {asOfDate} 的快照為準。所有金額皆為新台幣。',
   'Add cash flow and an FI budget, or try a scenario in the Strategy Lab.':
     '新增現金流與財務自由預算，或到策略實驗室試試情境。',
   'The age is the typical path, where markets return their typical amount every year; the status counts how often the money lasts across 1,000 simulated futures.':
@@ -379,7 +362,6 @@ export const ZH_TW: Record<string, string> = {
   'Net worth over time': '淨資產走勢',
   "Total and investable (incl. locked pension), TWD at each snapshot's FX rate":
     '總額與可投資資產（含鎖定的退休金），以各快照當時的匯率換算成新台幣',
-  'Investable + locked': '可投資 + 鎖定',
   Allocation: '資產配置',
   'Liquid investable assets by class; ticks mark the target': '可動用的可投資資產依類別分布；刻度標示目標',
   'Allocation by asset class': '依資產類別的配置',
@@ -389,10 +371,6 @@ export const ZH_TW: Record<string, string> = {
   'All assets, converted to TWD': '所有資產，換算成新台幣',
   'Assets by currency': '依幣別的資產',
   Backup: '備份',
-  'Never backed up.': '從未備份。',
-  'Last backup today.': '今天已備份。',
-  'Last backup {backupAge} days ago.': '上次備份是 {backupAge} 天前。',
-  'Backup & restore': '備份與還原',
   // features/dashboard/FiMoveCard.tsx
   'no change': '沒有變化',
   '1.0 month later': '晚 1.0 個月',
@@ -1521,7 +1499,7 @@ export const ZH_TW: Record<string, string> = {
   'Overseas stocks and ETFs, in USD': '海外股票與 ETF，以美元計',
   'Labor pension balance (locked until 60)': '勞退個人專戶餘額（60 歲前鎖定）',
   '儲蓄險 cash value': '儲蓄險的保單價值準備金',
-  Home: '房屋',
+  Home: '首頁',
   'Estimated market value': '估計市價',
   'Loan / mortgage': '貸款／房貸',
   Loan: '貸款',
@@ -2218,7 +2196,6 @@ export const ZH_TW: Record<string, string> = {
   Results: '結果',
   'Results view': '結果檢視',
   'S&P 500 (SPY)': 'S&P 500（SPY）',
-  Sandbox: '沙盒',
   'Saved and compare': '儲存與比較',
   'Saved scenarios': '已儲存的情境',
   'Saved scenarios stay on this device only.': '已儲存的情境只保留在這台裝置上。',
@@ -2232,7 +2209,6 @@ export const ZH_TW: Record<string, string> = {
   'Source: {source}. Data to {month}.': '資料來源：{source}。資料至 {month}。',
   'Standalone tool · Uses market history only. It does not read or change your FI Tracker data.':
     '獨立工具 · 只使用市場歷史資料，不會讀取或變更你的 FI Tracker 資料。',
-  'Standalone tools': '獨立工具',
   'Start in {month} instead': '改從 {month} 開始',
   'Start month': '開始月份',
   'Start of {month}': '{month} 月初',
@@ -2400,4 +2376,64 @@ export const ZH_TW: Record<string, string> = {
   'Money in and out': '收入與支出',
   'How you invest': '你怎麼投資',
   'FI goal': '財務自由目標',
+  'My money': '我的資產',
+  'What “{word}” means': '「{word}」是什麼意思',
+  Likely: '很可能',
+  'Fairly likely': '相當可能',
+  Uncertain: '不確定',
+  good: '良好',
+  fair: '普通',
+  low: '偏低',
+  '{month} update due': '該做 {month} 的更新了',
+  'Start the update': '開始更新',
+  'Your data lives only in this browser. Keep a copy, or turn on auto-save to a file.':
+    '你的資料只存在這個瀏覽器中。請保留一份副本，或開啟自動儲存到檔案。',
+  'Back up now': '立即備份',
+  'Add your 勞保 details to sharpen the date': '填入你的勞保資料，讓日期更準確',
+  'Setup estimated 勞退 and 勞保 from your pay. Your real figures are on the 勞保局 e化服務 site.':
+    '設定時依你的薪資估算了勞退和勞保。實際數字可在勞保局 e化服務網站查到。',
+  'Add details': '填入資料',
+  'Open the Strategy Lab': '開啟策略實驗室',
+  'Enter your first balances': '輸入你的第一筆餘額',
+  'As of {asOfDate}. All amounts in TWD.': '截至 {asOfDate}。所有金額以新台幣計。',
+  'Your progress': '你的進度',
+  'You’re {pct} of the way to financial independence': '你已完成財務自由進度的 {pct}',
+  'At this pace you could stop work at {age} ({date}).': '照這個步調，你可以在 {age} 歲（{date}）停止工作。',
+  'At this pace you would not reach it by {horizonAge}.': '照這個步調，{horizonAge} 歲前無法達成。',
+  'How sure is this?': '這有多確定？',
+  'Net worth': '淨資產',
+  'First month': '第一個月',
+  '{sign}{change} since last month': '比上個月 {sign}{change}',
+  '{word} · bonuses left out': '{word} · 不含獎金',
+  'Next step': '下一步',
+  'Your mix is {points} points off target.': '你的配置與目標相差 {points} 個百分點。',
+  Review: '檢視',
+  "TWD at each snapshot's FX rate": '以每次快照時的匯率換算成新台幣',
+  Show: '顯示',
+  'Your line starts here. Do next month’s update to see it grow.':
+    '你的曲線從這裡開始。下個月做完更新，就能看到它成長。',
+  'Investments incl. locked pension': '投資（含鎖定的退休金）',
+  Tools: '工具',
+  'Standalone tools that never read or change your plan.': '獨立工具，不會讀取或更改你的計畫。',
+  'What if you had invested a sum on a past date? Play it month by month against the S&P 500.':
+    '如果你在過去某一天投入一筆錢會怎樣？逐月播放，並與標普 500 比較。',
+  More: '更多',
+  Sandbox: '沙盒',
+  'My home': '自住房屋',
+  'Portfolio mix': '投資配置',
+  'Update sections': '更新的分頁',
+  'My money sections': '我的資產的分頁',
+  'My plan sections': '我的計畫的分頁',
+  'The mix shows how your investments split between asset classes and currencies.':
+    '配置顯示你的投資如何分布在各資產類別與幣別。',
+  'How your usable investments split, against the target mix for new savings.':
+    '你可動用的投資如何分布，並與新儲蓄的目標配置比較。',
+  '{points} points off the target mix.': '與目標配置相差 {points} 個百分點。',
+  'Change the target': '更改目標',
+  'Likely: the money lasts in at least 8 of 10 simulated futures.':
+    '很可能：在 10 個模擬未來中，至少有 8 個資金足以用到最後。',
+  'Fairly likely: the money lasts in 6 or 7 of 10 simulated futures. In the others, spending a little less after a bad run of markets would keep it going.':
+    '相當可能：在 10 個模擬未來中，有 6 或 7 個資金足以用到最後。其他情況下，市場表現不佳後稍微少花一點，就能撐下去。',
+  'Uncertain: the money lasts in fewer than 6 of 10 simulated futures. A what-if in My plan shows what would make it safer.':
+    '不確定：在 10 個模擬未來中，不到 6 個資金足以用到最後。在「我的計畫」試試假設情境，看看怎樣能更安全。',
 };
