@@ -22,7 +22,7 @@ export function LoanNotice({ className, link = true }: { className?: string; lin
       action={
         link && (
           <Link
-            to="/money/accounts"
+            to="/money/balances"
             className="text-sm font-medium text-primary hover:underline whitespace-nowrap"
           >
             {tn(open, 'Open the loan', 'Open the loans')}

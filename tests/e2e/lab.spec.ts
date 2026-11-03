@@ -117,7 +117,7 @@ test('phone navigation reaches every page in two taps (UX doc, N1)', async ({ pa
   // The same five destinations as on desktop.
   await expect(bar.getByRole('link')).toHaveText(['Home', 'Update', 'My money', 'My plan', 'Settings']);
   const pages: [string, string, string][] = [
-    ['My money', 'My money sections', 'Accounts'],
+    ['My money', 'My money sections', 'Balances'],
     ['My money', 'My money sections', 'Cash flow'],
     ['My plan', 'My plan sections', 'Goal'],
     ['My plan', 'My plan sections', 'Strategy Lab'],

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Copy, Plus, Trash2, Upload } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { useMedia } from '@/lib/useMedia';
 import type { CashFlow, Category, Settings } from '@/domain/entities';
 import { cashFlowTwd, monthlyTotals, trailing12 } from '@/domain/cashflow';
 import { addMonths, lastDayOfMonth, monthOf, today } from '@/domain/dates';
@@ -20,7 +21,8 @@ import { Link } from 'react-router-dom';
 import { LoanNotice } from '@/components/LoanNotice';
 import { LOAN_CATEGORY, loanPaymentsInCategory } from '@/domain/loans';
 
-const VISIBLE_MONTHS = 6;
+/** Months shown (UX doc, M2): three on a desktop, one on a phone; the rest behind Show all. */
+const VISIBLE_MONTHS = 3;
 
 type CashFlowMode = Settings['cashFlowMode'];
 
@@ -291,9 +293,18 @@ export function CashFlowPage() {
   const [extraMonths, setExtraMonths] = useState<string[]>([]);
   const months = [...new Set([...dataMonths, ...extraMonths])].sort();
   const [showAll, setShowAll] = useState(false);
-  const shown = showAll ? months : months.slice(-VISIBLE_MONTHS);
+  const wide = useMedia('(min-width: 768px)');
+  const visible = wide ? VISIBLE_MONTHS : 1;
+  const shown = showAll ? months : months.slice(-visible);
   const [selected, setSelected] = useState<string | undefined>(undefined);
   const lumpMonth = selected ?? shown.at(-1);
+  // Read first (UX doc, M2): only the latest month takes typing until Edit is pressed.
+  const [editingMonths, setEditingMonths] = useState<string[]>([]);
+  const editable = (m: string) => m === months.at(-1) || editingMonths.includes(m);
+  // Income and expenses collapse to their totals until opened.
+  const [openGroups, setOpenGroups] = useState<('income' | 'expense')[]>([]);
+  // Other entries sit behind "Add a one-off" in monthly mode.
+  const [showEntries, setShowEntries] = useState(false);
   const income = categories.filter((c) => c.kind === 'income');
   const expense = categories.filter((c) => c.kind === 'expense');
   const byMonth = new Map(totals.map((t) => [t.month, t]));
@@ -332,102 +343,128 @@ export function CashFlowPage() {
 
   const loanRow = (id: string) => categories.find((c) => c.id === id)?.system === LOAN_CATEGORY;
 
-  const section = (title: string, cats: Category[]) => (
-    <>
-      <tr>
-        <td
-          colSpan={shown.length + 1}
-          className="sticky left-0 bg-surface-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-        >
-          {title}
-        </td>
-      </tr>
-      {cats.map((c) => (
-        <tr key={c.id}>
-          <td className="sticky left-0 z-10 max-w-32 bg-surface sm:max-w-none sm:min-w-44">
-            {c.name}
-            {c.kind === 'expense' && c.essential && !c.system && (
-              <span className="ml-1 text-xs text-subtle">{t('essential')}</span>
-            )}
-            {c.system === LOAN_CATEGORY && (
-              <Link to="/money/accounts" className="block text-xs text-primary hover:underline">
-                {t('from loan terms in Accounts')}
-              </Link>
-            )}
+  const section = (title: string, kind: 'income' | 'expense', cats: Category[]) => {
+    const open = openGroups.includes(kind);
+    return (
+      <>
+        <tr>
+          <td className="sticky left-0 bg-surface-2">
+            <button
+              type="button"
+              aria-expanded={open}
+              className="flex min-h-8 w-full items-center gap-1 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase hover:text-foreground touch:min-h-11"
+              onClick={() =>
+                setOpenGroups((g) => (g.includes(kind) ? g.filter((x) => x !== kind) : [...g, kind]))
+              }
+            >
+              {open ? (
+                <ChevronDown className="size-4" aria-hidden />
+              ) : (
+                <ChevronRight className="size-4" aria-hidden />
+              )}
+              {title}
+            </button>
           </td>
-          {shown.map((m) => {
-            const extra = byMonth.get(m)?.byCategory[c.id] ?? 0;
-            const loanRow = c.system === LOAN_CATEGORY;
-            const regular = regularFlow(cashFlows, m, c.id, loanRow);
-            // Loan payments from Accounts shown in this cell: kept inside the typed amount, or added.
-            const loan = loanRow
-              ? { included: 0, added: 0 }
-              : loanPaymentsInCategory(loans, categories, c.id, m);
-            const scheduled = loanRow
-              ? 0
-              : cashFlows
-                  .filter((f) => f.scheduled && f.month === m && f.categoryId === c.id)
-                  .reduce((sum, f) => sum + f.amountMinor / 100, 0);
-            const others = extra - (regular ? regular.amountMinor / 100 : 0) - scheduled;
-            return (
-              <td key={m} className="w-36 min-w-28 align-top">
-                {mode === 'transactions' ? (
-                  <button
-                    className="block w-full py-1 text-right hover:text-primary"
-                    onClick={() => setSelected(m)}
-                    aria-label={t('{name} {m}: show transactions', { name: c.name, m })}
-                  >
-                    {extra ? twd(extra) : <span className="text-subtle">—</span>}
-                  </button>
-                ) : (
-                  <div
-                    className={regular?.scheduled ? 'text-subtle' : undefined}
-                    title={
-                      regular?.scheduled ? t('Scheduled from Accounts; type to change this month') : undefined
-                    }
-                  >
-                    <MoneyInput
-                      compact
-                      aria-label={`${c.name} ${m}`}
-                      value={regular?.amountMinor}
-                      currency="TWD"
-                      onCommit={(v) => {
-                        if (regular?.scheduled && v === regular.amountMinor) return;
-                        void setRegular(m, c.id, v, c.system === LOAN_CATEGORY);
-                      }}
-                    />
-                  </div>
+          {shown.map((m) => (
+            <td key={m} className="bg-surface-2 text-right font-medium tabular">
+              {twd(kind === 'income' ? (byMonth.get(m)?.income ?? 0) : (byMonth.get(m)?.expense ?? 0))}
+            </td>
+          ))}
+        </tr>
+        {open &&
+          cats.map((c) => (
+            <tr key={c.id}>
+              <td className="sticky left-0 z-10 max-w-32 bg-surface sm:max-w-none sm:min-w-44">
+                {c.name}
+                {c.kind === 'expense' && c.essential && !c.system && (
+                  <span className="ml-1 text-xs text-subtle">{t('essential')}</span>
                 )}
-                {loan.added > 0 && (
-                  <Link
-                    to="/money/accounts"
-                    className="mt-0.5 block text-right text-xs text-primary hover:underline"
-                    title={t('Added from the loan terms in Accounts')}
-                  >
-                    {t('+ {amount} loan', { amount: twd(loan.added) })}
+                {c.system === LOAN_CATEGORY && (
+                  <Link to="/money/balances" className="block text-xs text-primary hover:underline">
+                    {t('from loan terms in Accounts')}
                   </Link>
-                )}
-                {loan.included > 0 && (
-                  <Link
-                    to="/money/accounts"
-                    className="mt-0.5 block text-right text-xs text-subtle hover:text-primary"
-                    title={t('Part of this amount, from the loan terms in Accounts')}
-                  >
-                    {t('incl. {amount} loan', { amount: twd(loan.included) })}
-                  </Link>
-                )}
-                {mode === 'monthly' && Math.abs(others) > 0.5 && (
-                  <div className="mt-0.5 text-right text-xs text-subtle">
-                    {t('+ {others} other', { others: twdCompact(others) })}
-                  </div>
                 )}
               </td>
-            );
-          })}
-        </tr>
-      ))}
-    </>
-  );
+              {shown.map((m) => {
+                const extra = byMonth.get(m)?.byCategory[c.id] ?? 0;
+                const loanRow = c.system === LOAN_CATEGORY;
+                const regular = regularFlow(cashFlows, m, c.id, loanRow);
+                // Loan payments from Accounts shown in this cell: kept inside the typed amount, or added.
+                const loan = loanRow
+                  ? { included: 0, added: 0 }
+                  : loanPaymentsInCategory(loans, categories, c.id, m);
+                const scheduled = loanRow
+                  ? 0
+                  : cashFlows
+                      .filter((f) => f.scheduled && f.month === m && f.categoryId === c.id)
+                      .reduce((sum, f) => sum + f.amountMinor / 100, 0);
+                const others = extra - (regular ? regular.amountMinor / 100 : 0) - scheduled;
+                return (
+                  <td key={m} className="w-36 min-w-28 align-top">
+                    {mode === 'monthly' && !editable(m) ? (
+                      <div className="py-1 text-right tabular">
+                        {regular ? twd(regular.amountMinor / 100) : <span className="text-subtle">—</span>}
+                      </div>
+                    ) : mode === 'transactions' ? (
+                      <button
+                        className="block w-full py-1 text-right hover:text-primary"
+                        onClick={() => setSelected(m)}
+                        aria-label={t('{name} {m}: show transactions', { name: c.name, m })}
+                      >
+                        {extra ? twd(extra) : <span className="text-subtle">—</span>}
+                      </button>
+                    ) : (
+                      <div
+                        className={regular?.scheduled ? 'text-subtle' : undefined}
+                        title={
+                          regular?.scheduled
+                            ? t('Scheduled from Accounts; type to change this month')
+                            : undefined
+                        }
+                      >
+                        <MoneyInput
+                          compact
+                          aria-label={`${c.name} ${m}`}
+                          value={regular?.amountMinor}
+                          currency="TWD"
+                          onCommit={(v) => {
+                            if (regular?.scheduled && v === regular.amountMinor) return;
+                            void setRegular(m, c.id, v, c.system === LOAN_CATEGORY);
+                          }}
+                        />
+                      </div>
+                    )}
+                    {loan.added > 0 && (
+                      <Link
+                        to="/money/balances"
+                        className="mt-0.5 block text-right text-xs text-primary hover:underline"
+                        title={t('Added from the loan terms in Accounts')}
+                      >
+                        {t('+ {amount} loan', { amount: twd(loan.added) })}
+                      </Link>
+                    )}
+                    {loan.included > 0 && (
+                      <Link
+                        to="/money/balances"
+                        className="mt-0.5 block text-right text-xs text-subtle hover:text-primary"
+                        title={t('Part of this amount, from the loan terms in Accounts')}
+                      >
+                        {t('incl. {amount} loan', { amount: twd(loan.included) })}
+                      </Link>
+                    )}
+                    {mode === 'monthly' && Math.abs(others) > 0.5 && (
+                      <div className="mt-0.5 text-right text-xs text-subtle">
+                        {t('+ {others} other', { others: twdCompact(others) })}
+                      </div>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+      </>
+    );
+  };
 
   return (
     <>
@@ -517,21 +554,37 @@ export function CashFlowPage() {
                   <th className="sticky left-0 bg-surface">{t('Category')}</th>
                   {shown.map((m) => (
                     <th key={m} className="w-36 text-right">
-                      <button
-                        className={
-                          m === lumpMonth ? 'font-semibold text-foreground' : 'hover:text-foreground'
-                        }
-                        onClick={() => setSelected(m)}
-                      >
-                        {monthLabel(m)}
-                      </button>
+                      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                        <button
+                          className={
+                            m === lumpMonth ? 'font-semibold text-foreground' : 'hover:text-foreground'
+                          }
+                          onClick={() => setSelected(m)}
+                        >
+                          {monthLabel(m)}
+                        </button>
+                        {mode === 'monthly' && m !== months.at(-1) && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-6"
+                            aria-pressed={editingMonths.includes(m)}
+                            aria-label={t('Edit {month}', { month: monthLabel(m) })}
+                            onClick={() =>
+                              setEditingMonths((l) => (l.includes(m) ? l.filter((x) => x !== m) : [...l, m]))
+                            }
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {section(t('Income'), income)}
-                {section(t('Expenses'), expense)}
+                {section(t('Income'), 'income', income)}
+                {section(t('Expenses'), 'expense', expense)}
                 <tr className="font-medium">
                   <td className="sticky left-0 bg-surface">{t('Savings')}</td>
                   {shown.map((m) => (
@@ -562,7 +615,15 @@ export function CashFlowPage() {
         </Card>
       )}
 
-      {lumpMonth && <Entries month={lumpMonth} categories={categories} mode={mode} />}
+      {lumpMonth &&
+        (mode === 'transactions' || showEntries ? (
+          <Entries month={lumpMonth} categories={categories} mode={mode} />
+        ) : (
+          <Button variant="outline" className="mt-4" onClick={() => setShowEntries(true)}>
+            <Plus aria-hidden />{' '}
+            {t('Add a one-off or see other entries · {month}', { month: monthLabel(lumpMonth) })}
+          </Button>
+        ))}
 
       {totals.length > 1 && (
         <Card className="mt-4">

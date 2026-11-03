@@ -14,7 +14,7 @@ import { t } from '@/i18n';
 const NAV: { to: string; label: string; icon: LucideIcon; match: string[] }[] = [
   { to: '/', label: t('Home'), icon: Home, match: [] },
   { to: '/update', label: t('Update'), icon: RefreshCw, match: ['/update'] },
-  { to: '/money/accounts', label: t('My money'), icon: Wallet, match: ['/money'] },
+  { to: '/money/balances', label: t('My money'), icon: Wallet, match: ['/money'] },
   { to: '/plan/projection', label: t('My plan'), icon: Target, match: ['/plan'] },
   { to: '/settings', label: t('Settings'), icon: SettingsIcon, match: ['/settings', '/tools'] },
 ];

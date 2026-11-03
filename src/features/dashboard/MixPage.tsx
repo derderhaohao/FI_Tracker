@@ -16,7 +16,7 @@ export function MixPage() {
     return (
       <>
         <PageHeader title={t('Portfolio mix')} />
-        <EmptyState title={t('Add an account first')} to="/money/accounts" action={t('Add an account')}>
+        <EmptyState title={t('Add an account first')} to="/money/balances" action={t('Add an account')}>
           {t('The mix shows how your investments split between asset classes and currencies.')}
         </EmptyState>
       </>

@@ -81,11 +81,7 @@ export function DashboardPage() {
     return (
       <>
         <PageHeader title={t('Home')} />
-        <EmptyState
-          title={t('Enter your first balances')}
-          to="/money/snapshots"
-          action={t('Go to Snapshots')}
-        >
+        <EmptyState title={t('Enter your first balances')} to="/money/balances" action={t('Go to Balances')}>
           {t('One balance per account, in its own currency, plus the USD/TWD rate for the date.')}
         </EmptyState>
       </>
@@ -113,7 +109,7 @@ export function DashboardPage() {
     ctx.warnings[0] ??
     (lastChange?.check?.flagged
       ? t(
-          'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.',
+          'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Balances for a missing entry or a typo.',
           {
             change: twdCompact(lastChange.change),
             from: lastChange.from,

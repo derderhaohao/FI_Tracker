@@ -2,8 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { MixPage } from '@/features/dashboard/MixPage';
-import { AccountsPage } from '@/features/position/AccountsPage';
-import { SnapshotsPage } from '@/features/position/SnapshotsPage';
+import { BalancesPage } from '@/features/position/BalancesPage';
 import { CashFlowPage } from '@/features/engine/CashFlowPage';
 import { GoalPage } from '@/features/destination/GoalPage';
 import { ProjectionPage } from '@/features/trajectory/ProjectionPage';
@@ -24,8 +23,7 @@ const TimeMachinePage = lazy(() =>
 );
 
 export const MONEY_TABS = [
-  { to: '/money/accounts', label: t('Accounts') },
-  { to: '/money/snapshots', label: t('Snapshots') },
+  { to: '/money/balances', label: t('Balances') },
   { to: '/money/cashflow', label: t('Cash flow') },
   { to: '/money/mix', label: t('Portfolio mix') },
 ] as const;
@@ -53,10 +51,9 @@ export function proRoutes(loading: ReactNode) {
         <Route path="update" element={<UpdatePage />} />
         <Route path="update/reviews" element={<ReviewsPage />} />
       </Route>
-      <Route path="money" element={<Navigate to="/money/accounts" replace />} />
+      <Route path="money" element={<Navigate to="/money/balances" replace />} />
       <Route element={<SectionTabs label={t('My money sections')} tabs={MONEY_TABS} />}>
-        <Route path="money/accounts" element={<AccountsPage />} />
-        <Route path="money/snapshots" element={<SnapshotsPage />} />
+        <Route path="money/balances" element={<BalancesPage />} />
         <Route path="money/cashflow" element={<CashFlowPage />} />
         <Route path="money/mix" element={<MixPage />} />
       </Route>
@@ -66,8 +63,11 @@ export function proRoutes(loading: ReactNode) {
         <Route path="plan/goal" element={<GoalPage />} />
         <Route path="plan/lab" element={<LabPage />} />
       </Route>
-      <Route path="accounts" element={<Moved to="/money/accounts" />} />
-      <Route path="snapshots" element={<Moved to="/money/snapshots" />} />
+      {/* Accounts and Snapshots are one Balances page now (UX doc, M2). */}
+      <Route path="money/accounts" element={<Moved to="/money/balances" />} />
+      <Route path="money/snapshots" element={<Moved to="/money/balances" />} />
+      <Route path="accounts" element={<Moved to="/money/balances" />} />
+      <Route path="snapshots" element={<Moved to="/money/balances" />} />
       <Route path="cashflow" element={<Moved to="/money/cashflow" />} />
       <Route path="goal" element={<Moved to="/plan/goal" />} />
       <Route path="projection" element={<Moved to="/plan/projection" />} />

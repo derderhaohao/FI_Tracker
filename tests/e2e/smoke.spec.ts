@@ -27,10 +27,9 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   ).toBeVisible();
   await expect(page.getByText('Net worth', { exact: true }).first()).toBeVisible();
 
-  // Add a snapshot by copying the last period, then edit one balance.
+  // Start a month by copying the last one, then edit one balance (My money → Balances).
   await page.getByRole('link', { name: 'My money' }).first().click();
-  await page.getByRole('link', { name: 'Snapshots' }).first().click();
-  await page.getByLabel('Snapshot date').fill('2026-10-31');
+  await page.getByLabel('Balances as of').fill('2026-10-31');
   await page.getByRole('button', { name: 'Copy last period' }).click();
   const cell = page.getByLabel('Everyday account on 31 Oct 2026');
   await expect(cell).toBeVisible();
@@ -71,7 +70,6 @@ test('load demo data, add a snapshot, see the projection, export and re-import',
   await page.getByLabel('Backup file').setInputFiles(path);
   await expect(page.getByText('Backup loaded.')).toBeVisible();
   await page.getByRole('link', { name: 'My money' }).first().click();
-  await page.getByRole('link', { name: 'Snapshots' }).first().click();
   await expect(page.getByLabel('Everyday account on 31 Oct 2026')).toHaveValue('150,000');
 
   expect(external).toEqual([]);
@@ -86,15 +84,15 @@ test('every screen renders with demo data', async ({ page }) => {
     ['', 'Home'],
     ['update', 'Monthly update'],
     ['update/reviews', 'Reviews'],
-    ['money/accounts', 'Accounts'],
-    ['money/snapshots', 'Snapshots'],
+    ['money/balances', 'Balances'],
     ['money/cashflow', 'Cash flow'],
     ['money/mix', 'Portfolio mix'],
     ['plan/projection', 'Projection'],
     ['plan/goal', 'Goal'],
     ['plan/lab', 'Strategy Lab'],
     // Old addresses redirect (UX doc, N1).
-    ['snapshots', 'Snapshots'],
+    ['snapshots', 'Balances'],
+    ['accounts', 'Balances'],
     ['lab', 'Strategy Lab'],
   ]) {
     await page.goto(`./#/${route}`);

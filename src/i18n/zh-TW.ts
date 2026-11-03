@@ -111,7 +111,6 @@ export const ZH_TW: Record<string, string> = {
   // domain/assumptions.ts
   'Base case': '基本情境',
   // domain/baseline.ts
-  'No snapshot yet: the projection starts from zero.': '尚無快照：預測從零開始。',
   'Missing FX rate for {join}.': '缺少 {join} 的匯率。',
   'No cash flow yet: income and spending are zero unless a scenario sets them.':
     '尚無現金流：除非情境有設定，否則收入與支出皆為零。',
@@ -340,11 +339,8 @@ export const ZH_TW: Record<string, string> = {
   'Fixed % of portfolio': '投資組合固定比例',
   'Dividends only': '只領股利',
   // features/dashboard/DashboardPage.tsx
-  'Go to Snapshots': '前往快照',
   'One balance per account, in its own currency, plus the USD/TWD rate for the date.':
     '每個帳戶一筆結餘，以帳戶本身的幣別記錄，並加上當天的美元／新台幣匯率。',
-  'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Snapshots for a missing entry or a typo.':
-    '淨資產從 {from} 到 {to} 變動了 {change}，記錄的儲蓄（{contributions}）和合理的市場波動都無法解釋。請到「快照」檢查是否有漏記或打錯。',
   'Add cash flow and an FI budget, or try a scenario in the Strategy Lab.':
     '新增現金流與財務自由預算，或到策略實驗室試試情境。',
   'The age is the typical path, where markets return their typical amount every year; the status counts how often the money lasts across 1,000 simulated futures.':
@@ -1090,8 +1086,6 @@ export const ZH_TW: Record<string, string> = {
   'Archive {nickname}': '封存 {nickname}',
   'Delete {nickname}': '刪除 {nickname}',
   'Delete {nickname}? It has no snapshots.': '要刪除 {nickname} 嗎？它沒有任何快照。',
-  'Accounts with snapshots can be archived but not deleted, so history stays intact.':
-    '有快照的帳戶只能封存、不能刪除，以保留完整的歷史。',
   // features/position/SnapshotsPage.tsx
   '{currency}/TWD on {date}': '{date} 的 {currency}／新台幣',
   '{fallback} (carried)': '{fallback}（沿用）',
@@ -1118,7 +1112,6 @@ export const ZH_TW: Record<string, string> = {
     '每個帳戶每月一筆結餘，以帳戶本身的幣別記錄，並加上當天的匯率。負債請輸入尚欠金額。',
   'One balance per account per quarter, in its native currency, with the FX rate for the date. Liabilities are entered as the amount owed.':
     '每個帳戶每季一筆結餘，以帳戶本身的幣別記錄，並加上當天的匯率。負債請輸入尚欠金額。',
-  'Snapshot date': '快照日期',
   'Copy last period': '複製上一期',
   'Copies every balance and FX rate to the new date; then edit what changed.':
     '把所有結餘與匯率複製到新日期；再修改有變動的部分。',
@@ -1132,7 +1125,6 @@ export const ZH_TW: Record<string, string> = {
     '以原幣別記錄；外幣金額下方顯示新台幣等值。點「持股」可新增證券明細。',
   'Show last {VISIBLE_DATES}': '顯示最近 {VISIBLE_DATES} 個',
   'Show all {length} dates': '顯示全部 {length} 個日期',
-  'Delete snapshot {d}': '刪除快照 {d}',
   Owed: '尚欠',
   Holdings: '持股',
   '{nickname} on {d}': '{d} 的 {nickname}',
@@ -1154,7 +1146,6 @@ export const ZH_TW: Record<string, string> = {
   OK: '正常',
   // features/review/ReviewsPage.tsx
   'Enter a balance for every account': '輸入每個帳戶的結餘',
-  'Enter the USD/TWD rate for the snapshot date': '輸入快照日期的美元／新台幣匯率',
   "Enter last month's income and spending": '輸入上個月的收入與支出',
   'Tag bonuses and large one-off costs as lump sums': '將獎金與大額一次性支出標記為一次性款項',
   'Check the savings rate against the target': '對照目標檢查儲蓄率',
@@ -1172,7 +1163,6 @@ export const ZH_TW: Record<string, string> = {
   'Compare scenarios and run Monte Carlo': '比較情境並執行蒙地卡羅模擬',
   'Lock the plan of record': '鎖定正式計畫',
   'New review': '新增回顧',
-  'Monthly snapshot, quarterly review, annual reset.': '每月快照、每季回顧、每年重新檢視。',
   'Review type': '回顧類型',
   Monthly: '每月',
   Quarterly: '每季',
@@ -1788,10 +1778,6 @@ export const ZH_TW: Record<string, string> = {
   'Done in {ms}.': '完成，用時 {ms}。',
   "Last step: add last month's pay and spending, so savings and the FI date stay right.":
     '最後一步：加入上個月的薪資與支出，讓儲蓄與財務自由日期保持正確。',
-  'See what moved': '查看變動原因',
-  'Add a monthly reminder to your calendar': '在行事曆加入每月提醒',
-  'One card per account, pre-filled with last month.': '每個帳戶一張卡片，預先填入上個月的數字。',
-  'Which date are these balances for?': '這些結餘是哪一天的？',
   'Month-end works well; use the date on your statements.': '月底很合適；請使用對帳單上的日期。',
   '{length} account{v} to check{v2}.': '有 {length} 個帳戶要確認{v2}。',
   ', plus {length} that usually stay the same': '，另有 {length} 個通常不變',
@@ -1815,7 +1801,6 @@ export const ZH_TW: Record<string, string> = {
   '; last time {last}': '；上次為 {last}',
   '{currency}/TWD': '{currency}／新台幣',
   'Save {date}': '儲存 {date}',
-  'Save balances': '儲存結餘',
   // features/update/updateModel.ts
   '{m} min {v} s': '{m} 分 {v} 秒',
   // io/backup.ts
@@ -1963,8 +1948,6 @@ export const ZH_TW: Record<string, string> = {
   'Loan · {name}': '貸款 · {name}',
   '{amount}/mo until {month}': '每月 {amount}，到 {month}',
   // loan term worked out from the balance
-  'Enter this loan’s balance in Snapshots and the term is worked out from it.':
-    '在「快照」輸入這筆貸款的餘額，就會據此算出剩餘期數。',
   'Paid off.': '已還清。',
   'Enter the monthly payment and the term is worked out from the balance.':
     '輸入每月還款，就會依餘額算出剩餘期數。',
@@ -2436,4 +2419,75 @@ export const ZH_TW: Record<string, string> = {
     '相當可能：在 10 個模擬未來中，有 6 或 7 個資金足以用到最後。其他情況下，市場表現不佳後稍微少花一點，就能撐下去。',
   'Uncertain: the money lasts in fewer than 6 of 10 simulated futures. A what-if in My plan shows what would make it safer.':
     '不確定：在 10 個模擬未來中，不到 6 個資金足以用到最後。在「我的計畫」試試假設情境，看看怎樣能更安全。',
+  'Enter the USD/TWD rate for the update date': '輸入更新日期的美元／新台幣匯率',
+  'Monthly update, quarterly review, annual reset.': '每月更新、每季檢視、每年重設。',
+  'Balances as of': '餘額日期',
+  'Delete {d}': '刪除 {d}',
+  'Enter this loan’s balance in Balances and the term is worked out from it.':
+    '在「餘額」輸入這筆貸款的餘額，就會自動算出期限。',
+  'Go to Balances': '前往餘額',
+  'Net worth changed by {change} from {from} to {to}, which recorded savings ({contributions}) and plausible market moves do not explain. Check Balances for a missing entry or a typo.':
+    '淨資產從 {from} 到 {to} 變動了 {change}，記錄的儲蓄（{contributions}）和合理的市場波動都無法解釋。請到「餘額」檢查是否有漏記或打錯。',
+  'No balances yet: the projection starts from zero.': '尚無餘額：預測從零開始。',
+  'Edit {month}': '編輯 {month}',
+  'Add a one-off or see other entries · {month}': '新增一次性項目或查看其他項目 · {month}',
+  'Accounts with balances can be archived but not deleted, so history stays intact.':
+    '有餘額紀錄的帳戶只能封存、不能刪除，以保留歷史紀錄。',
+  'Exchange rate': '匯率',
+  '{month}: {change}, saved {saved}, markets {markets}, exchange rate {fx}':
+    '{month}：{change}，儲蓄 {saved}，市場 {markets}，匯率 {fx}',
+  'There is already a month on {date}. Edit it in the table.': '{date} 已經有資料，請在表格中編輯。',
+  'What you own': '你擁有的',
+  'Locked until {age}': '鎖定至 {age} 歲',
+  'Locked pension': '鎖定的退休金',
+  'What you owe': '你欠的',
+  'As of {date}. Amounts in TWD; foreign balances at that day’s rate.':
+    '截至 {date}。金額以新台幣計；外幣餘額以當日匯率換算。',
+  'Since {date}': '自 {date} 起',
+  Subtotal: '小計',
+  'Archived accounts ({n})': '已封存的帳戶（{n}）',
+  'Monthly history': '每月紀錄',
+  'Native currency. The latest month is editable; press Edit on an earlier month to change it. The Monthly update fills a new month for you.':
+    '以原幣別顯示。最新的月份可以直接編輯；要修改較早的月份，請按「編輯」。每月更新會幫你填入新的月份。',
+  'Pick a date and press “Copy last period” to start a month, then fill in each balance.':
+    '選一個日期並按「複製上一期」開始新的月份，再填入每個餘額。',
+  'Edit {d}': '編輯 {d}',
+  'Each month’s change in net worth: what you saved, what markets did, and the exchange rate on foreign balances.':
+    '每個月淨資產的變化：你存下的錢、市場的表現，以及外幣餘額的匯率影響。',
+  'Show numbers': '顯示數字',
+  'Balances, the USD rate, pay and spending: one card at a time, pre-filled with last month.':
+    '餘額、美元匯率、薪資與支出：一次一張卡片，預先填入上個月的數字。',
+  'Which month-end is this update for?': '這次更新是哪個月底？',
+  'Pay and spending in {month}': '{month} 的薪資與支出',
+  'You record individual transactions. Import the month’s bank CSV in':
+    '你記錄的是逐筆交易。請匯入當月的銀行 CSV：',
+  'Already entered for {month}: pay {income}, spending {spending}. Change them in Cash flow.':
+    '{month} 已輸入：薪資 {income}，支出 {spending}。可在現金流中修改。',
+  'Pre-filled from {month}. Change a total and its categories keep their split.':
+    '已預先填入 {month} 的數字。修改總數時，各類別會維持原本的比例。',
+  'Two totals for the month, in TWD.': '當月的兩個總數，以新台幣計。',
+  'Take-home pay (TWD)': '實領薪資（新台幣）',
+  'Spending (TWD)': '支出（新台幣）',
+  'One-off': '一次性項目',
+  'In: {name}': '收入：{name}',
+  'Out: {name}': '支出：{name}',
+  'Amount (TWD)': '金額（新台幣）',
+  'Remove one-off': '移除一次性項目',
+  'Add a bonus or one-off': '新增獎金或一次性項目',
+  'Pay − spending': '薪資 − 支出',
+  'Save and see the recap': '儲存並查看回顧',
+  'Net worth change': '淨資產變化',
+  'Saved this month': '本月存下',
+  'Also due this month': '本月也該做的事',
+  'Quarter end: your mix is {gap} points off target. Rebalance if that is more than you like, and compare the plan with what happened.':
+    '季末：你的配置與目標相差 {gap} 個百分點。若超出你能接受的範圍就再平衡，並比較計畫與實際情況。',
+  'Quarterly review': '季度檢視',
+  'Year end: revisit what you will spend once you stop working, and the 勞保 figures.':
+    '年底：重新檢視停止工作後的支出，以及勞保數字。',
+  'Note for future you (optional)': '給未來自己的備註（選填）',
+  'A raise, a big purchase, a decision…': '加薪、大筆開銷、一個決定……',
+  'Note saved': '備註已儲存',
+  'Save note': '儲存備註',
+  'Add a monthly calendar reminder': '加入每月行事曆提醒',
+  'Go to Home': '回到首頁',
 };

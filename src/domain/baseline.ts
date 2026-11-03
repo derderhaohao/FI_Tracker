@@ -105,7 +105,7 @@ export function baselineContext(data: PlanData): BaselineContext {
   const tiers = fiSpendingByTier(data.categories, data.settings.destination);
   const fiSpendingFromT12 = tiers.full - tiers.postEmployment <= 0;
   const warnings: string[] = [];
-  if (dates.length === 0) warnings.push(t('No snapshot yet: the projection starts from zero.'));
+  if (dates.length === 0) warnings.push(t('No balances yet: the projection starts from zero.'));
   if (netWorth.missingFx.length)
     warnings.push(t('Missing FX rate for {join}.', { join: netWorth.missingFx.join(', ') }));
   if (t12.monthsWithData === 0)

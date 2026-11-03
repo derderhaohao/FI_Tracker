@@ -68,9 +68,9 @@ test('a new user gets an estimate, sets up in four steps and lands on a result s
   await expect(
     page.getByLabel('Your progress').getByText(/^At this pace you could stop work at \d+ \(\w{3} \d{4}\)\.$/),
   ).toBeVisible();
-  await page.goto('./#/money/accounts');
-  await expect(page.getByRole('cell', { name: 'US broker', exact: true })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Loan', exact: true })).toBeVisible();
+  await page.goto('./#/money/balances');
+  await expect(page.getByRole('button', { name: 'US broker', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Loan', exact: true })).toBeVisible();
   await page.goto('./#/setup');
   await expect(page.getByText('Setup is for a fresh start')).toBeVisible();
   expect(errors).toEqual([]);

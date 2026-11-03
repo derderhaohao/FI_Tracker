@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Archive, ArchiveRestore, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import {
   ACCOUNT_TYPES,
   ACCOUNT_TYPE_LABELS,
@@ -14,21 +13,20 @@ import {
   REGIONS,
   type Account,
   type AccountType,
+  type Category,
   type Liability,
+  type Snapshot,
 } from '@/domain/entities';
 import { accountDefaults } from '@/domain/accounts';
 import { formatMoney, fromMinor, parseMoneyInput } from '@/domain/money';
 import { addMonths, monthOf, monthsBetween, today } from '@/domain/dates';
 import { formatDate, monthLabel } from '@/lib/format';
 import { ensureLoanCategory } from '@/db/loanCategory';
-import { LoanNotice } from '@/components/LoanNotice';
 import { db } from '@/db/db';
 import { newId, patch, save } from '@/db/repo';
 import { useAppData } from '@/app/data';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox, Field, Input, Select } from '@/components/ui/input';
-import { Badge, EmptyState, PageHeader, Table } from '@/components/ui/misc';
 import { t, tn } from '@/i18n';
 import { loanTerm } from '@/domain/loans';
 
@@ -160,7 +158,7 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
   const term = account ? loanTerm(draft(), snapshots) : undefined;
   const termText = (() => {
     if (!term || term.balance === undefined)
-      return t('Enter this loan’s balance in Snapshots and the term is worked out from it.');
+      return t('Enter this loan’s balance in Balances and the term is worked out from it.');
     if (term.months === 0) return t('Paid off.');
     if (payment <= 0) return t('Enter the monthly payment and the term is worked out from the balance.');
     if (term.neverRepaid)
@@ -424,200 +422,105 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
   );
 }
 
-export function AccountsPage() {
-  const { accounts, liabilities, snapshots, categories } = useAppData();
-  const whereText = (terms: Liability) => {
-    const c = categories.find((x) => x.id === terms.categoryId && !x.system);
-    if (terms.cashFlow === 'auto')
-      return c ? t('added to {name} automatically', { name: c.name }) : t('added to Cash flow automatically');
-    return c ? t('in {name}', { name: c.name }) : t('in your spending');
-  };
-  /** Payments left from this month, worked out from the latest balance. */
-  const termLeft = (terms: Liability): string => {
-    const term = loanTerm(terms, snapshots);
-    if (!term) return '—';
-    if (term.neverRepaid) return t('never repaid');
+/**
+ * Account details in a side drawer (UX doc, M2): institution, type, loan terms, archive and
+ * delete. Balances themselves live in the Balances table.
+ */
+export function AccountDrawer({ account, onClose }: { account?: Account; onClose: () => void }) {
+  const { snapshots } = useAppData();
+  const hasSnapshots = account ? snapshots.some((s) => s.accountId === account.id) : false;
+  return (
+    <div className="fixed inset-0 z-40" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30" aria-hidden />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={account ? t('Edit {nickname}', { nickname: account.nickname }) : t('New account')}
+        className="absolute inset-y-0 right-0 flex w-full max-w-3xl flex-col gap-4 overflow-y-auto bg-surface p-5 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">
+            {account ? t('Edit {nickname}', { nickname: account.nickname }) : t('New account')}
+          </h2>
+          <Button variant="ghost" onClick={onClose}>
+            {t('Close')}
+          </Button>
+        </div>
+        <AccountForm key={account?.id ?? 'new'} account={account} onDone={onClose} />
+        {account && (
+          <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await patch(db.accounts, account.id, { archived: !account.archived });
+                onClose();
+              }}
+            >
+              {account.archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
+              {account.archived
+                ? t('Restore {nickname}', { nickname: account.nickname })
+                : t('Archive {nickname}', { nickname: account.nickname })}
+            </Button>
+            {!hasSnapshots && (
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  if (!confirm(t('Delete {nickname}? It has no snapshots.', { nickname: account.nickname })))
+                    return;
+                  await db.transaction('rw', db.accounts, db.liabilities, async () => {
+                    await db.accounts.delete(account.id);
+                    await db.liabilities.delete(account.id);
+                  });
+                  onClose();
+                }}
+              >
+                <Trash2 aria-hidden /> {t('Delete {nickname}', { nickname: account.nickname })}
+              </Button>
+            )}
+            <p className="w-full text-xs text-subtle">
+              {t('Accounts with balances can be archived but not deleted, so history stays intact.')}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** "2.50% · NT$12,500/mo · 14 mo · in Loan repayment": a loan's terms on one line. */
+export function loanTermsText(
+  terms: Liability,
+  currency: string,
+  categories: readonly Category[],
+  snapshots: readonly Snapshot[],
+): string {
+  const c = categories.find((x) => x.id === terms.categoryId && !x.system);
+  const where =
+    terms.cashFlow === 'auto'
+      ? c
+        ? t('added to {name} automatically', { name: c.name })
+        : t('added to Cash flow automatically')
+      : c
+        ? t('in {name}', { name: c.name })
+        : t('in your spending');
+  // Payments left from this month, worked out from the latest balance.
+  const term = loanTerm(terms, snapshots);
+  let left = '—';
+  if (term?.neverRepaid) left = t('never repaid');
+  else if (term) {
     const now = monthOf(today());
     const from = term.asOf > now ? term.asOf : now;
-    const left = Math.max(0, monthsBetween(from, addMonths(term.asOf, term.months)));
-    return t('{n} mo', { n: left });
-  };
-  const [editing, setEditing] = useState<Account | 'new' | undefined>(
-    accounts.length === 0 ? 'new' : undefined,
-  );
-  const [showArchived, setShowArchived] = useState(false);
-  const visible = accounts
-    .filter((a) => showArchived || !a.archived)
-    .sort(
-      (a, b) =>
-        ACCOUNT_TYPES.indexOf(a.type) - ACCOUNT_TYPES.indexOf(b.type) || a.nickname.localeCompare(b.nickname),
-    );
-  const hasSnapshots = (id: string) => snapshots.some((s) => s.accountId === id);
-  const latest = (id: string) =>
-    snapshots.filter((s) => s.accountId === id).sort((x, y) => y.date.localeCompare(x.date))[0];
-
+    left = t('{n} mo', { n: Math.max(0, monthsBetween(from, addMonths(term.asOf, term.months))) });
+  }
   return (
-    <>
-      <PageHeader
-        title={t('Accounts')}
-        description={t(
-          "Every account by nickname. Balances go in Snapshots, in each account's own currency.",
-        )}
-        actions={
-          <Button onClick={() => setEditing('new')}>
-            <Plus aria-hidden /> {t('Add account')}
-          </Button>
-        }
-      />
-      <LoanNotice className="mb-4" link={false} />
-      {editing && (
-        <Card className="mb-4">
-          <CardHeader
-            title={
-              editing === 'new' ? t('New account') : t('Edit {nickname}', { nickname: editing.nickname })
-            }
-          />
-          <CardContent>
-            <AccountForm
-              key={editing === 'new' ? 'new' : editing.id}
-              account={editing === 'new' ? undefined : editing}
-              onDone={() => setEditing(undefined)}
-            />
-          </CardContent>
-        </Card>
-      )}
-      {accounts.length === 0 && !editing ? (
-        <EmptyState title={t('No accounts yet')}>
-          {t('Add your bank, broker, pension and insurance accounts.')}
-        </EmptyState>
-      ) : (
-        <Card>
-          <CardHeader
-            title={t('{length} account{v}', { length: visible.length, v: visible.length === 1 ? '' : 's' })}
-            actions={
-              <Checkbox
-                label={t('Show archived')}
-                checked={showArchived}
-                onChange={(e) => setShowArchived(e.target.checked)}
-              />
-            }
-          />
-          <CardContent>
-            <Table>
-              <thead>
-                <tr>
-                  <th>{t('Nickname')}</th>
-                  <th>{t('Institution')}</th>
-                  <th>{t('Type')}</th>
-                  <th>{t('Asset class')}</th>
-                  <th>{t('Currency')}</th>
-                  <th className="text-right">{t('Latest balance')}</th>
-                  <th>{t('Investable')}</th>
-                  <th>{t('Terms')}</th>
-                  <th className="w-28" />
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((a) => {
-                  const terms = liabilities.find((l) => l.accountId === a.id);
-                  return (
-                    <tr key={a.id} className={a.archived ? 'opacity-60' : undefined}>
-                      <td className="font-medium">
-                        {a.nickname} {a.archived && <Badge>{t('Archived')}</Badge>}
-                      </td>
-                      <td className="text-muted-foreground">{a.institution}</td>
-                      <td>{ACCOUNT_TYPE_LABELS[a.type]}</td>
-                      <td>{ASSET_CLASS_LABELS[a.assetClass]}</td>
-                      <td>{a.currency}</td>
-                      <td className="text-right">
-                        {latest(a.id) ? (
-                          <>
-                            {formatMoney(fromMinor(latest(a.id)!.balanceMinor), a.currency)}
-                            <div className="text-xs text-subtle">{latest(a.id)!.date}</div>
-                          </>
-                        ) : (
-                          <span className="text-subtle">—</span>
-                        )}
-                      </td>
-                      <td>
-                        {a.type === 'liability'
-                          ? '—'
-                          : a.investable
-                            ? a.accessAge
-                              ? t('From age {accessAge}', { accessAge: a.accessAge })
-                              : t('Yes')
-                            : t('No')}
-                      </td>
-                      <td className="text-muted-foreground">
-                        {terms
-                          ? t('{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths}', {
-                              toFixed: (terms.interestRate * 100).toFixed(2),
-                              monthlyPaymentMinor: formatMoney(
-                                fromMinor(terms.monthlyPaymentMinor),
-                                a.currency,
-                              ),
-                              remainingMonths: termLeft(terms),
-                            }) +
-                            ' · ' +
-                            whereText(terms)
-                          : ''}
-                      </td>
-                      <td>
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={t('Edit {nickname}', { nickname: a.nickname })}
-                            onClick={() => setEditing(a)}
-                          >
-                            <Pencil />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={
-                              a.archived
-                                ? t('Restore {nickname}', { nickname: a.nickname })
-                                : t('Archive {nickname}', { nickname: a.nickname })
-                            }
-                            onClick={() => void patch(db.accounts, a.id, { archived: !a.archived })}
-                          >
-                            {a.archived ? <ArchiveRestore /> : <Archive />}
-                          </Button>
-                          {!hasSnapshots(a.id) && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              aria-label={t('Delete {nickname}', { nickname: a.nickname })}
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    t('Delete {nickname}? It has no snapshots.', { nickname: a.nickname }),
-                                  )
-                                ) {
-                                  void db.transaction('rw', db.accounts, db.liabilities, async () => {
-                                    await db.accounts.delete(a.id);
-                                    await db.liabilities.delete(a.id);
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-            <p className="mt-3 text-xs text-subtle">
-              {t('Accounts with snapshots can be archived but not deleted, so history stays intact.')}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </>
+    t('{toFixed}% · {monthlyPaymentMinor}/mo · {remainingMonths}', {
+      toFixed: (terms.interestRate * 100).toFixed(2),
+      monthlyPaymentMinor: formatMoney(fromMinor(terms.monthlyPaymentMinor), currency),
+      remainingMonths: left,
+    }) +
+    ' · ' +
+    where
   );
 }

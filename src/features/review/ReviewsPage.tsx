@@ -35,7 +35,7 @@ const CHECKLISTS: Record<ReviewType, ChecklistItem[]> = {
     },
     {
       id: 'fx',
-      label: t('Enter the USD/TWD rate for the snapshot date'),
+      label: t('Enter the USD/TWD rate for the update date'),
       auto: (d) => d.fxRates.some((r) => monthOf(r.date) >= lastMonth()),
     },
     {
@@ -119,7 +119,7 @@ function NewReview() {
     <Card>
       <CardHeader
         title={t('New review')}
-        description={t('Monthly snapshot, quarterly review, annual reset.')}
+        description={t('Monthly update, quarterly review, annual reset.')}
       />
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end gap-3">

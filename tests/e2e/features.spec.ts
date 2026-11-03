@@ -42,7 +42,7 @@ test('imports bank transactions from CSV, skips duplicates, and lists them in tr
 
 test('imports balances into the snapshot grid', async ({ page }) => {
   const errors = await loadDemo(page);
-  await page.goto('./#/snapshots');
+  await page.goto('./#/money/balances');
   await page.getByRole('button', { name: 'Import CSV' }).click();
   await page.getByLabel('CSV file').setInputFiles(fixture('balances.csv'));
   await expect(page.getByText('2 balances', { exact: true })).toBeVisible();
@@ -76,8 +76,8 @@ test('exports and restores an encrypted backup', async ({ page }) => {
   await page.getByLabel('Passphrase', { exact: true }).fill('a long passphrase');
   await page.getByRole('button', { name: 'Decrypt and restore' }).click();
   await expect(page.getByText('Backup loaded.')).toBeVisible();
-  await page.goto('./#/accounts');
-  await expect(page.getByText('Everyday account')).toBeVisible();
+  await page.goto('./#/money/balances');
+  await expect(page.getByRole('button', { name: 'Everyday account' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -115,8 +115,10 @@ test('goal history, offline manifest and loading fallback', async ({ page, reque
 
 test('the account form validates and saves (zod resolver)', async ({ page }) => {
   const errors = await loadDemo(page);
-  await page.goto('./#/accounts');
+  await page.goto('./#/money/balances');
+  // Account details open in a side drawer (UX doc, M2).
   await page.getByRole('button', { name: 'Add account' }).first().click();
+  await expect(page.getByRole('dialog', { name: 'New account' })).toBeVisible();
   await page.getByRole('button', { name: 'Add account' }).last().click();
   await expect(page.getByText('Give it a nickname')).toBeVisible();
   await page.getByLabel('Nickname').fill('123456789');
@@ -124,6 +126,7 @@ test('the account form validates and saves (zod resolver)', async ({ page }) => 
   await expect(page.getByText('Do not store account numbers; use a nickname.')).toBeVisible();
   await page.getByLabel('Nickname').fill('Travel fund');
   await page.getByRole('button', { name: 'Add account' }).last().click();
-  await expect(page.getByRole('cell', { name: 'Travel fund', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByText('Travel fund', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
