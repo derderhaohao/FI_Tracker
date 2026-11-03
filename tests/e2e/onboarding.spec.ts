@@ -55,9 +55,9 @@ test('a new user sets up their data with the wizard and lands on a projection', 
   await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible();
   await expect(page.getByText('Most likely FI date')).toBeVisible();
   await expect(page.getByText('Birth year 1988, target FI age 50.')).toBeVisible();
-  // The mix for new savings must be chosen; keeping a mostly-cash mix warns.
-  await page.getByRole('button', { name: 'Finish and see my dashboard' }).click();
-  await expect(page.getByText('Choose how your new savings will be invested.')).toBeVisible();
+  // The mix for new savings is pre-selected (T2): the closest ready-made one. Keeping a
+  // mostly-cash mix warns.
+  await expect(page.getByRole('radio', { name: /Balanced/ })).toBeChecked();
   await page.getByRole('radio', { name: /Keep my current mix/ }).check();
   await expect(page.getByText(/of new savings would stay in cash/)).toBeVisible();
   await page.getByRole('radio', { name: /Balanced/ }).check();

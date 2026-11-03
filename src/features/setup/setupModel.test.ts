@@ -6,6 +6,8 @@ import {
   CASH_WARNING,
   chosenMix,
   currentMix,
+  effectiveMix,
+  suggestedMix,
   MIX_PRESETS,
   draftAccount,
   emptyDraft,
@@ -165,17 +167,29 @@ describe('setup records', () => {
 });
 
 describe('investment mix for new savings', () => {
-  it('must be chosen, and can be the current mix or a preset', () => {
+  it('is pre-selected (T2): the closest ready-made mix, or Balanced with nothing invested', () => {
     const d = fullDraft();
-    expect(validateStep(5, { ...d, mix: undefined }, 2026)).toEqual([
-      'Choose how your new savings will be invested.',
-    ]);
+    // Never blank, so Finish cannot fail on it.
+    expect(validateStep(5, { ...d, mix: undefined }, 2026)).toEqual([]);
     expect(chosenMix({ ...d, mix: 'balanced' })).toEqual(MIX_PRESETS.balanced.allocation);
     const sum = (a: Record<string, number | undefined>) =>
       Object.values(a).reduce<number>((x, y) => x + (y ?? 0), 0);
     for (const p of Object.values(MIX_PRESETS)) expect(sum(p.allocation)).toBeCloseTo(1, 9);
     expect(chosenMix(d)!.cash).toBeGreaterThan(CASH_WARNING);
-    const noUsable = { ...d, accounts: [{ ...draftAccount('pension'), balanceMinor: 100 }] };
-    expect(validateStep(5, noUsable, 2026)[0]).toMatch(/no current mix/);
+    // Nothing usable yet: Balanced, even if "current" was picked earlier.
+    const noUsable = {
+      ...d,
+      mix: 'current' as const,
+      accounts: [{ ...draftAccount('pension'), balanceMinor: 100 }],
+    };
+    expect(suggestedMix(noUsable)).toBe('balanced');
+    expect(effectiveMix(noUsable)).toBe('balanced');
+    expect(chosenMix(noUsable)).toEqual(MIX_PRESETS.balanced.allocation);
+    // All shares: Mostly shares. Mostly cash: Cautious.
+    const shares = { ...d, mix: undefined, accounts: [{ ...draftAccount('tw_broker'), balanceMinor: 100 }] };
+    expect(suggestedMix(shares)).toBe('growth');
+    expect(effectiveMix(shares)).toBe('growth');
+    const cash = { ...d, mix: undefined, accounts: [{ ...draftAccount('bank'), balanceMinor: 100 }] };
+    expect(suggestedMix(cash)).toBe('cautious');
   });
 });

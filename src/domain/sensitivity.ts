@@ -6,6 +6,7 @@ import {
   type ScenarioSpec,
   type BaselineContext,
 } from './baseline';
+import { fromMinor, toMinor } from './money';
 import { runProjection } from './projection';
 import { t } from '@/i18n';
 
@@ -43,10 +44,24 @@ export function sensitivity(
     run(t('Spending −10%'), with_({ spendingMultiplier: mult * 0.9 })),
     run(t('Spending +10%'), with_({ spendingMultiplier: mult * 1.1 })),
   ];
-  const baseSr = o.savingsRate ?? ctx.t12.savingsRate;
-  if (Number.isFinite(baseSr)) {
-    rows.push(run(t('Savings rate +5 pts'), with_({ savingsRate: Math.min(1, baseSr + 0.05) })));
-    rows.push(run(t('Savings rate −5 pts'), with_({ savingsRate: baseSr - 0.05 })));
+  // ±5 points of income saved. With a savings-rate lever the base already runs on that path;
+  // otherwise move this year's spending by 5% of income, so both rows share the base's spending
+  // basis and saving more can never make FI later.
+  if (o.savingsRate !== undefined) {
+    rows.push(run(t('Savings rate +5 pts'), with_({ savingsRate: Math.min(1, o.savingsRate + 0.05) })));
+    rows.push(run(t('Savings rate −5 pts'), with_({ savingsRate: o.savingsRate - 0.05 })));
+  } else {
+    const income = o.annualIncomeMinor !== undefined ? fromMinor(o.annualIncomeMinor) : ctx.t12.annualIncome;
+    const spending =
+      o.currentSpendingMinor !== undefined ? fromMinor(o.currentSpendingMinor) : ctx.annualSpendingExLoans;
+    // The spending multiplier scales this spending, so undo it on the step.
+    const step = (0.05 * income) / mult;
+    if (income > 0 && mult > 0) {
+      rows.push(
+        run(t('Savings rate +5 pts'), with_({ currentSpendingMinor: toMinor(Math.max(0, spending - step)) })),
+      );
+      rows.push(run(t('Savings rate −5 pts'), with_({ currentSpendingMinor: toMinor(spending + step) })));
+    }
   }
   for (const r of rows) {
     if (r.yearsToFi !== undefined && base.yearsToFi !== undefined) r.shift = r.yearsToFi - base.yearsToFi;

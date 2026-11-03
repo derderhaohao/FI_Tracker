@@ -22,6 +22,7 @@ import {
   chosenMix,
   currentAge,
   currentMix,
+  effectiveMix,
   MIX_PRESETS,
   draftAccount,
   emptyDraft,
@@ -418,6 +419,7 @@ function MixChoiceField({ d, set }: StepProps) {
     ),
   ];
   const chosen = chosenMix(d);
+  const mix = effectiveMix(d);
   return (
     <fieldset className="rounded-lg border p-4">
       <legend className="px-1 text-sm font-semibold">{t('How should new savings be invested?')}</legend>
@@ -432,14 +434,14 @@ function MixChoiceField({ d, set }: StepProps) {
             key={o.value}
             className={cn(
               'flex cursor-pointer gap-2 rounded-md border p-3 text-sm',
-              d.mix === o.value ? 'border-primary bg-surface-2' : 'hover:bg-surface-2',
+              mix === o.value ? 'border-primary bg-surface-2' : 'hover:bg-surface-2',
             )}
           >
             <input
               type="radio"
               name="mix"
               className="mt-1"
-              checked={d.mix === o.value}
+              checked={mix === o.value}
               onChange={() => set({ mix: o.value })}
             />
             <span>
@@ -570,11 +572,7 @@ function StepReview({ d, set }: StepProps) {
           <li>
             {d.taiwan.skipped ? t('Taiwan pension details skipped.') : t('Your 勞退 and 勞保 details.')}
           </li>
-          <li>
-            {chosenMix(d)
-              ? t('New savings invested as: {mixText}.', { mixText: mixText(chosenMix(d)!) })
-              : t('Choose how new savings are invested, above.')}
-          </li>
+          <li>{t('New savings invested as: {mixText}.', { mixText: mixText(chosenMix(d)!) })}</li>
           <li>
             {t('Your browser is asked to keep this data safe from automatic clean-up when space runs low.')}
           </li>

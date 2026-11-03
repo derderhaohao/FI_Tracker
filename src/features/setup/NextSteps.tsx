@@ -54,9 +54,7 @@ export function NextSteps() {
         </p>
       )}
       <p className="mt-1 text-sm text-muted-foreground">
-        {t(
-          'Once a month, update balances in Snapshots and last month’s pay and spending in Cash flow. When you have time:',
-        )}
+        {t('Once a month, run the Monthly update: it takes about 3 minutes. When you have time:')}
       </p>
       <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((s) => (

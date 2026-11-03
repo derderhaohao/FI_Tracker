@@ -1421,8 +1421,6 @@ export const ZH_TW: Record<string, string> = {
   'Your browser agreed to keep this data when space runs low.': '你的瀏覽器同意在空間不足時保留這些資料。',
   'Your browser did not promise to keep this data, so a backup matters even more.':
     '你的瀏覽器沒有承諾保留這些資料，所以備份更加重要。',
-  'Once a month, update balances in Snapshots and last month’s pay and spending in Cash flow. When you have time:':
-    '每個月在「快照」更新結餘，並在「現金流」更新上個月的薪資與支出。有空時：',
   // features/setup/SetupPage.tsx
   'Your age sets the timeline: when 勞退 unlocks (60), when 勞保 starts (65), and how many years your money must last.':
     '你的年齡決定時間軸：勞退何時可領（60 歲）、勞保何時開始（65 歲），以及你的資金必須撐多少年。',
@@ -1498,7 +1496,6 @@ export const ZH_TW: Record<string, string> = {
   'Taiwan pension details skipped.': '已略過台灣退休金細節。',
   'Your 勞退 and 勞保 details.': '你的勞退與勞保資料。',
   'New savings invested as: {mixText}.': '新儲蓄的投資方式：{mixText}。',
-  'Choose how new savings are invested, above.': '請在上方選擇新儲蓄的投資方式。',
   'Your browser is asked to keep this data safe from automatic clean-up when space runs low.':
     '會請你的瀏覽器在空間不足時，保護這些資料不被自動清除。',
   'Set up FI Tracker': '設定 FI Tracker',
@@ -1576,9 +1573,6 @@ export const ZH_TW: Record<string, string> = {
   'Enter your monthly spending.': '請輸入你的每月支出。',
   'Enter how much you would spend per year once you stop working.': '請輸入停止工作後每年會花多少。',
   'The withdrawal rate must be between 2.5% and 5%.': '提領率必須介於 2.5% 到 5% 之間。',
-  'Choose how your new savings will be invested.': '請選擇新儲蓄的投資方式。',
-  'There is no current mix to keep yet; pick one of the ready-made mixes.':
-    '目前還沒有可沿用的配置；請從現成的配置中選一個。',
   '勞保 insured years must be between 0 and 50.': '勞保投保年資必須介於 0 到 50 年之間。',
   '勞保 claim age must be between 60 and 70.': '勞保請領年齡必須介於 60 到 70 歲之間。',
   'Living costs': '生活費',
@@ -1594,8 +1588,6 @@ export const ZH_TW: Record<string, string> = {
   'Age {fiAge}': '{fiAge} 歲',
   'By age {horizonAge}': '到 {horizonAge} 歲',
   'Usable investments at FI': '財務自由時的可動用投資',
-  'Money needed at {fiAge}: {fiTarget}. Plus {locked} locked pension, which unlocks later.':
-    '{fiAge} 歲時所需資金：{fiTarget}。另有 {locked} 鎖定的退休金，之後才能動用。',
   'Money needed today: {twdCompact}': '今天所需資金：{twdCompact}',
   'Left at age {horizonAge}': '{horizonAge} 歲時剩下',
   'Left on the typical path; see the status above for the risk': '典型路徑上的剩餘金額；風險請看上方的狀態',
@@ -2363,4 +2355,12 @@ export const ZH_TW: Record<string, string> = {
   'Change story': '換個故事',
   'vs {names}': '對比 {names}',
   Edit: '編輯',
+  'Once a month, run the Monthly update: it takes about 3 minutes. When you have time:':
+    '每個月做一次「每月更新」，大約 3 分鐘。有空時：',
+  'Money needed at {fiAge}: {fiTarget}': '{fiAge} 歲時所需資金：{fiTarget}',
+  'About locked pension': '關於鎖定的退休金',
+  'Plus {locked} locked pension, which unlocks later and is not counted here.':
+    '另有 {locked} 鎖定的退休金，之後才能動用，這裡不計入。',
+  'Your mix is {points} points off your target. That is normal while you are still building up investments; new savings follow the target and close the gap.':
+    '你的配置與目標相差 {points} 個百分點。仍在累積投資時這很正常；新的儲蓄會依目標投入，逐步縮小差距。',
 };

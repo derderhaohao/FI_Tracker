@@ -221,11 +221,6 @@ export function validateStep(step: number, d: SetupDraft, currentYear: number): 
         errors.push(t('Enter how much you would spend per year once you stop working.'));
       if (d.swr < 0.025 || d.swr > 0.05) errors.push(t('The withdrawal rate must be between 2.5% and 5%.'));
       break;
-    case 5:
-      if (!d.mix) errors.push(t('Choose how your new savings will be invested.'));
-      else if (d.mix === 'current' && !currentMix(d))
-        errors.push(t('There is no current mix to keep yet; pick one of the ready-made mixes.'));
-      break;
     case 4: {
       const tw = d.taiwan;
       if (tw.skipped) break;
@@ -286,10 +281,48 @@ export function currentMix(d: SetupDraft): Allocation | undefined {
   return out;
 }
 
-/** The target allocation the user chose, if any. */
+const SHARE_CLASSES: AssetClass[] = ['global_equity', 'us_equity', 'tw_equity'];
+
+/** Shares, bonds and cash-or-other, as fractions of a mix. */
+function mixShape(a: Allocation): [number, number, number] {
+  const total = Object.values(a).reduce((s, v) => s + (v ?? 0), 0) || 1;
+  const shares = SHARE_CLASSES.reduce((s, c) => s + (a[c] ?? 0), 0) / total;
+  const bonds = (a.bond ?? 0) / total;
+  return [shares, bonds, 1 - shares - bonds];
+}
+
+/**
+ * The ready-made mix closest to what the accounts already hold, by their split between shares,
+ * bonds and cash; Balanced when nothing is invested yet. Setup pre-selects it (UX doc, T2), so
+ * the required choice is never blank.
+ */
+export function suggestedMix(d: SetupDraft): Exclude<MixChoice, 'current'> {
+  const current = currentMix(d);
+  if (!current) return 'balanced';
+  const shape = mixShape(current);
+  let best: Exclude<MixChoice, 'current'> = 'balanced';
+  let bestDistance = Infinity;
+  for (const [key, preset] of Object.entries(MIX_PRESETS) as [
+    Exclude<MixChoice, 'current'>,
+    (typeof MIX_PRESETS)['balanced'],
+  ][]) {
+    const p = mixShape(preset.allocation);
+    const distance = p.reduce((s, v, i) => s + Math.abs(v - shape[i]), 0);
+    if (distance < bestDistance) [best, bestDistance] = [key, distance];
+  }
+  return best;
+}
+
+/** The mix in effect: the user's choice, else the suggested one. */
+export function effectiveMix(d: SetupDraft): MixChoice {
+  if (d.mix === 'current' && !currentMix(d)) return suggestedMix(d);
+  return d.mix ?? suggestedMix(d);
+}
+
+/** The target allocation the draft will save. */
 export function chosenMix(d: SetupDraft): Allocation | undefined {
-  if (!d.mix) return undefined;
-  return d.mix === 'current' ? currentMix(d) : MIX_PRESETS[d.mix].allocation;
+  const mix = effectiveMix(d);
+  return mix === 'current' ? currentMix(d) : MIX_PRESETS[mix].allocation;
 }
 
 /** Turns a complete draft into the records to save. Pure: ids come from `newId`. */

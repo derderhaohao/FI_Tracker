@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ASSET_CLASS_LABELS, type AssetClass } from '@/domain/entities';
-import { computeAlerts } from '@/domain/alerts';
+import { allocationGap, computeAlerts, groupDriftAlerts } from '@/domain/alerts';
 import { monthlyTotals } from '@/domain/cashflow';
 import { daysBetween, today } from '@/domain/dates';
 import { fiProgress, netWorthSeries } from '@/domain/networth';
@@ -51,12 +51,10 @@ export function DashboardPage() {
   const backupAge = settings.lastBackupAt
     ? daysBetween(settings.lastBackupAt.slice(0, 10), today())
     : undefined;
-  const alerts = computeAlerts(
-    settings.alerts,
-    settings.targetAllocation,
-    nw,
-    totals,
-    ctx.t12.annualExpense / 12,
+  const alerts = groupDriftAlerts(
+    computeAlerts(settings.alerts, settings.targetAllocation, nw, totals, ctx.t12.annualExpense / 12),
+    series.length,
+    allocationGap(settings.targetAllocation, nw),
   );
   const lastChange = periodChanges(series.slice(-2), totals, data.fxRates, data.activeAssumptions.assets).at(
     -1,
@@ -76,8 +74,8 @@ export function DashboardPage() {
       ),
     });
   }
-  const driftAlerts = alerts.filter((a) => a.id.startsWith('drift-'));
-  const otherAlerts = alerts.filter((a) => !a.id.startsWith('drift-'));
+  const driftAlerts = alerts.filter((a) => a.id === 'drift');
+  const otherAlerts = alerts.filter((a) => a.id !== 'drift');
   const targetSum = Object.values(settings.targetAllocation).reduce((a, b) => a + (b ?? 0), 0);
   const byClass = (Object.keys(nw.byAssetClass) as AssetClass[])
     .filter((c) => nw.balances.some((b) => b.account.assetClass === c && b.bucket === 'liquid'))

@@ -1,11 +1,12 @@
 import { baselineContext, buildProjectionInput, normaliseAllocation, type PlanData } from './baseline';
 import { ASSET_CLASSES } from './entities';
-import { computeAlerts } from './alerts';
+import { computeAlerts, allocationGap, groupDriftAlerts } from './alerts';
 import { monthlyTotals } from './cashflow';
 import { netWorthAt, netWorthSeries } from './networth';
 import { flowsVsPlan, lockProjection, netWorthVsPlan, plannedInvestableAt } from './planVsActual';
 import { runProjection } from './projection';
 import { sensitivity } from './sensitivity';
+import { buildDemoBackup } from '@/io/demo';
 import { makeAccount, makeAssumptions, makeSettings, stamp } from './testFixtures';
 
 function data(): PlanData {
@@ -152,6 +153,30 @@ describe('baseline', () => {
     expect(rows).toHaveLength(6);
   });
 
+  it('never makes FI later when saving 5 points more (demo household)', () => {
+    const d = buildDemoBackup().data;
+    const plan: PlanData = {
+      settings: d.settings[0],
+      accounts: d.accounts,
+      snapshots: d.snapshots,
+      fxRates: d.fxRates,
+      liabilities: d.liabilities,
+      categories: d.categories,
+      cashFlows: d.cashFlows,
+      incomeStreams: d.incomeStreams,
+    };
+    const spec = { overrides: {}, events: [], withdrawalRule: { kind: 'fixed_swr' as const } };
+    const { base, rows } = sensitivity(plan, d.assumptionSets[0], spec);
+    const byLabel = Object.fromEntries(rows.map((r) => [r.label, r]));
+    expect(base.fiAge).toBeDefined();
+    expect(byLabel['Savings rate +5 pts'].fiAge!).toBeLessThanOrEqual(base.fiAge!);
+    expect(byLabel['Savings rate −5 pts'].fiAge!).toBeGreaterThanOrEqual(base.fiAge!);
+    // With a savings-rate lever the rows step from it.
+    const lever = sensitivity(plan, d.assumptionSets[0], { ...spec, overrides: { savingsRate: 0.4 } });
+    const leverRows = Object.fromEntries(lever.rows.map((r) => [r.label, r]));
+    expect(leverRows['Savings rate +5 pts'].fiAge!).toBeLessThanOrEqual(lever.base.fiAge!);
+  });
+
   it('compares actuals with a locked plan', () => {
     const d = data();
     const result = runProjection(buildProjectionInput(d, assumptions));
@@ -185,5 +210,16 @@ describe('baseline', () => {
     expect(ids).toContain('savings-rate');
     expect(ids).toContain('emergency-fund');
     expect(ids.some((i) => i.startsWith('drift-'))).toBe(true);
+
+    // T3: no drift warnings before the second monthly update, then one grouped card.
+    const gap = allocationGap({ cash: 0.5, tw_equity: 0.5 }, nw);
+    expect(gap).toBeGreaterThan(0);
+    expect(gap).toBeLessThanOrEqual(1);
+    const early = groupDriftAlerts(alerts, 2, gap).map((a) => a.id);
+    expect(early.some((i) => i.startsWith('drift'))).toBe(false);
+    expect(early).toContain('savings-rate');
+    const later = groupDriftAlerts(alerts, 3, gap);
+    expect(later.filter((a) => a.id.startsWith('drift'))).toHaveLength(1);
+    expect(later.find((a) => a.id === 'drift')!.message).toContain(`${Math.round(gap * 100)} points`);
   });
 });
