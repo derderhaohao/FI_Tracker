@@ -74,8 +74,10 @@ describe('Pro pages with the demo plan', () => {
     ['/money/cashflow', 'Cash flow'],
     ['/money/mix', 'Portfolio mix'],
     ['/plan/goal', 'Goal'],
-    ['/plan/projection', 'Projection'],
+    ['/plan', 'My plan'],
+    ['/plan/projection', 'Year by year'],
     ['/plan/lab', 'Strategy Lab'],
+    ['/plan/sure', 'How sure is this?'],
     ['/update/reviews', 'Reviews'],
     ['/settings', 'Settings'],
     ['/update', 'Monthly update'],
@@ -152,6 +154,41 @@ describe('Pro pages with the demo plan', () => {
     expect(seen!.reviews.some((r) => r.date === '2026-10-31' && r.notes === 'Raise next month')).toBe(true);
   });
 
+  it('previews a change on My plan live and saves it as a what-if (P1)', async () => {
+    renderPage('/plan');
+    await screen.findByRole('heading', { level: 1, name: 'My plan' }, { timeout: 5000 });
+    expect(screen.getByRole('figure', { name: 'Investments against money needed' })).toBeInTheDocument();
+    const sentence = () =>
+      screen.getByText(/^(Investments meet|Stop work at \d|At this pace)/, { selector: 'p' }).textContent;
+    const before = sentence();
+    expect(screen.getByRole('button', { name: 'Save as a what-if' })).toBeDisabled();
+    const sliders = within(screen.getByRole('group', { name: 'What if' })).getAllByRole('slider');
+    expect(sliders).toHaveLength(3);
+    fireEvent.change(sliders[1], { target: { value: Number(sliders[1].getAttribute('max')) } });
+    expect(sentence()).not.toBe(before);
+    expect(screen.getByText('what-if')).toBeInTheDocument();
+    fireEvent.change(sliders[0], { target: { value: 45 } });
+    expect(sentence()).toMatch(/^Stop work at 45 /);
+    const count = seen!.scenarios.length;
+    await userEvent.click(screen.getByRole('button', { name: 'Save as a what-if' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Strategy Lab' }, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    expect(seen!.scenarios).toHaveLength(count + 1);
+    const saved = seen!.scenarios.find((x) => x.name.startsWith('Stop at 45'));
+    expect(saved?.overrides.targetFiAge).toBe(45);
+    expect(saved?.overrides.currentSpendingMinor).toBeDefined();
+  });
+
+  it('shows how sure the plan is, with safer ideas in money (P2)', async () => {
+    renderPage('/plan/sure');
+    await screen.findByRole('heading', { level: 1, name: 'How sure is this?' }, { timeout: 5000 });
+    const health = screen.getByRole('region', { name: 'Plan health' });
+    expect(
+      await within(health).findByText(/^(Likely|Fairly likely|Uncertain)$/, {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
+  });
+
   it('marks the menu item and tab for the page in view', async () => {
     renderPage('/money/cashflow');
     await screen.findByRole('heading', { level: 1, name: 'Cash flow' }, { timeout: 5000 });
@@ -172,7 +209,7 @@ describe('Pro pages with the demo plan', () => {
     ).toBeInTheDocument();
     expect(within(hero).getByRole('link', { name: 'How sure is this?' })).toHaveAttribute(
       'href',
-      '/plan/projection',
+      '/plan/sure',
     );
     expect(screen.getAllByRole('region', { name: 'Next step' })).toHaveLength(1);
     // Allocation and currency moved to My money.
@@ -200,7 +237,7 @@ describe('Pro pages with the demo plan', () => {
 
   it('agrees with the projection: the dashboard progress uses the same target', async () => {
     renderPage('/plan/projection');
-    await screen.findByRole('heading', { level: 1, name: 'Projection' }, { timeout: 5000 });
+    await screen.findByRole('heading', { level: 1, name: 'Year by year' }, { timeout: 5000 });
     const { baseline, baselineInput } = seen!;
     expect(baseline.rows[0].age).toBe(baselineInput.startAge);
     expect(baseline.rows.at(-1)!.age).toBe(baselineInput.horizonAge);
@@ -213,7 +250,7 @@ describe('Pro pages with the demo plan', () => {
   it('plays a story with a scheduled crisis to its end card', async () => {
     const user = userEvent.setup();
     renderPage('/plan/projection');
-    await screen.findByRole('heading', { level: 1, name: 'Projection' }, { timeout: 5000 });
+    await screen.findByRole('heading', { level: 1, name: 'Year by year' }, { timeout: 5000 });
     await user.click(screen.getByRole('radio', { name: 'Play a story' }));
     expect(
       (await screen.findAllByText('One possible story, not a forecast.', {}, { timeout: 5000 })).length,

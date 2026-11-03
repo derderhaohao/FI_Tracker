@@ -706,7 +706,6 @@ export const ZH_TW: Record<string, string> = {
   '勞保 starts': '勞保開始',
   'Will your plan work, and what would make it safer? Try a what-if and compare it with your plan today.':
     '你的計畫行得通嗎？怎樣能更安全？試一個假設情境，和你今天的計畫比較看看。',
-  'Simple or advanced view': '簡易或進階檢視',
   Simple: '簡易',
   Advanced: '進階',
   'How this works': '運作方式',
@@ -2270,8 +2269,7 @@ export const ZH_TW: Record<string, string> = {
   'Make it safer': '讓計畫更穩',
   Assumptions: '假設',
   Tool: '工具',
-  Detail: '詳細程度',
-  'Show amounts in': '金額顯示為',
+  'Show amounts in': '金額顯示方式',
   'Keep at least one assumption set': '至少保留一組假設',
   DELETE: '刪除',
   'Danger zone': '危險區',
@@ -2376,7 +2374,6 @@ export const ZH_TW: Record<string, string> = {
   'Setup estimated 勞退 and 勞保 from your pay. Your real figures are on the 勞保局 e化服務 site.':
     '設定時依你的薪資估算了勞退和勞保。實際數字可在勞保局 e化服務網站查到。',
   'Add details': '填入資料',
-  'Open the Strategy Lab': '開啟策略實驗室',
   'Enter your first balances': '輸入你的第一筆餘額',
   'As of {asOfDate}. All amounts in TWD.': '截至 {asOfDate}。所有金額以新台幣計。',
   'Your progress': '你的進度',
@@ -2490,4 +2487,45 @@ export const ZH_TW: Record<string, string> = {
   'Save note': '儲存備註',
   'Add a monthly calendar reminder': '加入每月行事曆提醒',
   'Go to Home': '回到首頁',
+  'Goal details': '目標細節',
+  'Open My plan': '開啟我的計畫',
+  'Your target: {TIER_LABELS} FI': '你的目標：{TIER_LABELS} FI',
+  'Alternatives:': '其他選擇：',
+  '{TIER_LABELS} FI {value}': '{TIER_LABELS} FI {value}',
+  'Change the tier under FI settings below.': '可在下方的財務自由設定中更改等級。',
+  'Fewer options': '較少選項',
+  'More options': '更多選項',
+  Options: '選項',
+  'what-if': '假設',
+  'FI at {age}': '{age} 歲財務自由',
+  'Stop work at {age}': '{age} 歲停止工作',
+  '勞退 at {age}': '勞退 {age} 歲',
+  '勞保 at {age}': '勞保 {age} 歲',
+  'At this pace the money does not reach what you need by {horizonAge}.':
+    '照這個步調，{horizonAge} 歲前資金無法達到所需金額。',
+  'Stop work at {age} ({date}); on the typical path the money lasts to {horizonAge}.':
+    '{age} 歲（{date}）停止工作；在典型路徑下，資金足以用到 {horizonAge} 歲。',
+  'Stop work at {age} ({date}); on the typical path the money runs out at {depletionAge}.':
+    '{age} 歲（{date}）停止工作；在典型路徑下，資金會在 {depletionAge} 歲用完。',
+  'Investments meet what you need at {age} ({date}).': '你的投資在 {age} 歲（{date}）達到所需金額。',
+  'stop at {age}': '{age} 歲停止工作',
+  'save {amount}/mo': '每月存 {amount}',
+  'spend {amount}/yr': '每年花 {amount}',
+  "Amounts in today's money. Change this in Settings → General.":
+    '金額以今天的幣值計。可在「設定 → 一般」更改。',
+  'Amounts in future money. Change this in Settings → General.':
+    '金額以未來的幣值計。可在「設定 → 一般」更改。',
+  'Investments against money needed': '投資與所需資金',
+  'Your investments': '你的投資',
+  'What if': '假設情境',
+  'Stop work at': '停止工作年齡',
+  'Yearly spending once you stop': '停止工作後每年支出',
+  'Save as a what-if': '存成假設情境',
+  'Back to my plan': '回到我的計畫',
+  'A preview: nothing is saved until you press Save.': '這只是預覽：按下儲存前不會儲存任何東西。',
+  'Move a slider to see the date move.': '拖動滑桿，看看日期怎麼變。',
+  'Your plan against 1,000 simulated futures, and against what markets actually did in the past.':
+    '你的計畫在 1,000 個模擬未來中的表現，以及在過去實際市場中的表現。',
+  'The age is the typical path, where markets return their typical amount every year; the word counts how often the money lasts across the simulated futures.':
+    '年齡依典型路徑計算，也就是市場每年都有典型報酬；評語則依模擬未來中資金足夠的頻率而定。',
 };

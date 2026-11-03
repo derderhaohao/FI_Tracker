@@ -31,6 +31,6 @@ test('switches to Taiwan Traditional Chinese and back, keeping the choice', asyn
   await expect(page.getByLabel('故事結束')).toBeVisible();
 
   await page.getByRole('radio', { name: 'English' }).first().click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Projection' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Year by year' })).toBeVisible();
   expect(errors).toEqual([]);
 });

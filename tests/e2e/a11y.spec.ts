@@ -12,18 +12,21 @@ test.use({ serviceWorkers: 'block' });
 const PRO_ROUTES = [
   '',
   'update',
-  'accounts',
-  'snapshots',
-  'cashflow',
-  'goal',
-  'projection',
-  'lab',
-  'reviews',
+  'update/reviews',
+  'money/balances',
+  'money/cashflow',
+  'money/mix',
+  'plan',
+  'plan/goal',
+  'plan/lab',
+  'plan/sure',
+  'plan/projection',
   'settings/general',
   'settings/assumptions',
   'settings/taiwan',
   'settings/categories',
   'settings/backup',
+  'settings/tools',
   'settings/danger',
   'tools/time-machine',
 ];
@@ -46,7 +49,7 @@ async function addChild(page: Page) {
 async function open(page: Page, route: string) {
   await page.goto(`./#/${route}`);
   await expect(page.locator('h1').first()).toBeVisible({ timeout: 15_000 });
-  await page.waitForTimeout(route === 'lab' || route === 'tools/time-machine' ? 2500 : 600);
+  await page.waitForTimeout(['plan/lab', 'plan/sure', 'tools/time-machine'].includes(route) ? 2500 : 600);
 }
 
 async function contrast(page: Page) {

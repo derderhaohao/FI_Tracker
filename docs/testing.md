@@ -62,13 +62,19 @@ Other suites cover the rest of the maths:
   states, the segmented control, tables and form fields.
 - **App pieces** (`src/components/components.test.tsx`): the language and Beginner/Pro switches,
   the first-visit mode choice, the assumption badge and the chance dots.
-- **Pro pages** (`src/app/pages.test.tsx`):
-  - Every page opens with the demo plan.
-  - Plan health shows.
+- **Pro pages** (`src/app/pages.test.tsx`), through the real route tree (`app/proRoutes.tsx`):
+  - Every page and old address opens with the five-item menu and its tab marked.
+  - Home leads with progress, one certainty word and one Next step.
+  - Each Settings section opens by address.
+  - The whole monthly update runs to its recap and writes the month's flows and review.
+  - Balances groups accounts with subtotals, reads first, and opens details in a drawer.
+  - Cash-flow groups collapse to totals; one-offs sit behind a button.
+  - My plan's sliders move the date live and save a what-if; How sure is this? shows the word.
   - The Goal page shows the FI number the domain gives.
   - A story plays to its end card with a scheduled crisis.
-  - Accounts opens its form.
   - Unknown addresses show the not-found page.
+- **First run** (`src/features/setup/firstRun.test.tsx`): the welcome screen in focus mode, the
+  60-second estimate carried into setup, four steps with the live FI age, and the result screen.
 - **Time Machine fields and the playback player bar and story cards.**
 - **Beginner mode** (`src/kids/KidsApp.test.tsx`, `src/kids/ui.test.tsx`):
   - Profiles, jars and spending with the Savings check, goals, the money tree and Freedom
@@ -80,8 +86,8 @@ Other suites cover the rest of the maths:
 
 `tests/e2e/a11y.spec.ts` runs the UI polish acceptance checks against the built app:
 
-- **Contrast:** axe-core `color-contrast` on every Pro route, Settings section, the Time Machine
-  and the Beginner screens, in light and dark themes.
+- **Contrast:** axe-core `color-contrast` on every Pro route and tab, Settings section, the Time
+  Machine and the Beginner screens, in light and dark themes.
 - **Text size:** no text under 12 px.
 - **Target size:** no control under 24 × 24 px at 1280×800, and none under 44 × 44 px in the page or
   the bottom nav at 390×844. The page must also never scroll sideways at that width.

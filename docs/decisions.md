@@ -506,3 +506,40 @@ From the same PRD, Part D, KD-1 to KD-9 (Release 5).
   split. Turning it off resets the default to 50 / 30 / 20.
 - **Screenshots:** before and after images of Dashboard, Strategy Lab, Settings and Time Machine, at
   1280×800 and 390×844, are in `docs/screenshots/ui-polish/`.
+
+### UX improvements (docs/ux-improvement-plan.md)
+
+- **Sensitivity (T1):** the savings-rate rows move this year's spending by 5% of income on the
+  base row's own basis, instead of rebuilding spending from the trailing savings rate. A
+  savings-rate lever, when set, is stepped directly.
+- **Mix in setup (T2):** the closest ready-made mix by the split between shares, bonds and cash, or
+  Balanced with nothing invested. "Keep my current mix" stays an option.
+- **First visit (O1):** a new device opens Pro directly. Beginner mode is a link on the welcome
+  screen and a section in Settings; a link into `#/kids` still opens it.
+- **Pensions in setup (O2):** "Do you have a Taiwan employer?" Yes estimates gross pay as
+  take-home ÷ 0.9 (rounded to NT$100), the 勞退 wage from it (cap NT$150,000), the 勞保 salary
+  (cap NT$45,800) and insured years from age 23. `settings.pensionEstimated` marks the estimate
+  until the user edits Settings → Taiwan rules; Home's Next step asks for the real figures.
+- **Menu (N1):** tabs, not nested menus, inside My money, My plan and Update. The Time Machine
+  moved to Settings → Tools.
+- **Certainty words (A1):** Likely 80%+, Fairly likely 60–79%, Uncertain under 60%. They replace
+  On track / Watch / At risk (85% / 70%) everywhere, the Lab verdict included.
+- **Backup reminders (A1):** the global banner is only for a stopped auto-save. Reminders appear
+  in the Next step card from two months of data, and in the update recap. Loading the demo or
+  restoring a file counts as a backup.
+- **Pay and spending in the update (M1):** two totals pre-filled from the last month with regular
+  entries. A changed total scales that month's categories, so their split is kept. Months that
+  already have entries, and transaction mode, are left alone.
+- **Monthly review (M1):** saving the update writes the month's review, with its checklist ticked
+  from the data; the recap's note is stored on it.
+- **Balances (M2):** a new account without a balance shows in the monthly history, not in the
+  grouped summary, which lists the latest month's balances.
+- **My plan sliders (P1):** saving is take-home pay minus spending and loan payments; a slider
+  sets spending to what is left. Previews run the yearly engine synchronously on each move.
+- **How sure is this? (P2):** the full plan-health card, the safer ideas and the past-markets
+  chart, for the plan today. The Projection keeps the compact strip and is titled Year by year.
+- **Today's or future money (P2):** one setting in Settings → General, kept on this device.
+- **Simple / Advanced (P2):** one "More options" button in the Lab. On a phone the Lab's controls
+  sit behind an Options disclosure, so the first screen is the verdict.
+- **Plan of record (P2):** a stored scenario with no changes is the same as "Your plan today" and
+  is not listed again in Compare.

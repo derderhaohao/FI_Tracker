@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { CalendarPlus, Copy, Download, Hourglass, Lock, Plus, Trash2, Upload } from 'lucide-react';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { downloadMonthlyReminder } from '@/lib/ics';
 import {
   ASSET_CLASSES,
@@ -1329,6 +1330,11 @@ export function SettingsPage() {
             <Section id="general" title={t('General')}>
               {/* Phones have no sidebar, so the language picker lives here too. */}
               <LanguageSwitch className="mb-4 md:hidden" />
+              {/* Set once here, not toggled on every page (UX doc, P2). */}
+              <div className="mb-4">
+                <span className="mb-1 block text-sm font-medium">{t('Show amounts in')}</span>
+                <ValueModeToggle />
+              </div>
               <GeneralSettings s={settings} />
             </Section>
           )}

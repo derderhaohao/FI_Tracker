@@ -14,7 +14,6 @@ import { Select } from '@/components/ui/input';
 import { Badge, Notice, PageHeader, Segmented, Stat, Table } from '@/components/ui/misc';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { PlaybackView } from './playback/PlaybackView';
-import { ValueModeToggle } from '@/components/ValueModeToggle';
 import { toMode } from '@/lib/valueMode';
 import { dateAfterYears, formatDate, monthLabel, twd, twdCompact } from '@/lib/format';
 import { addMonths } from '@/domain/dates';
@@ -44,7 +43,7 @@ export function ProjectionPage() {
   return (
     <>
       <PageHeader
-        title={t('Projection')}
+        title={t('Year by year')}
         description={
           mode === 'play'
             ? t('Play a story: pick one, add events if you like, and watch your plan month by month.')
@@ -63,7 +62,6 @@ export function ProjectionPage() {
                 { value: 'play', label: t('Play a story') },
               ]}
             />
-            <ValueModeToggle />
             {/* Play uses the active assumption set, so the picker only applies to the summary. */}
             {mode === 'static' && (
               <>
@@ -86,8 +84,9 @@ export function ProjectionPage() {
         }
       />
       {mode === 'static' && (
-        // The full answer lives here; Home links to it as "How sure is this?" (UX doc, D1).
+        // The full answer lives on My plan → How sure is this? (UX doc, P2).
         <PlanHealthCard
+          compact
           note={
             setId !== data.activeAssumptions.id
               ? t('The status uses your active assumption set ({name}); the chart below uses {name2}.', {
