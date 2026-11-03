@@ -8,7 +8,6 @@ import { fiProgress, netWorthSeries } from '@/domain/networth';
 import { periodChanges } from '@/domain/reconcile';
 import { useAppData } from '@/app/data';
 import { Welcome } from '@/features/setup/Welcome';
-import { NextSteps } from '@/features/setup/NextSteps';
 import { FiMoveCard } from './FiMoveCard';
 import { AssumptionBadge } from '@/components/AssumptionBadge';
 import { PlanHealthCard } from '@/components/PlanHealthCard';
@@ -110,7 +109,6 @@ export function DashboardPage() {
           </>
         }
       />
-      <NextSteps />
       {ctx.warnings.length > 0 && (
         <div className="mb-4 flex flex-col gap-2">
           {ctx.warnings.map((w) => (

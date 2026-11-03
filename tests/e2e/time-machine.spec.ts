@@ -102,7 +102,7 @@ test('the Time Machine plays a portfolio against the S&P 500 without touching FI
     .poll(
       async () => {
         const now = await dumpIndexedDb(page);
-        const settled = now === before && now.includes(new Date().toISOString().slice(0, 10));
+        const settled = now === before && now.includes(`"date":"${new Date().toISOString().slice(0, 10)}"`);
         before = now;
         return settled;
       },

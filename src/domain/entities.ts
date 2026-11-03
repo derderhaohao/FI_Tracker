@@ -210,6 +210,8 @@ export const settingsSchema = z.object({
   stories: z.array(storySchema).max(100).optional(),
   /** Custom events from the event builder (SC-9). */
   customEvents: z.array(customEventSchema).max(50).optional(),
+  /** True while 勞退 and 勞保 are setup's estimate from pay, not the user's own figures. */
+  pensionEstimated: z.boolean().optional(),
   ...audit,
 });
 export type Settings = z.infer<typeof settingsSchema>;

@@ -20,6 +20,7 @@ import { toMinor } from '@/domain/money';
 import { lockProjection } from '@/domain/planVsActual';
 import { runProjection } from '@/domain/projection';
 import { SCHEMA_VERSION } from '@/db/db';
+import { importBackup, markBackedUp } from './backup';
 import type { BackupFile } from './backup';
 import { t } from '@/i18n';
 
@@ -402,4 +403,13 @@ export function buildDemoBackup(): BackupFile {
   );
 
   return { app: 'fi-tracker', schemaVersion: SCHEMA_VERSION, exportedAt: STAMP, data };
+}
+
+/**
+ * Loads the demo household. Made-up data needs no backup, so it is marked as backed up and
+ * the backup reminder stays quiet.
+ */
+export async function loadDemo(): Promise<void> {
+  await importBackup(buildDemoBackup());
+  await markBackedUp();
 }
