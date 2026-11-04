@@ -11,6 +11,7 @@ import type { MonteCarloOptions } from '@/domain/montecarlo/runner';
 import { DataProvider, useAppData } from './data';
 import { PlanHealthProvider } from './planHealth';
 import { proRoutes } from './proRoutes';
+import { walkUpdateToFlows } from '@/test/renderApp';
 import { formatMoney } from '@/domain/money';
 
 // Whole screens with many clicks: allow for slower CI runners under coverage.
@@ -121,22 +122,7 @@ describe('Pro pages with the demo plan', () => {
     const user = userEvent.setup();
     renderPage('/update');
     await screen.findByRole('heading', { level: 1, name: 'Monthly update' }, { timeout: 5000 });
-    fireEvent.change(screen.getByLabelText('Balances as of'), { target: { value: '2026-10-31' } });
-    await user.click(screen.getByRole('button', { name: 'Start' }));
-    for (let i = 0; i < 30; i++) {
-      const same = screen.queryByRole('button', { name: 'Same as last month' });
-      if (same) {
-        await user.click(same);
-        continue;
-      }
-      const correct = screen.queryByRole('button', { name: 'All correct' });
-      if (correct) {
-        await user.click(correct);
-        continue;
-      }
-      if (screen.queryByRole('heading', { name: /^Pay and spending in / })) break;
-      await user.click(screen.getByRole('button', { name: 'Next' }));
-    }
+    await walkUpdateToFlows(user, '2026-10-31');
     expect(screen.getByLabelText('Take-home pay (TWD)')).not.toHaveValue('');
     await user.click(screen.getByRole('button', { name: 'Add a bonus or one-off' }));
     await user.type(screen.getByLabelText('Amount (TWD)'), '10000');

@@ -2528,4 +2528,5 @@ export const ZH_TW: Record<string, string> = {
     '你的計畫在 1,000 個模擬未來中的表現，以及在過去實際市場中的表現。',
   'The age is the typical path, where markets return their typical amount every year; the word counts how often the money lasts across the simulated futures.':
     '年齡依典型路徑計算，也就是市場每年都有典型報酬；評語則依模擬未來中資金足夠的頻率而定。',
+  'Details for {nickname}': '{nickname} 的詳細資料',
 };

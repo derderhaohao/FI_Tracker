@@ -73,6 +73,43 @@ describe('pay and spending in the monthly update (UX doc, M1)', () => {
     expect(out[1]).toMatchObject({ categoryId: 'food', lumpSum: true, note: 'Party' });
   });
 
+  it('scales foreign-currency entries in their own currency, by the TWD total', () => {
+    const fx = [{ id: 'r', date: '2026-09-30', currency: 'USD', twdPerUnit: 30, ...stamp }];
+    const mixed = [
+      flow('t', '2026-09', 'salary', 60_000),
+      flow('u', '2026-09', 'salary', 1_000, { currency: 'USD' }),
+    ];
+    // 60,000 + 1,000 × 30 = 90,000 TWD last month; double it.
+    expect(planFlows(mixed, categories, fx, '2026-10').previous?.incomeMinor).toBe(toMinor(90_000));
+    const out = buildMonthFlows(
+      mixed,
+      categories,
+      fx,
+      '2026-10',
+      { incomeMinor: toMinor(180_000), spendingMinor: 0 },
+      [],
+      stamp.createdAt,
+    );
+    expect(out.map((f) => [f.currency, f.amountMinor])).toEqual([
+      ['TWD', toMinor(120_000)],
+      ['USD', toMinor(2_000)],
+    ]);
+  });
+
+  it('leaves transactions and scheduled loan payments out of last month’s totals', () => {
+    const list = [
+      ...flows,
+      flow('tx', '2026-09', 'food', 9_999, { date: '2026-09-12' }),
+      flow('loan', '2026-09', 'rent', 12_500, { scheduled: true }),
+    ];
+    expect(planFlows(list, categories, [], '2026-10').previous).toEqual({
+      incomeMinor: toMinor(90_000),
+      spendingMinor: toMinor(50_000),
+    });
+    // No earlier month at all: nothing to pre-fill.
+    expect(planFlows(list, categories, [], '2026-09').previousMonth).toBeUndefined();
+  });
+
   it('asks for the quarterly and annual checks only when due', () => {
     expect(duePrompts('2026-10')).toEqual([]);
     expect(duePrompts('2026-09')).toEqual(['quarterly']);

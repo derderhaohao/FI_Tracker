@@ -77,7 +77,7 @@ test('exports and restores an encrypted backup', async ({ page }) => {
   await page.getByRole('button', { name: 'Decrypt and restore' }).click();
   await expect(page.getByText('Backup loaded.')).toBeVisible();
   await page.goto('./#/money/balances');
-  await expect(page.getByRole('button', { name: 'Everyday account' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Everyday account', exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

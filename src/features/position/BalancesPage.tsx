@@ -643,7 +643,15 @@ export function BalancesPage() {
                 {active.map((a) => (
                   <tr key={a.id}>
                     <td className="sticky left-0 z-10 max-w-36 bg-surface sm:max-w-none">
-                      <div className="font-medium">{a.nickname}</div>
+                      {/* Opens details too: a new account has no row in the summary until it has a balance. */}
+                      <button
+                        type="button"
+                        className="text-left font-medium hover:text-primary hover:underline"
+                        aria-label={t('Details for {nickname}', { nickname: a.nickname })}
+                        onClick={() => setDrawer(a)}
+                      >
+                        {a.nickname}
+                      </button>
                       <div className="text-xs text-subtle">
                         {a.type === 'liability' ? t('Owed') : a.institution} · {a.currency}
                         {a.type === 'brokerage' && shown.length > 0 && (

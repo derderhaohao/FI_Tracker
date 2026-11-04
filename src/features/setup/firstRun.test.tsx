@@ -144,5 +144,14 @@ describe('first run (UX doc, phase 1)', () => {
     const sets = await db.assumptionSets.toArray();
     expect(sets.some((a) => a.taiwan.laborPension.monthlyInsuredWageMinor === 100_000_00)).toBe(true);
     expect(sets.some((a) => a.taiwan.laborInsurance.avgMonthlyInsuredSalaryMinor === 45_800_00)).toBe(true);
+
+    // A brand-new user lands on Home with no warning at all (UX doc, T3 and A1), and the
+    // menu is back now that there is data.
+    await userEvent.click(screen.getByRole('link', { name: 'Go to my dashboard' }));
+    expect(await screen.findByRole('region', { name: 'Your progress' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('alert')).toHaveLength(0);
+    expect(screen.getAllByRole('navigation', { name: 'Main' }).length).toBeGreaterThan(0);
+    // With one month of balances, Home asks for nothing but the next step.
+    expect(screen.getAllByRole('region', { name: 'Next step' })).toHaveLength(1);
   });
 });
