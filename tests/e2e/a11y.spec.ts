@@ -208,3 +208,37 @@ test('Time Machine results stay on two lines at 1280 px and setup comes first on
   const results = await table.boundingBox();
   expect(setup!.y).toBeLessThan(results!.y);
 });
+
+test('no page shows more than one warning banner (UX doc, A1)', async ({ page }) => {
+  test.setTimeout(180_000);
+  await loadDemo(page);
+  const problems: Record<string, number> = {};
+  for (const route of PRO_ROUTES) {
+    await open(page, route);
+    const banners = await page.getByRole('alert').count();
+    if (banners > 1) problems[route || 'dashboard'] = banners;
+  }
+  expect(problems).toEqual({});
+});
+
+test('long Chinese labels fit a phone: no page scrolls sideways at 390 px in 繁體中文', async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => localStorage.setItem('fi-tracker-lang', 'zh-TW'));
+  await loadDemoZh(page);
+  const wide: string[] = [];
+  for (const route of PRO_ROUTES) {
+    await page.goto(`./#/${route}`);
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(400);
+    if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1))
+      wide.push(route || 'dashboard');
+  }
+  expect(wide).toEqual([]);
+});
+
+async function loadDemoZh(page: Page) {
+  page.on('dialog', (d) => void d.accept());
+  await page.goto('./#/settings?demo=1');
+  await expect(page.getByRole('heading', { level: 1, name: '設定' })).toBeVisible();
+}

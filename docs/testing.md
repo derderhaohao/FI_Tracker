@@ -73,6 +73,16 @@ Other suites cover the rest of the maths:
   - The Goal page shows the FI number the domain gives.
   - A story plays to its end card with a scheduled crisis.
   - Unknown addresses show the not-found page.
+- **The redesign's behaviour** (`src/app/redesign.test.tsx`), on a fresh demo household per test:
+  - Home's Next step in each case (update due, backup, 勞保 figures, what-if), one banner at a
+    time, the mix line, one month of data, and the chart toggle.
+  - The 勞保 reminder clears once Settings → Taiwan rules is edited; the auto-save banner.
+  - The monthly update when the month already has entries, in transaction mode, and with a one-off.
+  - Balances: loan terms, archive and restore, deleting a new account, What changed, and the
+    duplicate-month guard.
+  - Cash flow on a wide screen and a phone; My plan's tabs, Compare without a duplicate of your
+    plan, one target on Goal, and the money setting.
+  - `src/test/renderApp.tsx` holds the shared render helper and the monthly-update walk.
 - **First run** (`src/features/setup/firstRun.test.tsx`): the welcome screen in focus mode, the
   60-second estimate carried into setup, four steps with the live FI age, and the result screen.
 - **Time Machine fields and the playback player bar and story cards.**
@@ -91,6 +101,8 @@ Other suites cover the rest of the maths:
 - **Text size:** no text under 12 px.
 - **Target size:** no control under 24 × 24 px at 1280×800, and none under 44 × 44 px in the page or
   the bottom nav at 390×844. The page must also never scroll sideways at that width.
+- **Banners:** no page shows more than one warning.
+- **Chinese on a phone:** no page scrolls sideways at 390 px in 繁體中文.
 - **Layout:**
   - The Dashboard KPI row is in view at 1280×800.
   - Settings sections open by address, and the Lab nav marks the section in view.

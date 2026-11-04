@@ -12,6 +12,7 @@ async function loadDemo(page: Page) {
 test('the monthly update on a phone, then why the FI date moved', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
   const errors = await loadDemo(page);
+  const started = Date.now();
   await page.getByRole('navigation', { name: 'Main' }).last().getByRole('link', { name: 'Update' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Monthly update' })).toBeVisible();
   await page.getByLabel('Balances as of').fill('2026-10-31');
@@ -44,6 +45,8 @@ test('the monthly update on a phone, then why the FI date moved', async ({ page 
   await expect(page.getByRole('heading', { name: /^Saved \d+ balances for 31 Oct 2026$/ })).toBeVisible();
   await expect(page.getByText(/^Done in /)).toBeVisible();
   await expect(page.getByText('Saved this month')).toBeVisible();
+  // The whole monthly job, pay and spending included, fits the doc's 3 minutes (M1).
+  expect(Date.now() - started).toBeLessThan(180_000);
   await page.getByLabel('Note for future you (optional)').fill('Raise next month');
   await page.getByRole('button', { name: 'Save note' }).click();
   await expect(page.getByRole('button', { name: 'Note saved' })).toBeVisible();
