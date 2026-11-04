@@ -95,6 +95,17 @@ Other suites cover the rest of the maths:
   transaction view; a signed credit-card file with spending as positive, lump sums and a bad row;
   waiting for columns and remembering a mapping; a file without a header; an empty file; balances
   matched by account name, mapped by hand, imported, and replaced on a second import.
+- **Playback** (`src/features/trajectory/playback/playback.test.tsx`): the playback state fires an
+  event that lowers the path only after its month, refuses an unknown event, a running one and a
+  sixth at once, removes one, undoes exactly and clears all, and starts over on a new story; the
+  view splits the chart by class, region and currency, shows and exports the history, saves a story
+  with its settings, imports a story file and rejects others, toggles the event pause, and answers
+  Space, the arrow keys, number keys and Ctrl+Z.
+- **Strategy Lab** (`src/features/lab/lab.test.tsx`): a what-if from a template, a blank copy, delete
+  (and a cancelled delete), Compare ticks, the starter guide, More options, the phone section picker;
+  editing a what-if (name, rule, a lever, a one-off event) and setting it as my plan; what it takes
+  to reach a target chance, saved as a what-if; the assumptions and reference tests; buy vs. rent
+  turned into a what-if. The worker mock runs the real simulations, solver and checks with 50 runs.
 - **First run** (`src/features/setup/firstRun.test.tsx`): the welcome screen in focus mode, the
   60-second estimate carried into setup, four steps with the live FI age, and the result screen.
 - **Time Machine fields and the playback player bar and story cards.**
