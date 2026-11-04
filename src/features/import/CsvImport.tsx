@@ -603,7 +603,11 @@ function BalanceMapper({
       await patch(db.settings, 'singleton', { snapshotSinceBackup: true });
     });
     setDone(
-      `Imported ${preview.rows.length} balance${preview.rows.length === 1 ? '' : 's'} from ${file.name}. Enter the FX rate for any new date in the grid.`,
+      t('Imported {length} balance{v} from {name}. Enter the FX rate for any new date in the grid.', {
+        length: preview.rows.length,
+        v: preview.rows.length === 1 ? '' : 's',
+        name: file.name,
+      }),
     );
   };
 
