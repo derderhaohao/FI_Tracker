@@ -56,6 +56,26 @@ Other suites cover the rest of the maths:
 - The Time Machine engine.
 - The kids' money maths (`src/kids/math.test.ts`).
 
+## What to test first
+
+Tests go where a silent mistake costs the most:
+
+1. **Data that cannot come back.** Backups, restore, encryption, CSV import and auto-save to a file
+   (`src/lib/autosave.test.ts`, with a fake File System Access handle: writes, debounce, a failed
+   write that stops and reports, permission, cancel). One wrong number here is lost history.
+2. **The FI answer.** The projection, Monte Carlo, the FI number and "why did my FI date move"
+   (`src/domain/fiDateMove.test.ts`: the parts always add up, including a new account, a paid-off
+   loan and a changed goal, and nothing is shown when FI is out of reach). The event library
+   (`src/domain/playback/library.test.ts`) checks custom events, event lengths and every kind of
+   impact text.
+3. **Screens that write data.** Every control that saves is clicked and the database is checked,
+   not only the screen.
+4. **Everything else** is covered by the page smoke tests and the accessibility run.
+
+Left for later, by choice: the Lab's section nav (scroll position, which jsdom lacks), the Strategy
+Lab's advanced levers, and the Beginner lessons' text. The real-browser paths (the worker, the
+installed app, file pickers) are covered by the e2e run.
+
 ## Component tests
 
 - **UI primitives** (`src/components/ui/ui.test.tsx`): buttons, cards, notices, stats, empty
@@ -106,6 +126,16 @@ Other suites cover the rest of the maths:
   editing a what-if (name, rule, a lever, a one-off event) and setting it as my plan; what it takes
   to reach a target chance, saved as a what-if; the assumptions and reference tests; buy vs. rent
   turned into a what-if. The worker mock runs the real simulations, solver and checks with 50 runs.
+- **Balances** (`src/features/position/balances.test.tsx`): a holding added, its total used as the
+  balance and removed; last month's holdings copied into a new month, with a foreign account's TWD
+  equivalent; the USD rate changed and cleared (the last rate then carries); an earlier month edited
+  after Edit; a month deleted only when confirmed; a new month started from the last, rates included.
+- **Goal and Reviews** (`src/features/destination/goal.test.tsx`): a category's FI budget and
+  essential flag; the warning when no budget is set; the tier, fat multiplier (out of range ignored)
+  and target age; the costs of leaving work; a guaranteed-income stream added only when complete,
+  edited and deleted; a quarterly review with its checklist, notes and decisions (and the backup
+  prompt after it); an annual reset that locks a new plan of record; plan vs. actual, its empty
+  state, and deleting a review only when confirmed.
 - **First run** (`src/features/setup/firstRun.test.tsx`): the welcome screen in focus mode, the
   60-second estimate carried into setup, four steps with the live FI age, and the result screen.
 - **Time Machine fields and the playback player bar and story cards.**
@@ -141,10 +171,13 @@ levels:
 
 | Scope                               | Statements | Branches | Functions | Lines |
 | ----------------------------------- | ---------: | -------: | --------: | ----: |
-| All of `src`                        |        75% |      63% |       64% |   77% |
-| `src/domain` (the calculations)     |        94% |      81% |       95% |   95% |
-| `src/io` (backups, CSV, encryption) |        95% |      85% |       94% |   96% |
-| Kids coin logic, PIN and backups    |        97% |      88% |       98% |   98% |
+| All of `src`                        |        87% |      76% |       80% |   89% |
+| `src/domain` (the calculations)     |        95% |      85% |       96% |   96% |
+| `src/io` (backups, CSV, encryption) |        96% |      88% |       97% |   97% |
+| Kids coin logic, PIN and backups    |        97% |      89% |       99% |   99% |
+
+Each level sits one to two points under what the suite reaches, so a change that drops tests
+fails CI but ordinary refactoring does not. Raise them when coverage grows.
 
 The job summary shows a coverage table by area. The HTML report is kept as the
 `coverage-report` artifact for seven days.

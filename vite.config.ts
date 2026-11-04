@@ -98,13 +98,13 @@ export default defineConfig({
       // CI fails when coverage drops below these (set just under the levels reached). The money
       // maths, backups and the kids' coin logic are held to a higher bar than the screens.
       thresholds: {
-        statements: 75,
-        branches: 63,
-        functions: 64,
-        lines: 77,
-        'src/domain/**': { statements: 94, branches: 81, functions: 95, lines: 95 },
-        'src/io/**': { statements: 95, branches: 85, functions: 94, lines: 96 },
-        'src/kids/{math,db,pin,backup}.ts': { statements: 97, branches: 88, functions: 98, lines: 98 },
+        statements: 87,
+        branches: 76,
+        functions: 80,
+        lines: 89,
+        'src/domain/**': { statements: 95, branches: 85, functions: 96, lines: 96 },
+        'src/io/**': { statements: 96, branches: 88, functions: 97, lines: 97 },
+        'src/kids/{math,db,pin,backup}.ts': { statements: 97, branches: 89, functions: 99, lines: 99 },
       },
     },
   },
