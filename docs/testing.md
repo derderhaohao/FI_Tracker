@@ -83,6 +83,18 @@ Other suites cover the rest of the maths:
   - Cash flow on a wide screen and a phone; My plan's tabs, Compare without a duplicate of your
     plan, one target on Goal, and the money setting.
   - `src/test/renderApp.tsx` holds the shared render helper and the monthly-update walk.
+- **Settings** (`src/features/settings/settings.test.tsx`): every General field saves; assumption
+  sets are edited, duplicated, added and deleted (or kept when cancelled); 勞退, 勞保 and dividend-tax
+  fields; categories are renamed, marked essential, added and deleted, and a used one cannot be;
+  JSON and CSV export, restore (with a download of the current data first), a rejected file, a
+  cancelled restore, an encrypted restore with a wrong and a right passphrase, the encrypted export's
+  passphrase checks, loading the demo; Delete all data after typing DELETE; the calendar reminder;
+  Beginner mode and Tools; the phone section picker. Downloads are captured, not saved.
+- **CSV import** (`src/features/import/csvImport.test.tsx`): a Taiwan bank export (民國 dates,
+  separate out / in columns, a BOM) imported and then skipped as duplicates; switching to the
+  transaction view; a signed credit-card file with spending as positive, lump sums and a bad row;
+  waiting for columns and remembering a mapping; a file without a header; an empty file; balances
+  matched by account name, mapped by hand, imported, and replaced on a second import.
 - **First run** (`src/features/setup/firstRun.test.tsx`): the welcome screen in focus mode, the
   60-second estimate carried into setup, four steps with the live FI age, and the result screen.
 - **Time Machine fields and the playback player bar and story cards.**
